@@ -1,0 +1,15 @@
+{
+  "name": "ai-native-fullstack-foundation",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:api": "bun run --cwd apps/api dev",
+    "dev:cms": "bun run --cwd apps/cms dev",
+    "lint": "bun run --cwd apps/api lint && bun run --cwd apps/cms lint",
+    "lint:fix": "bun run --cwd apps/api lint:fix && bun run --cwd apps/cms lint:fix",
+    "format": "bun run --cwd apps/api format && bun run --cwd apps/cms format",
+    "format:check": "bun run --cwd apps/api format:check && bun run --cwd apps/cms format:check",
+    "typecheck": "bun run --cwd apps/api typecheck && bun run --cwd apps/cms typecheck",
+    "test": "bun run --cwd apps/api test && bun run --cwd apps/cms test"
+  }
+}

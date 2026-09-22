@@ -1,0 +1,17 @@
+# Dependencies and build output
+node_modules/
+**/dist/
+**/coverage/
+.vite/
+
+# Application-local environment and secrets
+apps/*/.env
+apps/api/secrets/*
+!apps/api/secrets/.gitkeep
+apps/api/logs/*
+!apps/api/logs/.gitkeep
+
+# Tooling and OS files
+.DS_Store
+*.log
+.eslintcache
