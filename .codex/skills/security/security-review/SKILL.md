@@ -12,3 +12,7 @@ Activate for auth, JWT, permissions, user input, uploads, sensitive data, API en
 - Authorization: explicit user → role → permission → action; server decides; deny by default; no isAdmin design.
 - Review SQL injection, XSS, CSRF where cookies apply, SSRF, file handling, data exposure, audit behavior, and sensitive logging as relevant.
 - Never expose tokens, passwords, private keys, secrets, raw credentials, or internal production stacks.
+
+## Project Reference
+
+- Read references/security-review.md before applying this skill to repository code.

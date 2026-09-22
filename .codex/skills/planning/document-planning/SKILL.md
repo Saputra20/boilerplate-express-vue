@@ -15,3 +15,7 @@ Use for PRD-to-task planning, task migration, or task review. This skill owns ta
 7. Check task graph: existing dependencies, coherent order, no cycles, no successor dependency.
 
 Planning quality gate: another agent must implement without guessing; human must see exact change; completion must have objective evidence.
+
+## Project Reference
+
+- Read references/document-planning.md before applying this skill to repository code.

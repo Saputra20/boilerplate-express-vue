@@ -12,3 +12,7 @@ Use for schema, migration, repository, or query work.
 - Write transactions for atomic changes; prevent N+1 and unbounded reads; fetch only needed columns.
 - Do not delete/rename/type-change data structures or remove constraints/indexes without explicit approved impact plan.
 - Do not import Prisma-specific patterns.
+
+## Project Reference
+
+- Read references/database-patterns.md before applying this skill to repository code.

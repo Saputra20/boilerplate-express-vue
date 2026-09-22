@@ -12,3 +12,7 @@ Use at task completion.
 4. Map acceptance criteria to evidence and report PASS, FAIL, NOT RUN, or NOT APPLICABLE exactly.
 
 Tests, build, and Anti-Slop prove different things. No passing check upgrades another gate.
+
+## Project Reference
+
+- Read references/verification-loop.md before applying this skill to repository code.

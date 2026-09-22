@@ -13,3 +13,7 @@ Use for CMS work.
 - Frontend permissions are UX only. Backend remains authorization source of truth.
 - Use semantic HTML, keyboard access, visible focus, labels, contrast, and safe error display.
 - No React hooks, Next.js routing, or fabricated data/interaction.
+
+## Project Reference
+
+- Read references/frontend-patterns.md before applying this skill to repository code.

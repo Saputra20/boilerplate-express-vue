@@ -11,3 +11,7 @@ Use for cross-module, API, database, or task-planning changes.
 - Controllers handle transport only. Services own behavior. Repositories own data access.
 - Keep cross-cutting concerns focused; no generic CRUD, microservices, event systems, factories, or DI layers without approved need.
 - Existing docs/code outrank generic patterns. Flag boundary conflict; do not silently redesign architecture.
+
+## Project Reference
+
+- Read references/architecture.md before applying this skill to repository code.

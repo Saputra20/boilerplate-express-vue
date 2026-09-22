@@ -10,3 +10,7 @@ Use only for explicit refactor task or cleanup inside approved scope.
 - Remove dead code, unused exports/files/dependencies, duplication, or obsolete code only when evidence supports removal.
 - Do not combine feature work with unrelated cleanup. Do not change contracts or architecture accidentally.
 - Run relevant Anti-Slop, tests, and diff review after change.
+
+## Project Reference
+
+- Read references/refactoring.md before applying this skill to repository code.

@@ -11,3 +11,7 @@ Use for behavior changes. Flow: requirement → observable behavior → test sce
 - Frontend: Vitest component/integration tests; isolate Pinia, Router, API mocks, and global state.
 - Add E2E/browser tests only for critical flows or meaningful UI where component/integration tests cannot prove behavior.
 - No coverage theater, order dependence, real secrets, or fake passing mocks.
+
+## Project Reference
+
+- Read references/tdd-workflow.md before applying this skill to repository code.

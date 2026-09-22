@@ -11,3 +11,7 @@ Use whenever API contract changes.
 - Breaking field/status/auth/permission changes require explicit approved task scope and consumer review.
 - Update OpenAPI, tests, and affected CMS client contracts together.
 - Do not invent endpoints, error codes, pagination, or permission mappings when docs do not specify them.
+
+## Project Reference
+
+- Read references/api-design.md before applying this skill to repository code.

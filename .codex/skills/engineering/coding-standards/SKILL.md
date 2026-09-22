@@ -13,3 +13,7 @@ Use for every code change.
 - TypeScript/API JSON camelCase; PostgreSQL snake_case; env UPPER_SNAKE_CASE.
 - Use Bun commands from package scripts. Do not import npm/Node/React conventions that conflict with repository.
 - Coding standards define craftsmanship. Anti-Slop separately rejects generic, purposeless AI output.
+
+## Project Reference
+
+- Read references/coding-standards.md before applying this skill to repository code.

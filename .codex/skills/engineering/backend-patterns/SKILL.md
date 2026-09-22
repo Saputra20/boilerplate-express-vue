@@ -12,3 +12,7 @@ Use for API, worker, Redis, or backend infrastructure tasks.
 - Redis and BullMQ clients have explicit lifecycle/shutdown; queue payloads are typed and secret-free.
 - Pino/Morgan logs use request IDs and redaction. Central error middleware returns safe production envelopes.
 - No Supabase, Next.js route handlers, or generic repositories from upstream examples.
+
+## Project Reference
+
+- Read references/backend-patterns.md before applying this skill to repository code.

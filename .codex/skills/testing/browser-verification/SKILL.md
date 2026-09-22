@@ -10,3 +10,7 @@ Use for meaningful UI, responsive layouts, critical forms, authentication, payme
 - Verify applicable desktop/mobile layout, hierarchy, spacing, typography, overflow, focus, keyboard operation, loading/empty/error/success states, and critical interaction.
 - Capture evidence required by task. Do not claim inspection if browser capability or runnable app is unavailable.
 - Report NOT RUN with reason; required visual gate remains incomplete unless human explicitly resolves it.
+
+## Project Reference
+
+- Read references/browser-verification.md before applying this skill to repository code.
