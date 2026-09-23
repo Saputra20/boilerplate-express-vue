@@ -19,4 +19,6 @@ Cross-cutting concerns live in focused infrastructure modules. Business modules 
 
 ## Deferred Design
 
+Foundation RBAC enforces coarse-grained action permissions. Resource ownership and row-level rules belong to the business module that owns that resource.
+
 TODO: REQUIREMENT NEEDED — define actual business modules and data ownership.

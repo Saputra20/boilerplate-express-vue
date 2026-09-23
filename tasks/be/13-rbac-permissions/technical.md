@@ -2,201 +2,303 @@
 
 ## 1. Metadata
 
-| Field | Value |
-| --- | --- |
-| Task ID | `be/13-rbac-permissions` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
-| Workstream | Backend |
-| Category | rbac foundation |
-| Repository | `apps/api` |
-| Platform | Bun / Express API |
-| Status | Blocked — requirement needed |
-| Priority | Foundation execution order 13 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | be/04-identity-schema, be/10-login-session |
-| Blocks | be/14-audit-trail |
-| Execution Order | 13 |
+| Field           | Value                                                                     |
+| --------------- | ------------------------------------------------------------------------- |
+| Task ID         | `be/13-rbac-permissions`                                                  |
+| Batch           | N/A                                                                       |
+| Owning Feature  | N/A                                                                       |
+| Workstream      | Backend                                                                   |
+| Task Category   | RBAC foundation                                                           |
+| Repository/App  | `apps/api`                                                                |
+| Status          | Complete — validation evidence recorded below                             |
+| Priority        | Foundation execution order 13                                             |
+| Suggested Size  | Small — permission resolver, middleware, minimal test catalog, and tests  |
+| Depends On      | `be/04-identity-schema`, `be/10-login-session`, `be/12-logout-revocation` |
+| Blocks          | `be/14-audit-trail`                                                       |
+| Execution Order | 13                                                                        |
 
 ## 2. Outcome
 
-Implement deny-by-default server-side permission enforcement over explicit user-role-permission-action relations only after catalog and route policy approval.
+Provide deny-by-default server-side authorization based only on persisted `user → role → permission` relations. A focused permission middleware protects future explicitly mapped routes, returns safe `403` denials for authenticated users lacking a grant, and does not add business endpoints or policies.
 
 ## 3. Context
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+- `apps/api/src/database/schema.ts` already defines `roles`, `permissions`, `user_roles`, and `role_permissions` with stable lowercase codes, relation constraints, and lookup indexes.
+- `apps/api/src/auth/access-auth-middleware.ts` verifies typed access JWTs and session/JTI/user state before controller execution.
+- `apps/api/src/app.ts` currently installs only auth routes: login, refresh, logout, and logout-all. No business resource route exists.
+- `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, and `AGENTS.md` remain source-of-truth guidance.
+- OpenAPI infrastructure does not yet exist. Do not create parallel endpoint documentation.
 
-## 4. In Scope
+## 4. Dependencies
 
-- Implement deny-by-default server-side permission enforcement over explicit user-role-permission-action relations only after catalog and route policy approval.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+- `be/04-identity-schema` provides RBAC tables and constraints.
+- `be/10-login-session` provides user/session identity context.
+- `be/12-logout-revocation` provides access authentication and revocation enforcement.
+- PostgreSQL is required for repository/integration validation. Redis is not required; permission caching is out of scope.
 
-## 5. Out of Scope
+## 5. In Scope
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+- Persistent effective-permission resolution through `user_roles`, `role_permissions`, and `permissions`.
+- Focused deny-by-default permission middleware after successful access authentication.
+- Explicit route-level permission declaration boundary such as `requirePermission('system.access')`; actual names follow repository conventions.
+- Safe `401` versus `403` behavior.
+- Minimal isolated foundation test catalog: role `admin`, permission `system.access`, and an explicit `role_permissions` grant.
+- Focused authorization-denial application logging with safe metadata when practical.
+- Tests, validation, and completion evidence.
 
-## 6. Implementation Requirements
+## 6. Out of Scope
 
-- Implement deny-by-default server-side permission enforcement over explicit user-role-permission-action relations only after catalog and route policy approval.
-- Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+- Role, permission, user-role, or role-permission management APIs.
+- CMS role editor, user management UI, business permission catalog, and production placeholder endpoints.
+- Row-level, ownership, tenant, organization, field-level, ABAC, ReBAC, inheritance, wildcard, or explicit-deny authorization.
+- JWT role/permission snapshots, hard-coded admin bypasses, permission caching, and Redis authorization state.
+- Login, refresh, logout, session, token-revocation, or audit-trail successor behavior.
 
-### 6.1 Resolved Business Requirements
+## 7. Existing Implementation
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+- `apps/api/src/database/schema.ts` contains `roles`, `permissions`, `userRoles`, and `rolePermissions`.
+- `apps/api/src/auth/permission-repository.ts`, `permission-service.ts`, and `permission-middleware.ts` resolve persisted RBAC grants and enforce explicit permission declarations.
+- `apps/api/src/auth/access-auth-middleware.ts` exposes only verified access principal data to downstream authorization middleware.
+- `apps/api/src/app.ts` exposes no protected business resource route.
+- `apps/api/tests/rbac-permissions.test.ts` proves middleware behavior and test-only RBAC relations.
+- No seed/bootstrap framework exists. Do not add a broad seed system for this task.
 
-## 7. Contract and Data Impact
+## 8. Implementation Requirements
 
-### 7.1 Configuration Contract
+### 8.1 Authorization Model
 
-Not applicable — this task does not change documented configuration.
+- Backend is authorization source of truth: `user → role → permission → action`.
+- Resolve permissions from PostgreSQL at authorization time. Do not use client input, hidden UI state, `isAdmin`, JWT snapshots, or token claims as permission grants.
+- A user may hold multiple roles. Effective permissions are their union; duplicate grants do not change outcome.
+- `admin` has no bypass. It is allowed only through its persisted `role_permissions` records.
+- Permission and role codes are stable lowercase machine identifiers. Permission format is `resource.action`.
 
-### 7.2 API Contract
+### 8.2 Minimal Foundation Catalog
 
-Not applicable — this task does not modify an API contract.
+| Entity     | Code                        | Purpose                                                  |
+| ---------- | --------------------------- | -------------------------------------------------------- |
+| Role       | `admin`                     | Minimal foundation role for authorization tests.         |
+| Role       | `viewer`                    | Restricted test role required to prove permission union. |
+| Permission | `system.access`             | Foundation permission proving explicit RBAC evaluation.  |
+| Permission | `system.observe`            | Foundation test permission required to prove role union. |
+| Grant      | `admin` → `system.access`   | Normal `role_permissions` relation; never a bypass.      |
+| Grant      | `viewer` → `system.observe` | Normal `role_permissions` relation; never a bypass.      |
 
-### 7.3 Database Contract
+- This catalog is limited to isolated RBAC test/bootstrap data because no current production resource route needs a permission.
+- Do not create `users.*`, business-domain, or additional speculative permissions or roles.
+- Do not add runtime startup writes, an empty migration, or a broad seed framework. Tests create and clean up deterministic synthetic rows using existing schema conventions.
 
-Not applicable — this task does not change a database contract.
+### 8.3 Permission Middleware
 
-### 7.4 UI Contract
+- Permission middleware runs after access authentication and before route/controller handling.
+- Routes requiring authorization explicitly declare one permission code. Do not derive permission from path, HTTP method, controller, or table name.
+- Missing/invalid middleware configuration or a referenced permission absent from persistent data is a server configuration failure. Reject safely; never allow.
+- A protected route allows only when access authentication succeeded and at least one persisted role grants the declared existing permission.
+- No current production route is permission-protected. Prove the boundary through a focused middleware/integration test route only; do not expose a placeholder production endpoint.
 
-Not applicable — this task does not change a CMS UI contract.
+### 8.4 Resource Policy
 
-## 8. File Impact
+- Foundation policy is coarse-grained action permission only.
+- Permission answers whether a principal may perform an action, not whether it may access a particular row, field, tenant, organization, or owned resource.
+- No implicit self-service exception exists. A future resource-owning task must define any self/ownership policy.
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
+### 8.5 Denial, Logging, And Error Handling
 
-Test: `apps/api/tests/`.
+- Missing, malformed, invalid, expired, revoked, disabled, or soft-deleted authentication remains `401` using existing authentication behavior.
+- Authenticated principal without required permission receives `403` with centralized sanitized envelope/message equivalent to `Forbidden`.
+- Public `403` does not reveal roles, required permission, permission catalog, query details, or schema details.
+- Log authorization denial only with safe metadata when practical: request ID, user ID, session ID, route/action, required permission, and outcome. Never log credentials, authorization header, tokens, passwords, or secrets.
+- Durable authorization audit-table expansion belongs to `be/14-audit-trail`; do not alter current auth-audit vocabulary solely for RBAC denial.
 
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
+## 9. Applicable Contracts
 
-## 9. Runtime Behavior
+### Configuration Contract
 
-Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
+Not applicable — no RBAC configuration or cache setting is introduced.
 
-## 10. Error and Edge Cases
+### API Contract
 
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
+| Method | Route              | Authentication                  | Permission                                                    | Notes                         |
+| ------ | ------------------ | ------------------------------- | ------------------------------------------------------------- | ----------------------------- |
+| `POST` | `/auth/login`      | None                            | None — authentication/session capability, not RBAC-protected. | Public credential exchange.   |
+| `POST` | `/auth/refresh`    | Refresh credential in JSON body | None — authentication/session capability, not RBAC-protected. | Access token not required.    |
+| `POST` | `/auth/logout`     | Bearer access token             | None — authentication/session capability, not RBAC-protected. | Current session only.         |
+| `POST` | `/auth/logout-all` | Bearer access token             | None — authentication/session capability, not RBAC-protected. | Current user's sessions only. |
 
-## 11. Security Requirements
+No business resource route currently exists. RBAC is proven through focused middleware/integration tests only; no production placeholder endpoint is added.
 
-Backend remains authorization source of truth; deny by default; no client role/permission state is a security control.
+### Authorization Contract
 
-## 12. Test Requirements
+| Condition                                                  | Result                                               |
+| ---------------------------------------------------------- | ---------------------------------------------------- |
+| Authentication missing or invalid                          | Existing generic `401 Unauthorized`.                 |
+| Authenticated principal has an explicit persisted grant    | Route continues.                                     |
+| Authenticated principal lacks required permission or roles | Generic `403 Forbidden`.                             |
+| Middleware references nonexistent permission               | Sanitized server/configuration failure; never allow. |
 
-### Happy Path
+### Database Contract
 
-Prove the documented outcome at focused module/integration boundary.
+- Reuse `roles`, `permissions`, `user_roles`, and `role_permissions`.
+- Existing unique keys, composite relation keys, and indexes satisfy foundation resolution queries.
+- Database migration: **NOT REQUIRED — existing RBAC schema satisfies contract.**
+- Do not generate an empty migration or create duplicate RBAC tables.
 
-### Validation / Business Rules
+### UI Contract
 
-Prove each relevant scenario in section 10.
+Not applicable — CMS permissions are UX only and no UI changes belong here.
 
-### Negative / Recovery
+## 10. File Impact
 
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
+Expected paths are guidance; inspect before editing.
 
-### Isolation / Security
+| Change                | Paths                                                                                                                                           |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Expected create       | Focused RBAC resolver/middleware under `apps/api/src/auth/` or a verified adjacent backend boundary; `apps/api/tests/rbac-permissions.test.ts`. |
+| Expected modify       | `apps/api/src/app.ts` only if a focused internal test wiring seam requires it; logging/error boundary only if existing conventions require it.  |
+| Expected not modified | Auth route behavior, JWT claims, refresh rotation, logout revocation, RBAC schema/migrations, CMS, secrets, and future business modules.        |
 
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
+## 11. Runtime Behavior
 
-### Regression
+1. Route uses access-authentication middleware where authentication is required.
+2. Route explicitly invokes permission middleware with one stable permission code.
+3. Middleware resolves effective permissions through persisted user-role-role-permission relations in one focused query path without N+1 lookup.
+4. Existing declared grant allows route handling.
+5. Missing grant denies `403` with safe public response and optional safe application log.
+6. Unknown declared permission fails safely as server configuration error; it never grants access.
+7. Auth routes continue without RBAC checks.
 
-Existing API shell/Jest behavior remains passing.
+## 12. Error And Edge Cases
 
-### 12.1 Required Verification Scenarios
+| Scenario                                         | Expected Result                       | Security / Recovery                                 |
+| ------------------------------------------------ | ------------------------------------- | --------------------------------------------------- |
+| Missing/invalid access authentication            | Existing generic `401`                | Do not evaluate or reveal permission state.         |
+| Authenticated user has no roles                  | `403`                                 | Deny by default.                                    |
+| Roles have no required grant                     | `403`                                 | Do not reveal assigned roles.                       |
+| Multiple roles grant different permissions       | Union grants each declared permission | No explicit-deny model.                             |
+| Client sends role/permission field               | No authorization effect               | Ignore as untrusted transport data.                 |
+| Referenced permission absent from DB             | Sanitized `500`/configuration failure | Never convert unknown permission to allow or `403`. |
+| Disabled/deleted user or revoked/expired session | Existing generic `401`                | Access authentication rejects first.                |
+| Permission query/storage failure                 | Sanitized `500`                       | Do not allow on failure.                            |
 
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
+## 13. Security Requirements
 
-## 13. Validation Requirements
+- Deny by default.
+- Backend persistent RBAC data is sole authorization authority.
+- No hard-coded `admin` or super-admin bypass.
+- Explicit route permission declaration is mandatory for any future RBAC-protected route.
+- Permission/role codes remain stable machine identifiers; display labels do not authorize.
+- Preserve existing session/JTI/account-state authentication checks.
+- No token, password, secret, or authorization-header logging.
+- Do not add a cache without explicit invalidation and correctness policy.
+
+## 14. Test Requirements
+
+| Scenario                                   | Expected Result                              | Test Type                 |
+| ------------------------------------------ | -------------------------------------------- | ------------------------- |
+| One granted role                           | Allows declared permission                   | Focused integration/unit  |
+| Multiple roles                             | Effective permissions are union              | Focused integration/unit  |
+| No roles or irrelevant role                | `403`                                        | Focused integration/unit  |
+| Admin grant                                | Allows only via persisted `role_permissions` | Focused integration/unit  |
+| Client-supplied fake role/permission       | Does not authorize                           | Focused route/integration |
+| Missing/invalid/revoked access auth        | `401`                                        | Focused route/integration |
+| Unknown declared permission                | Safe server failure, never allow             | Focused integration/unit  |
+| Disabled/deleted/revoked-session principal | `401`                                        | Access-auth regression    |
+| Coarse permission check                    | No ownership/row behavior exists             | Focused unit              |
+| Auth routes                                | Continue without RBAC permissions            | Regression                |
+
+- Use synthetic UUIDs, roles, permissions, and keys only.
+- Tests are isolated, deterministic, and clean up RBAC relations.
+- Do not assert or snapshot credentials, tokens, authorization headers, or full logs.
+
+## 15. Task-Level Expected Results
+
+- Permission resolver and explicit deny-by-default middleware exist at backend boundary.
+- Existing RBAC tables resolve union permissions without N+1 behavior.
+- `admin` succeeds only through an explicit persisted `system.access` grant in isolated tests.
+- Authorization denial distinguishes `401` authentication failure from `403` permission denial.
+- No business API route, permission catalog, row policy, schema migration, or cache is added.
+
+## 16. Acceptance Criteria
+
+- [x] Backend persistent RBAC relations are authorization source of truth.
+- [x] Permission codes use stable lowercase `resource.action` identifiers.
+- [x] Authorization denies by default.
+- [x] Every RBAC-protected route uses an explicit permission declaration.
+- [x] Current auth foundation routes require no arbitrary RBAC permission.
+- [x] Unauthenticated/invalid authentication returns `401`; authenticated missing permission returns `403`.
+- [x] Effective permissions resolve through `user → role → permission` and union multiple roles.
+- [x] `admin` uses normal `role_permissions`; no bypass exists.
+- [x] Initial catalog remains limited to `admin`, `viewer`, `system.access`, and `system.observe` in isolated foundation tests.
+- [x] Resource policy remains coarse-grained; no row-level/self-service/business rule exists.
+- [x] Client role/permission state cannot authorize.
+- [x] Unknown permission references fail safely and never allow.
+- [x] Existing RBAC tables are reused; no schema migration or empty migration is created.
+- [x] Focused tests, regression suite, lint, typecheck, Code Anti-Slop, and `git diff --check` pass.
+
+## 17. Anti-Slop Requirements
+
+Code Anti-Slop: required. Reject generic policy engines, factories, duplicated authentication checks, hard-coded bypasses, speculative permissions/roles, fake production route, broad seed framework, cache, empty migration, hidden TODO/FIXME/HACK, unchecked `any`/assertions, unused code/dependencies, and incomplete authorization behavior. UI Anti-Slop and visual verification: not applicable — no UI work.
+
+## 18. Validation Requirements
 
 ### Static
 
+- `bun run --cwd apps/api format:check`
 - `bun run --cwd apps/api lint`
 - `bun run --cwd apps/api typecheck`
-- `bun run --cwd apps/api test`
 - `git diff --check`
 
 ### Automated Tests
 
-- Focused and full existing Jest tests applicable to changed boundary.
-
-### Build
-
-Not applicable — API package has no build script; TypeScript typecheck is applicable.
+- Focused RBAC permission-resolution/middleware tests.
+- Full `bun run --cwd apps/api test` regression suite.
 
 ### Database
 
-Validate Drizzle migration/schema if this task creates one.
+- No migration validation required — existing schema is reused.
+- Validate authorization query behavior against isolated PostgreSQL if repository tests require database integration.
 
-### UI
+### Build / UI
 
-Not applicable — no meaningful rendered UI change.
+Not applicable — API has no build script and no UI changes.
 
 ### Anti-Slop
 
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop and visual verification: not applicable — no CMS UI change.
+- Code Anti-Slop during implementation and after fixes.
 
-## 14. Acceptance Criteria
+## 19. Completion Evidence
 
-- [ ] Implement deny-by-default server-side permission enforcement over explicit user-role-permission-action relations only after catalog and route policy approval.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
+| Acceptance criterion                  | Evidence                                                               |
+| ------------------------------------- | ---------------------------------------------------------------------- |
+| Permission resolution and union       | Focused Jest test plus isolated PostgreSQL evidence                    |
+| Explicit declaration and deny default | Middleware/route integration test                                      |
+| `401` versus `403`                    | Authentication and authorization test                                  |
+| No admin bypass/client authority      | Relation-based fixture, negative test, and code review                 |
+| No business/row policy or migration   | Changed-file review and `db:generate` no-change output                 |
+| Regression/static/security            | Prettier, ESLint, TypeScript, 81-test Jest, Code Anti-Slop, diff check |
 
-### 14.1 Task-Level Expected Results
+## 20. Traceability
 
-- [ ] RBAC And Permissions capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
+| Trace Type       | References                                                                |
+| ---------------- | ------------------------------------------------------------------------- |
+| Architecture     | `docs/ARCHITECTURE.md` authorization boundary                             |
+| Database         | `roles`, `permissions`, `user_roles`, `role_permissions`                  |
+| API              | Current auth-route mapping table in this task                             |
+| Security         | `docs/SECURITY.md`, `AGENTS.md`                                           |
+| Dependency tasks | `be/04-identity-schema`, `be/10-login-session`, `be/12-logout-revocation` |
+| Test IDs         | Not applicable — project has no test-ID system.                           |
 
-## 15. Anti-Slop Requirements
+## 21. Open Points
 
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop and visual verification: not applicable — no CMS UI change.
+None.
 
-## 16. Definition of Done
+## 22. Definition Of Done
 
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/api/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/api lint`; `bun run --cwd apps/api typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | RBAC And Permissions boundary |
-| `docs/SECURITY.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `be/13-rbac-permissions` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-TODO: REQUIREMENT NEEDED — permission catalog, route mapping, resource policy, denial contract.
+- [x] Approved scope and all acceptance criteria are implemented without successor behavior.
+- [x] Authorization uses persistent RBAC data and explicit route permission declarations.
+- [x] Auth routes remain free of arbitrary RBAC grants.
+- [x] No business catalog, row policy, cache, duplicate schema, or empty migration appears.
+- [x] Focused and regression tests pass.
+- [x] Code Anti-Slop passes.
+- [x] Format, lint, typecheck, and `git diff --check` pass.
+- [x] Changed-file, secret, and human review complete.

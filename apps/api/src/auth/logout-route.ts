@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Express, RequestHandler } from 'express';
-import { createAccessAuthMiddleware } from './access-auth-middleware.js';
-import type { AccessAuthService, AccessPrincipal } from './access-auth-service.js';
+import { createAccessAuthMiddleware, getAccessPrincipal } from './access-auth-middleware.js';
+import type { AccessAuthService } from './access-auth-service.js';
 import type { LogoutService } from './logout-service.js';
 
 export function installLogoutRoutes(
@@ -19,8 +19,8 @@ export function createLogoutController(
   scope: 'current' | 'all',
 ): RequestHandler {
   return async (request, response, next) => {
-    const principal = response.locals.authPrincipal;
-    if (!isAccessPrincipal(principal)) {
+    const principal = getAccessPrincipal(response);
+    if (principal === null) {
       response.status(401).json({ message: 'Invalid authentication' });
       return;
     }
@@ -44,21 +44,4 @@ export function createLogoutController(
       next(error);
     }
   };
-}
-
-function isAccessPrincipal(value: unknown): value is AccessPrincipal {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'sub' in value &&
-    typeof value.sub === 'string' &&
-    'sid' in value &&
-    typeof value.sid === 'string' &&
-    'jti' in value &&
-    typeof value.jti === 'string' &&
-    'exp' in value &&
-    typeof value.exp === 'number' &&
-    'revoked' in value &&
-    typeof value.revoked === 'boolean'
-  );
 }

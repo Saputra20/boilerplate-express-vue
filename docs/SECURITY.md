@@ -5,5 +5,6 @@
 - Passwords use Argon2id.
 - Require issuer, audience, expiry, JTI, revocation, and applicable `nbf` validation.
 - Current-session logout and all-session logout remain separate explicit actions. Session revocation is a primary authentication invalidation check; access-JTI revocations persist only until token expiry and raw JWTs never persist. Revocation storage must be enforced by authentication middleware.
+- Authorization resolves persistent user-role-permission relations, denies by default, and uses explicit route permission declarations. Client/UI state, JWT snapshots, and hard-coded admin bypasses never grant access; resource-owning tasks define row-level policy.
 - Add Helmet, strict CORS, rate limits, body limits, request IDs, audit trail, safe error handling, and graceful shutdown in approved tasks.
 - Logs never contain credentials, passwords, tokens, secrets, or private key content.

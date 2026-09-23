@@ -263,7 +263,7 @@ Inspect schema and data impact first. Schema changes require appropriate Drizzle
 
 ## RBAC And Authorization
 
-Backend is authorization source of truth: user → role → permission → action. Never use `isAdmin === true` as authorization architecture. Frontend permission checks are UX only, never security controls.
+Backend is authorization source of truth: user → role → permission → action. Deny by default; declare each protected route permission explicitly; resolve multiple roles as a union; distinguish `401` authentication failure from `403` authorization denial. Never use `isAdmin === true` as authorization architecture or client/UI role state as security authority. Permission codes are stable machine identifiers. Resource-owning tasks define row-level policy; do not invent business permissions or ownership rules first.
 
 ## Frontend Rules
 
