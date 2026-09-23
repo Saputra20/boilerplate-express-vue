@@ -1,44 +1,42 @@
-# be/10-login-session — Login And Session
+# be/10-login-session - Login And Session
 
-## Tujuan
+## Apa yang dibuat?
 
-Implement login request validation, credential verification, session creation, access-token issue, and audit outcome only after API and identity contract approval.
+Task ini sekarang punya kontrak eksekusi untuk `POST /auth/login`, session, metadata refresh token, dan audit login yang tahan lama.
 
-## Kenapa Task Ini Dibutuhkan
+## Kenapa dibuat?
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+Login membutuhkan cara yang konsisten untuk memeriksa password, membuat session, menerbitkan token, dan menyimpan jejak audit tanpa membocorkan keadaan akun.
 
-## Apa yang Akan Dikerjakan
+## Apa yang berubah?
 
-- Implement login request validation, credential verification, session creation, access-token issue, and audit outcome only after API and identity contract approval.
-- Validasi dan evidence sesuai technical.md.
+- Login menerima email dan password melalui `POST /auth/login`.
+- Hanya user aktif dan belum soft delete yang dapat login.
+- User tidak ditemukan, password salah, akun disabled, dan akun deleted memberi respons publik `401` yang sama.
+- Login sukses membuat session UUID, lalu access dan refresh token memakai user UUID sebagai `sub` dan session UUID sebagai `sid`.
+- Raw refresh token tidak disimpan. Database hanya menyimpan hash SHA-256 token tersebut. Access token tidak disimpan.
+- Setiap login sukses/gagal membuat event audit tanpa password atau token.
 
-## Apa yang Tidak Dikerjakan
+## Apa yang tidak berubah?
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+Task ini belum membuat refresh rotation, refresh endpoint, logout, revocation, RBAC, cookie token transport, registration, password reset, atau generic audit framework.
 
-## Dependency
+## Dependency task apa?
 
-be/04-identity-schema, be/08-jwt-foundation, be/09-password-hashing
+Task ini memakai users identity schema, JWT foundation, password hashing, security middleware, dan Drizzle transaction.
 
-## Risiko / Hal yang Perlu Diperhatikan
+## Risiko utama?
 
-TODO: REQUIREMENT NEEDED — login path, fields, response/error contract, account states, session fields.
+Login tidak boleh membedakan alasan kegagalan secara publik. Session, refresh metadata, dan audit sukses harus tersimpan atomik sebelum token dikembalikan. Jika penyimpanan gagal, token tidak boleh dikirim.
 
-## Cara Verifikasi
+## Bagaimana cara mengecek hasilnya?
 
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Review test request valid/tidak valid, respons `401` seragam, session/token claim, tidak ada raw refresh/access token di database, audit redacted, dan failure atomicity. Jalankan migration UP/DOWN/re-apply, lint, typecheck, full test, `git diff --check`, dan Code Anti-Slop.
 
-## Yang Perlu Direview Human
+## Apa yang harus direview manusia?
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Pastikan response login tetap minimal, account state tidak bocor, raw refresh token tidak disimpan, retention 30/90 hari sesuai kontrak, dan migration dipisah per entity.
 
-## Output yang Diharapkan
+## Apa yang belum dikerjakan?
 
-Implement login request validation, credential verification, session creation, access-token issue, and audit outcome only after API and identity contract approval.
-
-## Task Berikutnya
-
-be/11-refresh-token
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Implementasi login belum dibuat dalam pembaruan dokumen ini. Refresh rotation, logout/revocation, generic audit trail, dan authorization tetap task berikutnya.

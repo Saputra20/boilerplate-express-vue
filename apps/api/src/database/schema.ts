@@ -37,6 +37,69 @@ export const users = pgTable(
   (table) => [check('users_email_lowercase_check', sql`${table.email} = lower(${table.email})`)],
 );
 
+export const authSessions = pgTable(
+  'auth_sessions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  },
+  (table) => [
+    index('auth_sessions_user_id_index').on(table.userId),
+    index('auth_sessions_expires_at_index').on(table.expiresAt),
+  ],
+);
+
+export const refreshTokens = pgTable(
+  'refresh_tokens',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => authSessions.id, { onDelete: 'cascade' }),
+    jti: uuid('jti').notNull().unique(),
+    tokenHash: text('token_hash').notNull().unique(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  },
+  (table) => [
+    index('refresh_tokens_session_id_index').on(table.sessionId),
+    index('refresh_tokens_expires_at_index').on(table.expiresAt),
+  ],
+);
+
+export const authAuditEvents = pgTable(
+  'auth_audit_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    eventType: text('event_type').notNull(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+    sessionId: uuid('session_id').references(() => authSessions.id, { onDelete: 'set null' }),
+    requestId: uuid('request_id').notNull(),
+    reason: text('reason'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('auth_audit_events_user_id_index').on(table.userId),
+    index('auth_audit_events_session_id_index').on(table.sessionId),
+    index('auth_audit_events_created_at_index').on(table.createdAt),
+    check(
+      'auth_audit_events_event_type_check',
+      sql`${table.eventType} IN ('auth.login.succeeded', 'auth.login.failed')`,
+    ),
+    check(
+      'auth_audit_events_reason_check',
+      sql`${table.reason} IS NULL OR ${table.reason} IN ('INVALID_CREDENTIALS', 'ACCOUNT_DISABLED', 'ACCOUNT_DELETED', 'RATE_LIMITED', 'INTERNAL_ERROR')`,
+    ),
+  ],
+);
+
 export const roles = pgTable(
   'roles',
   {

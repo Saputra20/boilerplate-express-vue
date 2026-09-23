@@ -5,8 +5,8 @@ Document actual Drizzle/PostgreSQL foundation and its limits.
 
 ## Established Evidence
 - Drizzle config: apps/api/drizzle.config.ts.
-- Schema entrypoint: apps/api/src/database/schema.ts currently exports no tables.
-- Migration output: apps/api/drizzle; no migrations exist.
+- Schema entrypoint: apps/api/src/database/schema.ts exports users, roles, permissions, user_roles, and role_permissions.
+- Migration output: apps/api/drizzle contains entity-scoped forward and matching reverse migrations through `0004_create-role-permissions-table`.
 - .env.example defines separated DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, DATABASE_USERNAME, DATABASE_PASSWORD, DATABASE_SSL.
 - docker-compose.yml provides PostgreSQL 18 local service.
 
@@ -20,7 +20,7 @@ export default defineConfig({
 Derived from apps/api/drizzle.config.ts.
 
 ## Not Established
-No tables, relations, repositories, transactions, seeds, or DB migration test harness exists. `apps/api/src/database/client.ts` provides the runtime Drizzle/pg client lifecycle. docs/DATABASE.md leaves fields/constraints/indexes for approved design.
+No auth-session, refresh-token, token-revocation, or audit tables/repositories exist yet. `apps/api/src/database/client.ts` provides the runtime Drizzle/pg client lifecycle. Login/session schema details are approved in `tasks/be/10-login-session/technical.md`; `be/12` owns token revocations.
 
 ## Migration Discipline
 - Follow `AGENTS.md` as policy: Drizzle owns schema and forward migration history; migrations are entity-scoped or tightly coupled concern-scoped.

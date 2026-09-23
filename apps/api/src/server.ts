@@ -1,4 +1,6 @@
 import { createApp } from './app.js';
+import { createLoginRepository } from './auth/login-repository.js';
+import { createLoginService } from './auth/login-service.js';
 import { loadEnv } from './config/env.js';
 import { createDatabase } from './database/client.js';
 import { loadDatabaseConfig } from './database/config.js';
@@ -6,17 +8,17 @@ import { createLogging } from './logging/index.js';
 import { createRedis } from './redis/client.js';
 import { loadRedisConfig } from './redis/config.js';
 import { shutdown } from './shutdown.js';
-import { createJwt } from './jwt/index.js';
+import { createJwt, type JwtService } from './jwt/index.js';
 
 async function startServer(): Promise<void> {
   const env = loadEnv();
   const logging = createLogging();
-  const app = createApp(logging, { corsOrigins: env.CORS_ORIGINS });
   const database = createDatabase(loadDatabaseConfig(env));
   const redis = createRedis(loadRedisConfig(env));
+  let jwt: JwtService;
 
   try {
-    createJwt({
+    jwt = createJwt({
       privateKeyPath: env.JWT_PRIVATE_KEY_PATH,
       publicKeyPath: env.JWT_PUBLIC_KEY_PATH,
       issuer: env.JWT_ISSUER,
@@ -33,6 +35,12 @@ async function startServer(): Promise<void> {
     logging.close();
     throw new Error('API startup failed');
   }
+
+  const app = createApp(
+    logging,
+    { corsOrigins: env.CORS_ORIGINS },
+    createLoginService(createLoginRepository(database.db), jwt),
+  );
 
   const server = app.listen(env.PORT, () => {
     logging.logger.info({ port: env.PORT }, 'API listening');

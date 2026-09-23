@@ -256,6 +256,7 @@ Inspect schema and data impact first. Schema changes require appropriate Drizzle
 
 - Validate environment at startup and fail clearly. Preserve Helmet, CORS, rate limits, body limits, secure headers, authorization middleware, and graceful shutdown.
 - JWT uses RS256 with issuer, audience, expiry, `nbf` where applicable, JTI, and session/token revocation. JWT `sub` is the stable `users.id` UUID, never a session or mutable identity. Token classes use an explicit `access`/`refresh` claim; reserve UUID `sid` for approved session work. Keep claims minimal and typed. Do not embed roles, permissions, or other mutable authorization state without explicit approval. Passwords use Argon2id, favor sufficient approved length over arbitrary composition rules, and are never trimmed or otherwise mutated. Plaintext passwords are never logged or persisted. Breach checks and forced password expiration require separate explicit approval.
+- Public authentication failures must not reveal account existence or disabled/deleted state. Only active non-deleted users authenticate. Sessions are explicit lifecycle records; login writes session, refresh metadata, and required security audit event atomically. Store only a deterministic hash of a raw refresh token, never access tokens; audit records remain separate from ordinary logs. Follow entity-scoped FK-safe UP/DOWN migrations for auth tables.
 - Never log, commit, return, or bundle passwords, JWTs, refresh tokens, private keys, secrets, or raw credentials. Private keys never enter CMS bundles.
 
 ## RBAC And Authorization
