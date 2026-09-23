@@ -98,6 +98,21 @@ describe('logging foundation', () => {
     rmSync(directory, { recursive: true, force: true });
   });
 
+  it('prettifies only development terminal logs', () => {
+    const directory = createDirectory();
+    const stderr = new MemoryStream();
+    const logging = createLogging({ directory, stderr, nodeEnv: 'development' });
+
+    logging.logger.info({ requestId: 'request-1' }, 'Development log');
+
+    const applicationLog = readFileSync(join(directory, 'application.log'), 'utf8');
+    expect(stderr.output).toContain('Development log');
+    expect(stderr.output).not.toContain('"msg":"Development log"');
+    expect(applicationLog).toContain('"msg":"Development log"');
+
+    logging.close();
+  });
+
   it('rotates bounded application logs and removes expired rotated files', () => {
     const directory = createDirectory();
     const now = new Date('2026-09-23T00:00:00.000Z');

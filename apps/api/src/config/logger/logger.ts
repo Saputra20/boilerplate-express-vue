@@ -9,6 +9,7 @@ import {
   unlinkSync,
 } from 'node:fs';
 import { basename, extname, join } from 'node:path';
+import { createRequire } from 'node:module';
 import { Writable } from 'node:stream';
 import type { RequestHandler } from 'express';
 import morgan from 'morgan';
@@ -18,6 +19,7 @@ import { pinoHttp } from 'pino-http';
 export const LOG_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 export const LOG_RETENTION_DAYS = 14;
 const RETENTION_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const require = createRequire(import.meta.url);
 
 type LogFileName = 'access.log' | 'application.log';
 
@@ -27,6 +29,7 @@ type LoggingOptions = {
   retentionDays?: number;
   now?: () => Date;
   stderr?: NodeJS.WritableStream | null;
+  nodeEnv?: string;
 };
 
 export type Logging = {
@@ -183,12 +186,27 @@ function validateOptions(maxFileSizeBytes: number, retentionDays: number): void 
   }
 }
 
+function createTerminalStream(
+  stderr: NodeJS.WritableStream | null,
+  nodeEnv: string | undefined,
+): NodeJS.WritableStream | null {
+  if (stderr === null || nodeEnv !== 'development') return stderr;
+
+  const pretty = require('pino-pretty') as typeof import('pino-pretty');
+  return pretty({
+    colorize: 'isTTY' in stderr && stderr.isTTY === true,
+    destination: stderr,
+    sync: true,
+  });
+}
+
 export function createLogging({
   directory = join(process.cwd(), 'logs'),
   maxFileSizeBytes = LOG_MAX_FILE_SIZE_BYTES,
   retentionDays = LOG_RETENTION_DAYS,
   now = () => new Date(),
   stderr = process.stderr,
+  nodeEnv = process.env.NODE_ENV,
 }: LoggingOptions = {}): Logging {
   validateOptions(maxFileSizeBytes, retentionDays);
 
@@ -210,8 +228,9 @@ export function createLogging({
     now,
     onFileFailure,
   );
+  const terminalStream = createTerminalStream(stderr, nodeEnv);
   const destinations = [
-    ...(stderr ? [{ stream: stderr }] : []),
+    ...(terminalStream ? [{ stream: terminalStream }] : []),
     ...(applicationStream.isHealthy() ? [{ stream: applicationStream }] : []),
   ];
 

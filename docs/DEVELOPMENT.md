@@ -29,3 +29,7 @@ docker compose --profile test stop postgres-test redis-test
 ```
 
 Integration tests create synthetic rows, keys, and queue names, then clean them after every test. Do not set `API_INTEGRATION=true` against a shared or developer database/Redis service.
+
+## API logging
+
+With `NODE_ENV=development`, API terminal logs use `pino-pretty`. Application and access log files remain JSON, as does terminal output outside development. Pino redaction applies before every destination.
