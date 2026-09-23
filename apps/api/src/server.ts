@@ -1,12 +1,5 @@
 import { createApp } from './app.js';
-import { createLoginRepository } from './modules/auth/repositories/login.repository.js';
-import { createLoginService } from './modules/auth/services/login.service.js';
-import { createAccessAuthRepository } from './modules/auth/repositories/access-auth.repository.js';
-import { createAccessAuthService } from './modules/auth/services/access-auth.service.js';
-import { createLogoutRepository } from './modules/auth/repositories/logout.repository.js';
-import { createLogoutService } from './modules/auth/services/logout.service.js';
-import { createRefreshRepository } from './modules/auth/repositories/refresh-token.repository.js';
-import { createRefreshService } from './modules/auth/services/refresh-token.service.js';
+import { createAuthModule } from './modules/auth/auth.module.js';
 import { loadEnv } from './config/env.js';
 import { createDatabase } from './config/database/client.js';
 import { loadDatabaseConfig } from './config/database/config.js';
@@ -51,21 +44,18 @@ export async function startServer(): Promise<void> {
     startupPhase = 'BullMQ initialization';
     queues = createQueueInfrastructure(redisConfig, logging.logger);
     await queues.initialize();
-    app = createApp(
+    app = createApp({
       logging,
-      { corsOrigins: env.CORS_ORIGINS },
-      createLoginService(createLoginRepository(database.db), jwt),
-      createRefreshService(createRefreshRepository(database.db), jwt),
-      createAccessAuthService(createAccessAuthRepository(database.db), jwt),
-      createLogoutService(createLogoutRepository(database.db)),
-      {
+      security: { corsOrigins: env.CORS_ORIGINS },
+      auth: createAuthModule({ db: database.db, jwt }),
+      queueMonitor: {
         queue: queues.queue,
         credentials: {
           username: env.QUEUE_MONITOR_USERNAME,
           password: env.QUEUE_MONITOR_PASSWORD,
         },
       },
-      {
+      health: {
         async databaseProbe() {
           await database.db.execute(sql`SELECT 1`);
         },
@@ -74,7 +64,7 @@ export async function startServer(): Promise<void> {
             throw new Error('Redis readiness probe failed');
         },
       },
-    );
+    });
   } catch {
     await queues?.close().catch(() => undefined);
     await database.close().catch(() => undefined);

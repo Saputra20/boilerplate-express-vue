@@ -22,3 +22,5 @@ export function createDatabase(config: DatabaseConfig) {
     },
   };
 }
+
+export type Database = ReturnType<typeof createDatabase>['db'];

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
+import { createAuthRouter } from '../src/modules/auth/auth.router.js';
 import {
   createLoginService,
   LoginError,
@@ -101,7 +102,11 @@ async function createActiveUser(): Promise<LoginUser> {
 function createTestApp(loginService: LoginService) {
   const directory = mkdtempSync(join(tmpdir(), 'api-login-test-'));
   const logging = createLogging({ directory, stderr: null });
-  const app = createApp(logging, { corsOrigins: [origin] }, loginService);
+  const app = createApp({
+    logging,
+    security: { corsOrigins: [origin] },
+    auth: { router: createAuthRouter({ loginService }) },
+  });
 
   return { app, directory, logging };
 }

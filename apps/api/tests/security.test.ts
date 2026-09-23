@@ -24,10 +24,13 @@ function createTestApp(options?: {
 }) {
   const directory = createDirectory();
   const logging = createLogging({ directory, stderr: null });
-  const app = createApp(logging, {
-    corsOrigins: [origin],
-    rateLimit: options?.rateLimit,
-    jsonBodyLimit: options?.jsonBodyLimit,
+  const app = createApp({
+    logging,
+    security: {
+      corsOrigins: [origin],
+      rateLimit: options?.rateLimit,
+      jsonBodyLimit: options?.jsonBodyLimit,
+    },
   });
 
   return { app, directory, logging };

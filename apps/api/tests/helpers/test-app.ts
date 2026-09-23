@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../../src/app.js';
+import { createAuthRouter } from '../../src/modules/auth/auth.router.js';
 import type { AccessAuthService } from '../../src/modules/auth/services/access-auth.service.js';
 import type { LoginService } from '../../src/modules/auth/services/login.service.js';
 import type { LogoutService } from '../../src/modules/auth/services/logout.service.js';
@@ -33,16 +34,27 @@ export type TestApp = {
 export function createTestApp(options: TestAppOptions = {}): TestApp {
   const directory = mkdtempSync(join(tmpdir(), 'api-test-'));
   const logging = createLogging({ directory, stderr: null });
-  const app = createApp(
+  const hasAuthService =
+    options.loginService !== undefined ||
+    options.refreshService !== undefined ||
+    options.accessAuthService !== undefined ||
+    options.logoutService !== undefined;
+  const app = createApp({
     logging,
-    options.securityOptions ?? { corsOrigins: [TEST_CORS_ORIGIN] },
-    options.loginService,
-    options.refreshService,
-    options.accessAuthService,
-    options.logoutService,
-    options.queueMonitor,
-    options.healthRoutes,
-  );
+    security: options.securityOptions ?? { corsOrigins: [TEST_CORS_ORIGIN] },
+    auth: hasAuthService
+      ? {
+          router: createAuthRouter({
+            loginService: options.loginService,
+            refreshService: options.refreshService,
+            accessAuthService: options.accessAuthService,
+            logoutService: options.logoutService,
+          }),
+        }
+      : undefined,
+    queueMonitor: options.queueMonitor,
+    health: options.healthRoutes,
+  });
 
   return {
     app,

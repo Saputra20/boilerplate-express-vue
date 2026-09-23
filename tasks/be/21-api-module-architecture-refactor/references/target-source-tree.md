@@ -46,6 +46,7 @@ apps/api/src/
       services/
         audit.service.ts
     auth/
+      auth.module.ts
       auth.router.ts
       auth.openapi.ts
       controllers/

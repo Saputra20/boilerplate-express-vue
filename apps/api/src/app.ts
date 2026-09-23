@@ -1,11 +1,5 @@
 import express from 'express';
-import { installLoginRoute } from './modules/auth/auth.router.js';
-import type { LoginService } from './modules/auth/services/login.service.js';
-import { installLogoutRoutes } from './modules/auth/auth.router.js';
-import type { AccessAuthService } from './modules/auth/services/access-auth.service.js';
-import type { LogoutService } from './modules/auth/services/logout.service.js';
-import { installRefreshRoute } from './modules/auth/auth.router.js';
-import type { RefreshService } from './modules/auth/services/refresh-token.service.js';
+import type { AuthModule } from './modules/auth/auth.module.js';
 import { installHealthRoutes, type HealthRouteOptions } from './modules/health/health.router.js';
 import type { Logging } from './config/logger/logger.js';
 import { installOpenApiRoutes } from './config/openapi/openapi.js';
@@ -14,30 +8,24 @@ import { type SecurityOptions } from './config/security/http-security.config.js'
 import { createErrorHandler } from './middleware/error.middleware.js';
 import { installSecurityMiddleware } from './middleware/security.middleware.js';
 
-export function createApp(
-  logging: Logging,
-  securityOptions: SecurityOptions,
-  loginService?: LoginService,
-  refreshService?: RefreshService,
-  accessAuthService?: AccessAuthService,
-  logoutService?: LogoutService,
-  queueMonitor?: QueueMonitorOptions,
-  healthRoutes?: HealthRouteOptions,
-) {
+export type AppDependencies = {
+  logging: Logging;
+  security: SecurityOptions;
+  auth?: Pick<AuthModule, 'router'>;
+  health?: HealthRouteOptions;
+  queueMonitor?: QueueMonitorOptions;
+};
+
+export function createApp({ logging, security, auth, health, queueMonitor }: AppDependencies) {
   const app = express();
 
   app.disable('x-powered-by');
   app.use(logging.requestLogger);
-  installSecurityMiddleware(app, logging.logger, securityOptions);
+  installSecurityMiddleware(app, logging.logger, security);
   app.use(logging.accessLogger);
-  if (healthRoutes) installHealthRoutes(app, healthRoutes, logging.logger);
+  if (health) installHealthRoutes(app, health, logging.logger);
   installOpenApiRoutes(app);
-
-  if (loginService) installLoginRoute(app, loginService);
-  if (refreshService) installRefreshRoute(app, refreshService);
-  if (accessAuthService && logoutService) {
-    installLogoutRoutes(app, accessAuthService, logoutService);
-  }
+  if (auth) app.use('/auth', auth.router);
   if (queueMonitor) installQueueMonitor(app, queueMonitor, logging.logger);
 
   app.use((_request, response) => {

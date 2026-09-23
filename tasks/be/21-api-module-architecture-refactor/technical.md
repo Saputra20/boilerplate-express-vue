@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Behavior-preserving structural refactor |
 | Repository/App | `apps/api` |
-| Status | Ready — contract reconciled after predecessor source additions; source refactor requires separate approved execution. |
+| Status | Partially Complete — source relocation and composition finalization executed; be/20 prerequisite evidence remains unresolved. |
 | Priority | Architecture gate after backend quality gate |
 | Suggested Size | Medium — one bounded refactor with no behavior change |
 | Depends On | `be/20-backend-quality-gate` |
@@ -60,7 +60,7 @@ Reorganize existing API source into approved module-first ownership without chan
 
 ## 7. Existing Implementation
 
-- API source: all 37 current files listed in section 10.1; current tree is preserved in `references/current-source-tree.md`.
+- Original migration inventory: 37 pre-refactor source files listed in section 10.1. Actual reconciled final tree is 42 TypeScript files, including predecessor additions and `modules/auth/auth.module.ts`; it is preserved in `references/current-source-tree.md`.
 - API tests: `apps/api/tests/app.test.ts`, `audit-trail.test.ts`, `bullmq-foundation.test.ts`, `database.test.ts`, `env.test.ts`, `health-readiness.test.ts`, `identity-schema.test.ts`, `jwt.test.ts`, `logging.test.ts`, `login-session.test.ts`, `logout-revocation.test.ts`, `openapi.test.ts`, `password.test.ts`, `queue-monitor.test.ts`, `rbac-permissions.test.ts`, `redis.test.ts`, `refresh-token.test.ts`, and `security.test.ts`.
 - Bootstrap/config: `apps/api/package.json`, `apps/api/tsconfig.json`, `apps/api/drizzle.config.ts`, and `apps/api/scripts/db-rollback.ts`.
 - No TypeScript path aliases exist: `apps/api/tsconfig.json` has no `baseUrl` or `paths`; preserve relative ESM `.js` import convention.
@@ -82,7 +82,8 @@ Reorganize existing API source into approved module-first ownership without chan
 
 ### 8.2 Module shape and request flow
 
-- `modules/auth/auth.router.ts` mounts unchanged `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, and `POST /auth/logout/all` handlers using the existing route order and middleware behavior.
+- `modules/auth/auth.module.ts` owns plain TypeScript composition of auth repositories, services, and one auth router. It exposes only the router to application composition.
+- `modules/auth/auth.router.ts` is one `express.Router()` boundary mounted at `/auth`; it exposes unchanged `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, and `POST /auth/logout-all` handlers using the existing route order and middleware behavior.
 - `modules/auth/controllers/login.controller.ts`, `refresh.controller.ts`, and `logout.controller.ts` contain current HTTP parsing, Zod validation, request-ID fallback, status mapping, JSON output, and `next(error)` delegation. Do not add a generic controller abstraction.
 - Auth services remain separate: `login.service.ts`, `refresh-token.service.ts`, `logout.service.ts`, and `access-auth.service.ts`. Do not merge them into a giant `auth.service.ts`.
 - Auth repositories remain separate where current transaction/query responsibilities differ: `login.repository.ts`, `refresh-token.repository.ts`, `logout.repository.ts`, and `access-auth.repository.ts`.
@@ -119,7 +120,7 @@ No configuration semantic change. Existing environment variables, validation, de
 
 ### 9.2 API Contract
 
-No API contract change. Preserve existing `/auth/login`, `/auth/refresh`, `/auth/logout`, and `/auth/logout/all` behavior plus `GET /health`, `GET /ready`, `GET /docs`, `GET /openapi.json`, `/ops/queues/*`, and current fallback/security/error middleware behavior. Do not add RBAC or audit endpoints.
+No API contract change. Preserve existing `/auth/login`, `/auth/refresh`, `/auth/logout`, and `/auth/logout-all` behavior plus `GET /health`, `GET /ready`, `GET /docs`, `GET /openapi.json`, `/ops/queues/*`, and current fallback/security/error middleware behavior. Do not add RBAC or audit endpoints.
 
 ### 9.3 Database Contract
 
@@ -138,6 +139,7 @@ Not applicable — no CMS/UI change.
 ### Expected Create
 
 - `apps/api/src/modules/auth/auth.router.ts`
+- `apps/api/src/modules/auth/auth.module.ts`
 - `apps/api/src/modules/auth/controllers/login.controller.ts`
 - `apps/api/src/modules/auth/controllers/refresh.controller.ts`
 - `apps/api/src/modules/auth/controllers/logout.controller.ts`
@@ -174,7 +176,7 @@ Expected paths are guidance for non-source documentation changes; implementation
 
 ### 10.1 Mandatory File Migration Matrix
 
-Every current source file under `apps/api/src/**` is represented exactly once.
+Every original pre-refactor source file under `apps/api/src/**` is represented exactly once. The reconciled final tree also contains predecessor additions and the explicit `auth.module.ts` composition boundary.
 
 | Current Path | Target Path | Responsibility | Action | Notes |
 | --- | --- | --- | --- | --- |
@@ -216,11 +218,11 @@ Every current source file under `apps/api/src/**` is represented exactly once.
 | `apps/api/src/audit/audit-service.ts` | `apps/api/src/modules/audit/services/audit.service.ts` | Generic audit validation/recording/cleanup | RENAME | Preserve input validation, required/informational semantics, and safe metadata rules. |
 | `apps/api/src/audit/audit-repository.ts` | `apps/api/src/modules/audit/repositories/audit.repository.ts` | Generic audit persistence | RENAME | Preserve append/cleanup behavior and schema import. |
 
-Migration action totals: KEEP 4; MOVE 0; RENAME 27; SPLIT 6; MERGE 0; DELETE AFTER MOVE 0. All 37 current source files are represented exactly once. Old directories are removed only as a result of moved/split files; no standalone compatibility files remain.
+Migration action totals for the original inventory: KEEP 4; MOVE 0; RENAME 27; SPLIT 6; MERGE 0; DELETE AFTER MOVE 0. All 37 original source files are represented exactly once. The reconciled final tree has 42 TypeScript files, including predecessor additions and `modules/auth/auth.module.ts`. Old directories are removed only as a result of moved/split files; no standalone compatibility files remain.
 
 ## 11. Runtime Behavior
 
-1. `server.ts` validates environment, initializes logging/database/Redis/JWT and confirmed queue infrastructure, composes focused module services/repositories, creates app, listens, and wires graceful shutdown exactly as before.
+1. `server.ts` validates environment, initializes logging/database/Redis/JWT and confirmed queue infrastructure, creates the Auth module through its factory, creates app with named module/infrastructure dependencies, listens, and wires graceful shutdown exactly as before.
 2. `app.ts` creates Express, installs request logging, global HTTP security middleware, access logging, mounts health/readiness routes, global OpenAPI `/docs` and `/openapi.json`, the auth router, and the protected read-only `/ops/queues` monitor in the existing order, then installs fallback 404 and centralized error middleware.
 3. Health requests flow through `modules/health/health.router.ts`; `/health` remains public liveness and `/ready` remains public readiness with unchanged two-second dependency probes, statuses, bodies, and logging.
 4. Global OpenAPI infrastructure aggregates module-owned auth and health contributions, preserves `/docs`, `/openapi.json`, reusable components, security schemes, and excludes `/ops/queues` from public OpenAPI.
@@ -360,6 +362,27 @@ Migration action totals: KEEP 4; MOVE 0; RENAME 27; SPLIT 6; MERGE 0; DELETE AFT
 - [ ] `AGENTS.md`, `docs/ARCHITECTURE.md`, and applicable skills document module-first ownership; future backend task plans answer module/files/new-file/concern/root-directory questions.
 - [ ] Final source tree, `git diff --check`, `git status`, and full diff are reviewed.
 
+### 16.1 Reconciliation Status — 2026-09-23
+
+| Area | Contract | Actual State | Status | Remaining Work |
+| --- | --- | --- | --- | --- |
+| be/20 prerequisite | be/20 passes first | be/20 remains `Ready contract — execution blocked by be/19` with no completion evidence | FAIL | Complete be/19 and be/20 through separate approved work; do not bypass dependency. |
+| Filesystem/module relocation | Target tree and no legacy directories | 42-file final tree matches updated target; no tracked `common/` placeholder | PASS | None. |
+| Auth ownership | Auth module owns auth internals and router | `modules/auth` owns controllers, services, repositories, OpenAPI, router, and `auth.module.ts` | PASS | None. |
+| RBAC/audit/health ownership | Modules own confirmed business/operational behavior | RBAC, audit, and health live under `modules/` | PASS | None. |
+| Config/middleware/helpers | Infrastructure, middleware, and helpers stay bounded | `config/`, `middleware/`, and `helpers/` contain approved ownership only | PASS | None. |
+| App composition | No positional feature dependency soup | `createApp` receives named `{ logging, security, auth, health, queueMonitor }` dependencies | PASS | None. |
+| Server composition | Server does not build auth internals | `server.ts` calls `createAuthModule({ db, jwt })` only | PASS | None. |
+| Auth router boundary | One module-relative router mounted at `/auth` | `auth.router.ts` uses `express.Router()` with `/login`, `/refresh`, `/logout`, and `/logout-all` | PASS | None. |
+| API/operational behavior | Preserve existing routes and policies | Focused regression tests pass for auth, health, OpenAPI, security, and queue monitor | PASS | None. |
+| OpenAPI ownership | Module contributions; global aggregator | Existing module contributions and `config/openapi` remain unchanged | PASS | None. |
+| Database/migrations | No schema or migration change | No Drizzle/migration diff | PASS | None. |
+| Rules/docs/skills | Module-first guidance exists | `AGENTS.md`, architecture docs, and applicable skills already contain required guidance | PASS | None. |
+| Legacy imports | No obsolete top-level runtime/test imports | Legacy directories absent; scoped active-import search returns no matches | PASS | None. |
+| Tests/static | Focused/full tests, lint, typecheck, format | All commands pass | PASS | None. |
+| Code Anti-Slop | Required diff audit | Core project skill reviewed; zero blocking findings | PASS | None. |
+| Scope/review | Diff, status, and secret review | `git diff --check` passes; no committed secrets or generated output found | PASS | None. |
+
 ## 17. Anti-Slop Requirements
 
 Code Anti-Slop: required during implementation.
@@ -423,6 +446,17 @@ Expected result: no runtime/test import match. Documentation/history matches req
 | Code Anti-Slop | Actual tool output, or exact required `NOT RUN` blocker. |
 | Scope hygiene | `git diff --check`, `git status --short`, full `git diff`, source-tree inspection, and secret review. |
 | Architecture rules | Changed `AGENTS.md`, `docs/ARCHITECTURE.md`, relevant skills, and future task-plan checklist review. |
+
+### 19.1 Reconciliation Evidence — 2026-09-23
+
+- Focused composition/regression tests: 8 suites, 46 tests passed with `--detectOpenHandles`.
+- Full API suite: 18 suites passed, 2 integration suites skipped, 124 tests passed, 6 skipped with `--detectOpenHandles`.
+- Static checks: `lint`, `typecheck`, and `format:check` passed.
+- Architecture checks: `server.ts` has no direct auth repository/service factory imports; `app.ts` has no individual auth route installers; auth router uses module-relative paths.
+- Legacy checks: old top-level source directories are absent; scoped runtime/test legacy import search returned no matches.
+- Scope checks: final source tree has 42 TypeScript files; no Drizzle/migration change; `git diff --check` passed; changed-file and secret reviews completed.
+- Code Anti-Slop: project-local core skill loaded; audit found zero blocking findings (no duplicate old/new route implementation, DI framework, compatibility shim, dead abstraction, or secret/debug addition).
+- Completion blocker: be/20 has no recorded completion evidence. This task remains partially complete until that prerequisite is completed through separate approved work.
 
 ## 20. Traceability
 

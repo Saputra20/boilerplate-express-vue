@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import express from 'express';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
+import { createAuthRouter } from '../src/modules/auth/auth.router.js';
 import { createAccessAuthMiddleware } from '../src/middleware/authentication.middleware.js';
 import type { AccessAuthRepository } from '../src/modules/auth/services/access-auth.service.js';
 import { createAccessAuthService } from '../src/modules/auth/services/access-auth.service.js';
@@ -75,14 +76,16 @@ describe('logout and revocation routes', () => {
     const sub = randomUUID();
     const sid = randomUUID();
     const token = jwt.issueToken({ sub, sid, typ: 'access' });
-    const app = createApp(
+    const app = createApp({
       logging,
-      { corsOrigins: ['http://localhost:5173'] },
-      undefined,
-      undefined,
-      createAccessAuthService(authRepository, jwt),
-      createLogoutService(logoutRepository),
-    );
+      security: { corsOrigins: ['http://localhost:5173'] },
+      auth: {
+        router: createAuthRouter({
+          accessAuthService: createAccessAuthService(authRepository, jwt),
+          logoutService: createLogoutService(logoutRepository),
+        }),
+      },
+    });
 
     try {
       const first = await request(app).post('/auth/logout').set('Authorization', `Bearer ${token}`);
@@ -113,14 +116,16 @@ describe('logout and revocation routes', () => {
     const logoutRepository = new MemoryLogoutRepository();
     const sub = randomUUID();
     const sid = randomUUID();
-    const app = createApp(
+    const app = createApp({
       logging,
-      { corsOrigins: ['http://localhost:5173'] },
-      undefined,
-      undefined,
-      createAccessAuthService(authRepository, jwt),
-      createLogoutService(logoutRepository),
-    );
+      security: { corsOrigins: ['http://localhost:5173'] },
+      auth: {
+        router: createAuthRouter({
+          accessAuthService: createAccessAuthService(authRepository, jwt),
+          logoutService: createLogoutService(logoutRepository),
+        }),
+      },
+    });
 
     try {
       const missing = await request(app).post('/auth/logout');

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
+import { createAuthRouter } from '../src/modules/auth/auth.router.js';
 import {
   createRefreshService,
   type IssuedRefreshRotation,
@@ -85,7 +86,11 @@ function createTestApp(refreshService: RefreshService) {
   const directory = mkdtempSync(join(tmpdir(), 'api-refresh-test-'));
   const logging = createLogging({ directory, stderr: null });
   return {
-    app: createApp(logging, { corsOrigins: [origin] }, undefined, refreshService),
+    app: createApp({
+      logging,
+      security: { corsOrigins: [origin] },
+      auth: { router: createAuthRouter({ refreshService }) },
+    }),
     directory,
     logging,
   };

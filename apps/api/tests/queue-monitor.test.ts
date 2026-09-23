@@ -40,15 +40,11 @@ function createTestApp() {
   const directory = mkdtempSync(join(tmpdir(), 'queue-monitor-test-'));
   const logging = createLogging({ directory, stderr: null });
   const queue = createQueue();
-  const app = createApp(
+  const app = createApp({
     logging,
-    { corsOrigins: ['http://localhost:5173'] },
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    { queue, credentials: monitorCredentials },
-  );
+    security: { corsOrigins: ['http://localhost:5173'] },
+    queueMonitor: { queue, credentials: monitorCredentials },
+  });
 
   return { app, directory, logging, queue };
 }
