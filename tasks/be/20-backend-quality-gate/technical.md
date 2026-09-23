@@ -16,7 +16,7 @@
 | Priority | Foundation execution order 20 |
 | Suggested Size | Small — one reviewable change set |
 | Depends On | be/19-backend-testing |
-| Blocks | None — final task in this workstream. |
+| Blocks | `be/21-api-module-architecture-refactor` |
 | Execution Order | 20 |
 
 ## 2. Outcome

@@ -39,6 +39,6 @@ Document executable quality-gate selection, Anti-Slop evidence, validation order
 
 ## Task Berikutnya
 
-None — final task in this workstream.
+`be/21-api-module-architecture-refactor` — reorganisasi source API dilakukan hanya setelah quality gate backend lulus.
 
 Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
