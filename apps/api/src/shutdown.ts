@@ -5,6 +5,7 @@ type ClosableServer = {
 type ShutdownResources = {
   database: { close(): Promise<void> };
   redis: { close(): void };
+  queues?: { close(): Promise<void> };
   logging: { close(): void };
 };
 
@@ -27,6 +28,12 @@ export async function shutdown(
     });
   } catch (error) {
     failure = error;
+  }
+
+  try {
+    await resources.queues?.close();
+  } catch (error) {
+    failure ??= error;
   }
 
   try {

@@ -11,6 +11,7 @@ import { loadEnv } from './config/env.js';
 import { createDatabase } from './database/client.js';
 import { loadDatabaseConfig } from './database/config.js';
 import { createLogging } from './logging/index.js';
+import { createQueueInfrastructure } from './queue/index.js';
 import { createRedis } from './redis/client.js';
 import { loadRedisConfig } from './redis/config.js';
 import { shutdown } from './shutdown.js';
@@ -20,7 +21,9 @@ async function startServer(): Promise<void> {
   const env = loadEnv();
   const logging = createLogging();
   const database = createDatabase(loadDatabaseConfig(env));
-  const redis = createRedis(loadRedisConfig(env));
+  const redisConfig = loadRedisConfig(env);
+  const redis = createRedis(redisConfig);
+  let queues: ReturnType<typeof createQueueInfrastructure> | undefined;
   let jwt: JwtService;
 
   try {
@@ -34,7 +37,10 @@ async function startServer(): Promise<void> {
     });
     await database.initialize();
     await redis.initialize();
+    queues = createQueueInfrastructure(redisConfig, logging.logger);
+    await queues.initialize();
   } catch {
+    await queues?.close().catch(() => undefined);
     await database.close().catch(() => undefined);
     redis.close();
     logging.logger.error('API startup failed');
@@ -61,7 +67,7 @@ async function startServer(): Promise<void> {
 
     shuttingDown = true;
     logging.logger.info({ signal }, 'API shutdown started');
-    void shutdown(server, { database, redis, logging })
+    void shutdown(server, { database, redis, queues, logging })
       .then(() => {
         process.exitCode = 0;
       })

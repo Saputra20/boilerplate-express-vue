@@ -2,41 +2,24 @@
 
 ## Tujuan
 
-Implement BullMQ queue/worker lifecycle with removeOnComplete true, failed-job retention for seven days, and documented lazy-cleanup strategy.
+Task ini membuat fondasi BullMQ memakai satu queue bernama `default` di atas Redis yang sudah ada.
 
-## Kenapa Task Ini Dibutuhkan
+## Perilaku Utama
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+- Queue bisnis baru dibuat oleh feature yang membutuhkannya, bukan oleh fondasi ini.
+- Default job mendapat maksimal tiga total attempt.
+- Retry memakai exponential backoff dengan delay awal satu detik.
+- Completed job langsung dibuang.
+- Failed job memiliki batas eligibility retention tujuh hari.
 
-## Apa yang Akan Dikerjakan
+## Cleanup
 
-- Implement BullMQ queue/worker lifecycle with removeOnComplete true, failed-job retention for seven days, and documented lazy-cleanup strategy.
-- Validasi dan evidence sesuai technical.md.
+Cleanup mengikuti mekanisme lazy BullMQ. Job gagal boleh dibersihkan setelah melewati usia tujuh hari saat ada aktivitas queue berikutnya. Penghapusan tidak dijamin tepat pada detik ke-7 hari. Task ini tidak membuat cron, timer, atau scheduler cleanup.
 
-## Apa yang Tidak Dikerjakan
+## Batas Scope
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+Task ini tidak membuat processor bisnis, producer bisnis, endpoint HTTP queue, payload global, database migration, atau queue monitor. `be/16` tetap memiliki queue monitor.
 
-## Dependency
+## Dependency dan Verifikasi
 
-be/05-redis-foundation, be/06-logging-foundation
-
-## Risiko / Hal yang Perlu Diperhatikan
-
-TODO: REQUIREMENT NEEDED — queue names, retries/backoff, exact cleanup schedule if seven-day retention must be exact.
-
-## Cara Verifikasi
-
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
-
-## Yang Perlu Direview Human
-
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
-
-## Output yang Diharapkan
-
-Implement BullMQ queue/worker lifecycle with removeOnComplete true, failed-job retention for seven days, and documented lazy-cleanup strategy.
-
-## Task Berikutnya
-
-be/16-queue-monitor
+BullMQ memakai Redis foundation yang ada dan logging aman yang ada. Verifikasi mencakup default queue, retry, lifecycle shutdown, logging tanpa payload sensitif, Redis integration test, format, lint, typecheck, test, `git diff --check`, dan Code Anti-Slop.

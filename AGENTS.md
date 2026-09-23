@@ -251,6 +251,7 @@ Inspect schema and data impact first. Schema changes require appropriate Drizzle
 - Stack: Express, Bun, TypeScript, Drizzle/PostgreSQL, Redis, BullMQ, Zod, Morgan, Pino.
 - Keep business logic testable outside HTTP. Centralize errors. Use request IDs. Safe production errors only.
 - Morgan is HTTP access logging; Pino is application logging. Audit records remain separate from ordinary logs when recording security/business events.
+- Queue tasks reuse validated Redis infrastructure, use bounded retries/retention, and define cleanup eligibility separately from exact deletion timing. Do not invent business queues, schedulers, or trusted generic job payloads before an owning producer task exists. Queue logs never dump payloads or credentials.
 
 ## Security Rules
 
