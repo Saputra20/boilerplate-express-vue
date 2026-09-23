@@ -1,17 +1,15 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import request from 'supertest';
-import { createApp } from '../src/app.js';
 import {
   checkReadiness,
   READINESS_TIMEOUT_MS,
   type HealthRouteOptions,
 } from '../src/health/index.js';
-import { createLogging } from '../src/logging/index.js';
 import { OPENAPI_DOCUMENT_PATH } from '../src/openapi/index.js';
+import { createTestApp as createApiTestApp, TEST_CORS_ORIGIN } from './helpers/test-app.js';
 
-const origin = 'http://localhost:5173';
+const origin = TEST_CORS_ORIGIN;
 const secretDatabaseError = 'postgres://user:secret-password@db.internal:5432/app';
 const secretRedisError = 'redis://:secret-password@cache.internal:6379';
 
@@ -19,20 +17,10 @@ function createTestApp(
   healthRoutes: HealthRouteOptions,
   rateLimit?: { limit: number; windowMs: number },
 ) {
-  const directory = mkdtempSync(join(tmpdir(), 'health-readiness-test-'));
-  const logging = createLogging({ directory, stderr: null });
-  const app = createApp(
-    logging,
-    { corsOrigins: [origin], rateLimit },
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
+  return createApiTestApp({
+    securityOptions: { corsOrigins: [origin], rateLimit },
     healthRoutes,
-  );
-
-  return { app, directory, logging };
+  });
 }
 
 function successfulProbes(): HealthRouteOptions {

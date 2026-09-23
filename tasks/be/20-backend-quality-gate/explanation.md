@@ -1,44 +1,42 @@
-# be/20-backend-quality-gate — Backend Quality Gate
+# be/20-backend-quality-gate — Penjelasan
 
-## Tujuan
+## Apa yang dibuat?
 
-Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
+Task ini menetapkan kontrak quality gate backend yang dapat dijalankan dan dilaporkan secara konsisten. Ini bukan fitur runtime aplikasi.
 
-## Kenapa Task Ini Dibutuhkan
+## Kenapa dibuat?
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+Lint, typecheck, dan test tidak membuktikan semua masalah kualitas. Code Anti-Slop adalah pemeriksaan terpisah terhadap diff nyata, termasuk abstraksi spekulatif, duplikasi, kode mati, TODO tersembunyi, dan perubahan di luar scope.
 
-## Apa yang Akan Dikerjakan
+## Apa yang berubah?
 
-- Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
-- Validasi dan evidence sesuai technical.md.
+- Urutan quality gate sekarang jelas: cek dependency, focused test, audit Anti-Slop, perbaikan dan audit ulang, lint, typecheck, full test, validasi kondisional, lalu review diff dan secret.
+- Anti-Slop memakai skill lokal proyek. Tidak ada satu perintah CLI yang dipaksakan bila skill tidak mendokumentasikan perintah tersebut.
+- PASS Anti-Slop harus berasal dari skill yang berhasil dimuat, audit yang benar-benar dijalankan, temuan yang ditangani, dan tidak ada temuan blocking.
+- Focused test memberi umpan balik cepat; full test tetap wajib sebagai regresi akhir.
+- Validasi migrasi, OpenAPI, dan browser hanya berjalan bila jenis task memang membutuhkannya.
+- Review final diff dan secret wajib. `NOT RUN` tidak boleh dianggap `PASS`.
 
-## Apa yang Tidak Dikerjakan
+## Apa yang tidak berubah?
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+Tidak ada route, API, database, migration, dependency, CI baru, target coverage angka, atau perubahan runtime aplikasi.
 
-## Dependency
+## Dependency task apa?
 
-be/19-backend-testing
+`be/20` tetap bergantung pada `be/19-backend-testing`. Saat ini be/19 masih berstatus `Planned — not executed`, sehingga kontrak be/20 sudah jelas tetapi eksekusinya tetap diblokir.
 
-## Risiko / Hal yang Perlu Diperhatikan
+## Risiko utama?
 
-Anti-Slop installation and command syntax are not specified in repository.
+Risiko terbesar adalah laporan selesai yang tidak jujur: misalnya Anti-Slop dianggap lulus hanya karena lint atau test lulus. Kontrak ini melarang penggantian bukti seperti itu.
 
-## Cara Verifikasi
+## Bagaimana cara mengecek hasilnya?
 
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Review kontrak untuk memastikan urutan gate, bukti Anti-Slop, status PASS/FAIL/NOT RUN, perbedaan focused/full test, dan validasi kondisional sudah jelas. Saat task dieksekusi nanti, gunakan script API yang memang tersedia untuk lint, typecheck, dan test; lakukan review diff serta secret nyata.
 
-## Yang Perlu Direview Human
+## Apa yang harus direview manusia?
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Pastikan be/19 benar-benar COMPLETE sebelum membuka eksekusi be/20. Pastikan laporan akhir menyebut bukti audit Anti-Slop yang benar-benar dijalankan, bukan asumsi dari gate lain.
 
-## Output yang Diharapkan
+## Apa yang belum dikerjakan?
 
-Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
-
-## Task Berikutnya
-
-`be/21-api-module-architecture-refactor` — reorganisasi source API dilakukan hanya setelah quality gate backend lulus.
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Implementasi behavior quality gate belum dimulai. `be/21-api-module-architecture-refactor` juga tetap di luar scope sampai be/20 lulus.

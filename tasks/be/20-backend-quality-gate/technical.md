@@ -5,198 +5,290 @@
 | Field | Value |
 | --- | --- |
 | Task ID | `be/20-backend-quality-gate` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | Backend quality foundation |
 | Workstream | Backend |
-| Category | quality foundation |
-| Repository | `apps/api` |
-| Platform | Bun / Express API |
-| Status | Blocked — requirement needed |
+| Task Category | Quality gate documentation |
+| Repository/App | `apps/api` |
+| Status | Ready contract — execution blocked by `be/19-backend-testing` |
 | Priority | Foundation execution order 20 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | be/19-backend-testing |
+| Suggested Size | Small — focused documentation/rule update |
+| Depends On | `be/19-backend-testing` |
 | Blocks | `be/21-api-module-architecture-refactor` |
 | Execution Order | 20 |
 
 ## 2. Outcome
 
-Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
+Establish one reusable, deterministic backend completion gate. It requires independent Code Anti-Slop evidence, focused and full tests when applicable, static checks, conditional migration/OpenAPI/browser checks, diff and secret review, and truthful final reporting. It adds no runtime API behavior.
 
 ## 3. Context
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+- `AGENTS.md` already makes Anti-Slop mandatory and defines truthful PASS, FAIL, and NOT RUN reporting.
+- `.codex/skills/REGISTRY.md` lists the local `antislop`, `antislop-code`, `verification-loop`, and `code-review` skills.
+- The project-local core Anti-Slop skill at `.codex/skills/antislop/` is loadable and executable. Its evidence is skill-based; no repository-supported fixed Anti-Slop CLI command exists.
+- `apps/api/package.json` provides `lint`, `typecheck`, and Jest `test`; it has no build script.
+- `be/19` is currently `Planned — not executed`; this task contract is resolved but execution remains blocked until be/19 has complete evidence.
 
-## 4. In Scope
+## 4. Dependencies
 
-- Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+- `be/19-backend-testing` must be COMPLETE with required evidence before this task implementation starts.
+- Existing `AGENTS.md`, project skills, `docs/DEVELOPMENT.md`, and `apps/api/package.json` are the source of truth for reusable quality rules and actual API commands.
+- No CI provider, external service, environment variable, or package is required.
 
-## 5. Out of Scope
+## 5. In Scope
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+- Reusable documented backend quality-gate order and evidence requirements.
+- Independent Code Anti-Slop execution and reporting semantics.
+- Focused/full test, static check, conditional validation, diff, secret, and final review requirements.
+- Truthful task status reporting.
 
-## 6. Implementation Requirements
+## 6. Out of Scope
 
-- Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
-- Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+- Application runtime behavior, API routes, database changes, migrations, dependencies, custom CI, coverage dashboards, custom test runners, linters, or Anti-Slop wrapper CLIs.
+- Numeric coverage targets or coverage theater.
+- `be/19` implementation and `be/21-api-module-architecture-refactor`.
 
-### 6.1 Resolved Business Requirements
+## 7. Existing Implementation
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+- `AGENTS.md`: mandatory quality, Anti-Slop, validation, and final-report rules.
+- `.codex/skills/antislop/`: project-local core Anti-Slop capability.
+- `.codex/skills/antislop-code/`: comment-quality capability when changed comments need review.
+- `.codex/skills/quality/verification-loop/` and `.codex/skills/quality/code-review/`: applicable validation/review guidance.
+- `apps/api/package.json`: actual lint, typecheck, and full Jest scripts.
+- `docs/DEVELOPMENT.md`: developer workflow source-of-truth.
 
-## 7. Contract and Data Impact
+Expected paths are guidance; inspect before implementation.
 
-### 7.1 Configuration Contract
+## 8. Implementation Requirements
 
-Not applicable — this task does not change documented configuration.
+- Do not begin this task implementation until `be/19` is COMPLETE. Until then report `BLOCKED — be/19-backend-testing is not COMPLETE`.
+- Establish reusable documented quality-gate behavior; do not add runtime code or speculative tooling.
+- Use this exact gate order:
 
-### 7.2 API Contract
+```text
+1. approved scope / dependency check
+2. focused behavior tests
+3. Code Anti-Slop audit
+4. fix Anti-Slop findings
+5. re-run Code Anti-Slop
+6. lint
+7. typecheck
+8. full applicable test suite
+9. applicable migration/OpenAPI/integration validation
+10. git diff --check
+11. git status + changed-file review
+12. secret/generated-junk review
+13. final diff review
+14. truthful final report
+```
 
-Not applicable — this task does not modify an API contract.
+- If code changes after the final Anti-Slop audit, re-run Anti-Slop and affected validation before reporting completion.
+- Require capability/evidence, not an invented `antislop` shell command.
+- Preserve existing behavior outside the documentation/rule boundary.
 
-### 7.3 Database Contract
+## 9. Applicable Contracts
 
-Not applicable — this task does not change a database contract.
+### Configuration Contract
 
-### 7.4 UI Contract
+Not applicable — no environment configuration changes.
 
-Not applicable — this task does not change a CMS UI contract.
+### API Contract
 
-## 8. File Impact
+Not applicable — no API change.
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
+### Database Contract
 
-Test: `apps/api/tests/`.
+Not applicable — no schema or migration change.
 
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
+### UI Contract
 
-## 9. Runtime Behavior
+Not applicable — no UI change.
 
-Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
+### Quality-Gate Contract
 
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing API shell/Jest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
+| Gate | Requirement | PASS evidence |
 | --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
+| Focused tests | Run changed-capability tests first when tests apply. | Actual passing focused test output. |
+| Code Anti-Slop | Required for backend, refactor, and database code changes. | Loaded skill, executed audit, findings resolved, zero blocking findings. |
+| Lint | Run actual API script. | `bun run --cwd apps/api lint` exits successfully. |
+| Typecheck | Run actual API script. | `bun run --cwd apps/api typecheck` exits successfully. |
+| Full tests | Required before completion when API tests apply. | `bun run --cwd apps/api test` exits successfully. |
+| Migration | Required only for schema changes. | Isolated UP, DOWN, re-UP, and focused integrity evidence. |
+| OpenAPI | Required only for public API changes. | Generated contract matches implemented route, request, response, security, and status behavior. |
+| Browser | Required only for rendered operational UI when task contract requires it. | Actual browser verification evidence. |
+| Diff and secrets | Required before PASS. | `git diff --check`, status/changed-file review, secret/generated-junk review, final diff review. |
 
-## 13. Validation Requirements
+## 10. File Impact
+
+**Expected Modify**
+- `docs/DEVELOPMENT.md` or a focused existing quality-rule document selected after inspection.
+- `AGENTS.md` only if a concise clarification is needed that project-local Anti-Slop skills are valid execution sources and no CLI syntax is assumed.
+
+**Expected Not Modified**
+- `apps/api/src/**`
+- `apps/api/tests/**`
+- package manifests, lockfiles, secrets, migrations, successor tasks, and `be/21` files.
+
+## 11. Runtime Behavior
+
+Not applicable — quality gate is documentation and review behavior, not application runtime behavior.
+
+## 12. Error And Edge Cases
+
+| Scenario | Expected Result | Security / Recovery |
+| --- | --- | --- |
+| `be/19` incomplete | Block be/20 implementation. | Report dependency status; do not bypass it. |
+| Required Anti-Slop skill unavailable | `NOT RUN — <reason>`; overall gate fails or blocks. | Do not infer PASS. |
+| Audit execution fails | `FAIL`. | Report safe failure only; preserve changed work for review. |
+| Audit finds blocking issue | Fix and re-run; unresolved result is `FAIL`. | Do not hide finding. |
+| No database/API/UI change | Report corresponding conditional validation as NOT APPLICABLE with reason. | Do not fake validation. |
+| Changed diff contains secret/generated junk | `FAIL` until removed. | Never print or commit secret values. |
+
+## 13. Security Requirements
+
+- Never report a required gate as PASS without actual evidence.
+- Never log, commit, or include passwords, keys, JWTs, refresh tokens, database/Redis credentials, Basic Auth credentials, `.env` files, or generated logs in review evidence.
+- Secret review must inspect changed files, not only command output.
+- Anti-Slop must review actual changed diff/files; lint, typecheck, tests, builds, and SQL inspection do not substitute for it.
+
+## 14. Test Requirements
+
+### Focused Tests
+
+Run changed-capability-specific tests first when code/test behavior changes. Focused tests provide fast feedback and do not replace the full suite.
+
+### Full Tests
+
+Before completion of applicable API work, run:
+
+```bash
+bun run --cwd apps/api test
+```
+
+### Isolation
+
+Tests must be repeatable, order-independent, use isolated data or mocks, clean up deterministically, and contain no real secrets.
+
+### Documentation-Only Execution
+
+Tests: NOT APPLICABLE — this task implementation changes reusable documentation/rules only. Validate documentation consistency and required quality-gate wording instead.
+
+## 15. Task-Level Expected Results
+
+- One documented backend quality-gate sequence exists.
+- Code Anti-Slop has independent required evidence and truthful failure states.
+- Actual API validation commands are named without inventing a build or Anti-Slop CLI.
+- Conditional migration, OpenAPI, and browser gates have clear applicability rules.
+- `be/21` remains blocked until be/20 passes.
+
+## 16. Acceptance Criteria
+
+- [ ] `be/19` dependency is checked and never bypassed.
+- [ ] Quality-gate execution order is explicit.
+- [ ] Code Anti-Slop is an independent mandatory backend gate.
+- [ ] Project-local skill execution is accepted; no unsupported CLI syntax is required.
+- [ ] PASS requires loaded skill, executed audit, resolved findings, and zero blocking findings.
+- [ ] FAIL and NOT RUN are reported truthfully and fail/block the overall gate.
+- [ ] Focused tests and full API tests are differentiated.
+- [ ] Lint, typecheck, full tests, diff check, changed-file review, secret review, and final diff review are required where applicable.
+- [ ] Migration, OpenAPI, and browser checks are conditional on task type.
+- [ ] No numeric coverage target, custom CI, wrapper CLI, runtime behavior, or `be/21` work is introduced.
+- [ ] `be/21` remains blocked until be/20 passes.
+
+## 17. Anti-Slop Requirements
+
+### Code Anti-Slop
+
+Required for backend code, refactor, and database tasks.
+
+1. Load project-local core skill `antislop` from `.codex/skills/antislop`.
+2. Load `antislop-code` when changed code comments require comment-quality review.
+3. Audit actual changed diff/files.
+4. Fix applicable findings.
+5. Re-run the audit.
+6. Report actual evidence.
+
+A PASS must contain equivalent semantics:
+
+```text
+Code Anti-Slop: PASS
+Skill: antislop
+Source: project .codex/skills/antislop
+Audit actually executed: PASS
+Blocking findings: 0
+```
+
+Use `FAIL` for skill/audit failure or unresolved blocking findings. Use `NOT RUN — <reason>` when the required capability is unavailable or skipped. Never infer PASS from lint, typecheck, tests, build, or another gate.
+
+### UI Anti-Slop And Visual Verification
+
+Not applicable for normal backend work. A rendered operational UI task must follow its own approved browser-verification requirement.
+
+## 18. Validation Requirements
 
 ### Static
 
-- `bun run --cwd apps/api lint`
-- `bun run --cwd apps/api typecheck`
-- `bun run --cwd apps/api test`
-- `git diff --check`
+```bash
+bun run --cwd apps/api lint
+bun run --cwd apps/api typecheck
+git diff --check
+```
 
 ### Automated Tests
 
-- Focused and full existing Jest tests applicable to changed boundary.
+```bash
+bun run --cwd apps/api test
+```
 
-### Build
-
-Not applicable — API package has no build script; TypeScript typecheck is applicable.
+Run focused tests first when applicable. Do not invent a build command; `apps/api` has no build script.
 
 ### Database
 
-Not applicable — no migration expected.
+For schema changes, require isolated PostgreSQL migration UP, matching DOWN, re-UP, and focused integrity validation. Otherwise report: `Database migration validation: NOT APPLICABLE — no schema change.`
+
+### API / OpenAPI
+
+For public API changes, validate generated OpenAPI route, request, response, security, and status alignment. Otherwise report: `OpenAPI validation: NOT APPLICABLE — no public API change.`
 
 ### UI
 
-Not applicable — no meaningful rendered UI change.
+For normal backend work: `Visual Verification: NOT APPLICABLE — no rendered UI.` For rendered third-party operational UI, follow the approved task contract and inspect actual browser behavior.
 
-### Anti-Slop
+### Review
 
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop and visual verification: not applicable — no CMS UI change.
+Before PASS, run `git status --short`, `git diff --check`, and `git diff`; review approved scope, dead/duplicate code, generated junk, TODO/FIXME/HACK, debug logs, changed files, and secrets.
 
-## 14. Acceptance Criteria
+## 19. Completion Evidence
 
-- [ ] Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Backend Quality Gate capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop and visual verification: not applicable — no CMS UI change.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
+| Acceptance criterion | Evidence |
 | --- | --- |
-| Outcome behavior | Focused test(s) under `apps/api/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/api lint`; `bun run --cwd apps/api typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
+| Dependency respected | Current be/19 status and execution evidence review. |
+| Gate order and conditional checks | Changed documentation review. |
+| Code Anti-Slop | Skill source/load, executed audit, findings, re-audit, and zero blocking findings. |
+| Static and test gates | Actual command output when implementation applies. |
+| Conditional validation | Actual migration/OpenAPI/browser evidence or exact NOT APPLICABLE reason. |
+| Diff/secret hygiene | `git status --short`, `git diff --check`, changed-file review, secret/generated-junk review, and final `git diff` review. |
+| Truthful completion | Final report lists each gate as PASS, FAIL, or NOT RUN. |
 
-## 17. Traceability
+## 20. Traceability
 
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Backend Quality Gate boundary |
-| `docs/SECURITY.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `be/20-backend-quality-gate` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
+| Trace Type | References |
+| --- | --- |
+| Architecture / quality | `AGENTS.md`; `docs/DEVELOPMENT.md` |
+| Skills | `.codex/skills/REGISTRY.md`; `.codex/skills/antislop/`; `.codex/skills/antislop-code/` |
+| Testing / review | `.codex/skills/quality/verification-loop/`; `.codex/skills/quality/code-review/` |
+| Dependency | `tasks/be/19-backend-testing/technical.md` |
+| Successor | `tasks/be/21-api-module-architecture-refactor/technical.md` |
+| API / database / UI | Not applicable — quality-gate documentation only |
 
-## 18. Open Points
+## 21. Open Points
 
-Anti-Slop installation and command syntax are not specified in repository.
+None.
+
+## 22. Definition Of Done
+
+- [ ] `be/19` completion evidence permits execution; otherwise status remains dependency-blocked.
+- [ ] Reusable gate order, independent Anti-Slop evidence, conditional checks, diff/secret review, and truthful reporting are documented.
+- [ ] No unsupported Anti-Slop command, arbitrary coverage threshold, runtime code, dependency, migration, or successor work is added.
+- [ ] Documentation consistency review and `git diff --check` pass.
+- [ ] Changed-file and secret review are complete.

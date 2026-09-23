@@ -1,9 +1,6 @@
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { rmSync } from 'node:fs';
 import request from 'supertest';
-import { createApp } from '../src/app.js';
-import { createLogging } from '../src/logging/index.js';
+import { createTestApp as createApiTestApp } from './helpers/test-app.js';
 import {
   OPENAPI_DOCUMENT_PATH,
   OPENAPI_INFO_VERSION,
@@ -12,11 +9,7 @@ import {
 } from '../src/openapi/index.js';
 
 function createTestApp() {
-  const directory = mkdtempSync(join(tmpdir(), 'openapi-test-'));
-  const logging = createLogging({ directory, stderr: null });
-  const app = createApp(logging, { corsOrigins: ['http://localhost:5173'] });
-
-  return { app, directory, logging };
+  return createApiTestApp();
 }
 
 describe('OpenAPI infrastructure', () => {

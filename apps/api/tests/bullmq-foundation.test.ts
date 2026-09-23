@@ -1,7 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Redis } from 'ioredis';
 import pino from 'pino';
-import type { RedisConfig } from '../src/redis/config.js';
 import {
   DEFAULT_JOB_ATTEMPTS,
   DEFAULT_JOB_BACKOFF_DELAY_MS,
@@ -11,18 +9,15 @@ import {
   createQueueInfrastructure,
 } from '../src/queue/index.js';
 import { shutdown } from '../src/shutdown.js';
+import {
+  API_INTEGRATION_ENABLED,
+  createTestQueueName,
+  createTestRedis,
+  deleteRedisNamespace,
+  testRedisConfig,
+} from './helpers/integration.js';
 
-const redisIntegrationEnabled = process.env.REDIS_INTEGRATION === 'true';
-const integrationDescribe = redisIntegrationEnabled ? describe : describe.skip;
-
-const redisConfig: RedisConfig = {
-  host: '127.0.0.1',
-  port: 6379,
-  username: '',
-  password: '',
-  db: 15,
-  tls: false,
-};
+const integrationDescribe = API_INTEGRATION_ENABLED ? describe : describe.skip;
 
 function waitFor(check: () => boolean | Promise<boolean>): Promise<void> {
   const deadline = Date.now() + 5_000;
@@ -60,10 +55,22 @@ describe('BullMQ foundation defaults', () => {
     });
   });
 
+  it('allows an isolated queue name without changing production default', async () => {
+    const queueName = createTestQueueName();
+    const queues = createQueueInfrastructure(testRedisConfig, pino({ enabled: false }), queueName);
+
+    try {
+      expect(queues.queue.name).toBe(queueName);
+      expect(DEFAULT_QUEUE_NAME).toBe('default');
+    } finally {
+      await queues.close();
+    }
+  });
+
   it('sanitizes required queue initialization failure', async () => {
     const password = 'do-not-log-this-redis-password';
     const logger = pino({ enabled: false });
-    const queues = createQueueInfrastructure({ ...redisConfig, port: 1, password }, logger);
+    const queues = createQueueInfrastructure({ ...testRedisConfig, port: 1, password }, logger);
 
     await expect(queues.initialize()).rejects.toThrow('BullMQ initialization failed');
   });
@@ -99,30 +106,35 @@ describe('BullMQ foundation defaults', () => {
 });
 
 integrationDescribe('BullMQ foundation Redis integration', () => {
-  let cleanupRedis: Redis;
+  let cleanupRedis: ReturnType<typeof createTestRedis>;
   let queues: ReturnType<typeof createQueueInfrastructure>;
+  let queueName: string;
+  let queueInitialized = false;
 
   beforeEach(async () => {
-    cleanupRedis = new Redis({
-      host: redisConfig.host,
-      port: redisConfig.port,
-      db: redisConfig.db,
-      maxRetriesPerRequest: 1,
-      retryStrategy: null,
-    });
-    await cleanupRedis.flushdb();
-    queues = createQueueInfrastructure(redisConfig, pino({ enabled: false }));
+    cleanupRedis = createTestRedis();
+    await cleanupRedis.connect();
+    await cleanupRedis.ping();
+    queueName = createTestQueueName();
+    queues = createQueueInfrastructure(testRedisConfig, pino({ enabled: false }), queueName);
     await queues.initialize();
+    queueInitialized = true;
   });
 
   afterEach(async () => {
-    await queues.close();
-    await cleanupRedis.flushdb();
-    cleanupRedis.disconnect();
+    if (queueInitialized) await queues.close();
+    if (cleanupRedis.status === 'ready') {
+      await deleteRedisNamespace(cleanupRedis, `bull:${queueName}`);
+      expect(await cleanupRedis.scan('0', 'MATCH', `bull:${queueName}:*`, 'COUNT', 100)).toEqual([
+        '0',
+        [],
+      ]);
+    }
+    if (cleanupRedis.status !== 'end') cleanupRedis.disconnect();
   });
 
   it('retries a synthetic job and removes it after success', async () => {
-    expect(queues.queue.name).toBe(DEFAULT_QUEUE_NAME);
+    expect(queues.queue.name).toBe(queueName);
     let attempts = 0;
     await queues.createWorker({
       'test.retry': async () => {
@@ -155,7 +167,7 @@ integrationDescribe('BullMQ foundation Redis integration', () => {
         },
       },
     );
-    const isolatedQueues = createQueueInfrastructure(redisConfig, logger);
+    const isolatedQueues = createQueueInfrastructure(testRedisConfig, logger, queueName);
     await queues.close();
     queues = isolatedQueues;
     await queues.initialize();

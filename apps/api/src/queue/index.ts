@@ -46,8 +46,9 @@ function createConnection(config: RedisConfig): RedisOptions {
 export function createQueueInfrastructure(
   config: RedisConfig,
   logger: QueueLogger,
+  queueName = DEFAULT_QUEUE_NAME,
 ): QueueInfrastructure {
-  const queue = new Queue(DEFAULT_QUEUE_NAME, {
+  const queue = new Queue(queueName, {
     connection: createConnection(config),
     defaultJobOptions: DEFAULT_JOB_OPTIONS,
   });
@@ -68,7 +69,7 @@ export function createQueueInfrastructure(
       if (closed) throw new Error('BullMQ infrastructure is closed');
 
       const worker = new Worker(
-        DEFAULT_QUEUE_NAME,
+        queueName,
         async (job) => {
           const processor = processors[job.name];
           if (!processor) throw new Error('Unsupported BullMQ job');
@@ -80,12 +81,12 @@ export function createQueueInfrastructure(
         },
       );
       worker.on('error', () => {
-        logger.error({ queueName: DEFAULT_QUEUE_NAME }, 'BullMQ worker error');
+        logger.error({ queueName }, 'BullMQ worker error');
       });
       worker.on('failed', (job) => {
         logger.error(
           {
-            queueName: DEFAULT_QUEUE_NAME,
+            queueName,
             jobName: job?.name,
             jobId: job?.id,
             attemptsMade: job?.attemptsMade,
