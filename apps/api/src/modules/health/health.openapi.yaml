@@ -1,0 +1,55 @@
+tags:
+  - name: Health
+schemas:
+  HealthV1Status:
+    type: object
+    required:
+      - status
+    additionalProperties: false
+    properties:
+      status:
+        type: string
+        enum:
+          - ok
+  HealthV1ReadinessStatus:
+    type: object
+    required:
+      - status
+    additionalProperties: false
+    properties:
+      status:
+        type: string
+        enum:
+          - ready
+          - not_ready
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      operationId: getHealth
+      responses:
+        '200':
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthV1Status'
+  /ready:
+    get:
+      tags:
+        - Health
+      operationId: getReadiness
+      responses:
+        '200':
+          description: Required dependencies are ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthV1ReadinessStatus'
+        '503':
+          description: Required dependency is not ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthV1ReadinessStatus'

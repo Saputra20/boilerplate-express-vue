@@ -2,7 +2,7 @@
 
 ## Apa yang dibuat?
 
-Kontrak untuk memindahkan kontrak API v1 ke YAML yang tinggal dekat module pemiliknya, lalu menyajikan satu dokumen v1 yang tervalidasi melalui `/openapi/v1.json` dan Swagger UI di `/docs/v1`. `/docs` menjadi redirect convenience ke `/docs/v1`.
+Kontrak API v1 dipindahkan ke YAML dekat module pemiliknya. Infrastruktur global memuat dan memvalidasi dokumen, menyajikan `/openapi/v1.json`, Swagger UI di `/docs/v1`, dan redirect `/docs` ke `/docs/v1`.
 
 ## Kenapa dibuat?
 
@@ -26,7 +26,7 @@ Risiko utama adalah YAML berbeda dari Express route, security declaration salah,
 
 ## Bagaimana cara mengecek hasilnya?
 
-Jalankan focused spec/serving tests, full API suite, YAML/OpenAPI validator, lint, typecheck, format check, Code Anti-Slop, secret review, dan browser verification untuk `/docs`, `/docs/v1`, Auth, Health, Try it out, serta Authorize.
+Jalankan focused spec/serving tests, full API suite, YAML/OpenAPI validator, lint, typecheck, format check, Code Anti-Slop, secret review, dan functional Swagger fallback validation. Jika browser tersedia, verifikasi `/docs`, `/docs/v1`, Auth, Health, Try it out, serta Authorize secara interaktif/visual. Jika browser tidak tersedia, laporkan `Browser verification: NOT RUN — browser capability unavailable in execution environment`; fallback HTTP/spec/configuration tetap wajib lulus.
 
 ## Apa yang harus direview manusia?
 
@@ -34,4 +34,4 @@ Pastikan YAML tetap dekat module, global config hanya menjadi aggregator/serving
 
 ## Apa yang belum dikerjakan?
 
-V2, coexistence runtime v2, versioned OpenAPI v2, deprecation, dan removal v1 belum dikerjakan. Semua itu memerlukan task terpisah dan approval eksplisit.
+Browser verification belum dapat dijalankan karena environment tidak menyediakan browser automation atau browser binary; kondisi ini tidak memblokir completion bila fallback validation lulus. Visual layout, Authorize button yang diamati secara visual, klik Try it out manual, dan rendered fields tetap `NOT RUN — browser capability unavailable`. v2, coexistence runtime v2, versioned OpenAPI v2, deprecation, dan removal v1 juga belum dikerjakan.

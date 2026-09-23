@@ -371,6 +371,8 @@ Module ownership and filesystem organization are mandatory architecture rules.
 
 HTTP API versioning belongs at module transport boundaries. Application composition owns `/api/vN/<module>` prefixes; versioned routers use module-relative paths. Do not duplicate services, repositories, database access, or business logic for a URL version without an approved incompatible business requirement. Operational routes such as `/health`, `/ready`, `/docs`, `/openapi.json`, and `/ops/queues` remain outside business API version prefixes.
 
+OpenAPI module contracts live beside owning modules as YAML. Global OpenAPI infrastructure loads, validates, aggregates, and serves those contracts. v1 and future v2 documentation remain separate; do not add v2 routes, schemas, or UI without approved scope.
+
 ## Anti-Slop Mandatory Quality Gate
 
 **Anti-Slop is mandatory for every approved task. It is never optional.** It is not skipped because work is small, frontend, UI, configuration, refactor, bug fix, or because lint, typecheck, tests, or build pass.

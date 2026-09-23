@@ -19,6 +19,8 @@ Dependencies flow inward: app/server compose config, middleware, and module rout
 
 API versioning belongs at HTTP transport boundaries. Application composition mounts versioned module routers, such as `/api/v1/auth`, while routers define only relative paths such as `/login`. URL versioning does not create versioned services, repositories, database access, or authorization policy by default. Operational routes remain outside business version prefixes.
 
+OpenAPI contracts live beside owning modules in YAML. `config/openapi` owns loading, validation, aggregation, and serving. Versioned documents must stay isolated; v2 documentation does not appear until v2 is explicitly approved.
+
 Operational dashboards mount inside the API only after baseline security middleware and use explicit queue/resource registration. They are internal tooling, not business API or CMS capabilities.
 
 ## Authorization

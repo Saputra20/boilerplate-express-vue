@@ -1,0 +1,136 @@
+tags:
+  - name: Auth
+schemas:
+  AuthV1LoginRequest:
+    type: object
+    required:
+      - email
+      - password
+    additionalProperties: false
+    properties:
+      email:
+        type: string
+        format: email
+      password:
+        type: string
+        format: password
+  AuthV1RefreshRequest:
+    type: object
+    required:
+      - refreshToken
+    additionalProperties: false
+    properties:
+      refreshToken:
+        type: string
+  AuthV1TokenResponse:
+    type: object
+    required:
+      - accessToken
+      - refreshToken
+      - tokenType
+      - expiresIn
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+      tokenType:
+        type: string
+        enum:
+          - Bearer
+      expiresIn:
+        type: integer
+        minimum: 0
+paths:
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Auth
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthV1LoginRequest'
+      responses:
+        '200':
+          description: Authenticated session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthV1TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - Auth
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthV1RefreshRequest'
+      responses:
+        '200':
+          description: Rotated session tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthV1TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - Auth
+      operationId: logoutCurrentSession
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Current session revoked
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/auth/logout-all:
+    post:
+      tags:
+        - Auth
+      operationId: logoutAllSessions
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: All user sessions revoked
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

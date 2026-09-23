@@ -4,6 +4,7 @@ import { createTestApp as createApiTestApp } from './helpers/test-app.js';
 import {
   OPENAPI_DOCUMENT_PATH,
   OPENAPI_INFO_VERSION,
+  OPENAPI_REDIRECT_PATH,
   OPENAPI_UI_PATH,
   OPENAPI_VERSION,
 } from '../src/config/openapi/openapi.js';
@@ -17,16 +18,23 @@ describe('OpenAPI infrastructure', () => {
     const { app, directory, logging } = createTestApp();
 
     try {
-      const [ui, asset, document] = await Promise.all([
+      const [redirect, ui, asset, init, document] = await Promise.all([
+        request(app).get(OPENAPI_REDIRECT_PATH),
         request(app).get(OPENAPI_UI_PATH),
         request(app).get(`${OPENAPI_UI_PATH}/swagger-ui.css`),
+        request(app).get(`${OPENAPI_UI_PATH}/swagger-ui-init.js`),
         request(app).get(OPENAPI_DOCUMENT_PATH),
       ]);
 
+      expect(redirect.status).toBe(302);
+      expect(redirect.headers.location).toBe(OPENAPI_UI_PATH);
       expect(ui.status).toBe(200);
       expect(ui.headers['content-type']).toContain('text/html');
       expect(asset.status).toBe(200);
       expect(asset.headers['content-type']).toContain('text/css');
+      expect(init.status).toBe(200);
+      expect(init.text).toContain('"persistAuthorization": false');
+      expect(init.text).toContain('"tryItOutEnabled": true');
       expect(document.status).toBe(200);
       expect(document.headers['content-type']).toContain('application/json');
     } finally {
@@ -53,6 +61,7 @@ describe('OpenAPI infrastructure', () => {
         >;
         components: {
           securitySchemes: { bearerAuth: { type: string; scheme: string; bearerFormat: string } };
+          schemas: Record<string, unknown>;
         };
       };
 
@@ -64,16 +73,22 @@ describe('OpenAPI infrastructure', () => {
         scheme: 'bearer',
         bearerFormat: 'JWT',
       });
+      expect(document.components.schemas.AuthV1LoginRequest).toBeDefined();
+      expect(document.components.schemas.AuthV1RefreshRequest).toBeDefined();
+      expect(document.components.schemas.AuthV1TokenResponse).toBeDefined();
+      expect(document.components.schemas.HealthV1Status).toBeDefined();
+      expect(document.components.schemas.HealthV1ReadinessStatus).toBeDefined();
       expect(Object.keys(document.paths).sort()).toEqual(
         [
           '/api/v1/auth/login',
           '/api/v1/auth/logout',
           '/api/v1/auth/logout-all',
           '/api/v1/auth/refresh',
-          '/health',
-          '/ready',
+          OPENAPI_REDIRECT_PATH,
           OPENAPI_DOCUMENT_PATH,
           OPENAPI_UI_PATH,
+          '/health',
+          '/ready',
         ].sort(),
       );
       expect(document.paths['/api/v1/auth/login']?.post?.security).toBeUndefined();
