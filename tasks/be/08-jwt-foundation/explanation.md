@@ -1,44 +1,43 @@
-# be/08-jwt-foundation — JWT Foundation
+# be/08-jwt-foundation - JWT Foundation
 
-## Tujuan
+## Apa yang dibuat?
 
-Load RS256 keys and provide sign/verify boundary enforcing issuer, audience, expiry, applicable nbf, JTI, and algorithm restrictions.
+Task ini sekarang punya kontrak eksekusi untuk fondasi JWT. Fondasi ini memuat key RS256, membuat token access/refresh, dan memverifikasi signature serta claim yang disetujui.
 
-## Kenapa Task Ini Dibutuhkan
+## Kenapa dibuat?
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+Login dan endpoint auth berikutnya perlu identitas token yang konsisten. Kontrak ini menetapkan identitas user, tipe token, dan batas claim sebelum kode JWT dibuat.
 
-## Apa yang Akan Dikerjakan
+## Apa yang berubah?
 
-- Load RS256 keys and provide sign/verify boundary enforcing issuer, audience, expiry, applicable nbf, JTI, and algorithm restrictions.
-- Validasi dan evidence sesuai technical.md.
+- `sub` selalu UUID dari `users.id`.
+- `sub` bukan session ID, email, username, atau role ID.
+- Session ID nanti dapat memakai `sid` jika task session yang disetujui membutuhkannya.
+- Token memakai `typ=access` atau `typ=refresh`; verifier harus menolak tipe yang salah.
+- Setiap token mendapat JTI UUID baru.
+- Claim hanya memuat identitas dan data teknis minimum. Role dan permission tidak masuk ke token foundation.
+- RS256, issuer, audience, masa berlaku, dan `nbf` bila ada wajib divalidasi.
 
-## Apa yang Tidak Dikerjakan
+## Apa yang tidak berubah?
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+Task ini belum membuat login, register, password verification, refresh rotation, session persistence, token revocation, logout, atau authorization middleware. Backend tetap menjadi sumber keputusan authorization melalui user, role, permission, dan action.
 
-## Dependency
+## Dependency task apa?
 
-be/02-environment-validation, be/07-security-foundation
+Task bergantung pada environment validation, identity schema `users.id`, dan security foundation.
 
-## Risiko / Hal yang Perlu Diperhatikan
+## Risiko utama?
 
-TODO: REQUIREMENT NEEDED — subject and custom JWT claim schema.
+Key, token, dan claim tidak boleh bocor ke log atau error. Key yang tidak dapat dibaca atau token yang tidak valid harus gagal aman dan tidak membuat API berjalan dalam kondisi JWT tidak aman.
 
-## Cara Verifikasi
+## Bagaimana cara mengecek hasilnya?
 
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Review test JWT untuk access/refresh token, tipe token yang salah, signature/issuer/audience/masa berlaku, JTI, `sub`, dan error aman. Lalu jalankan lint, typecheck, seluruh test API, `git diff --check`, dan Code Anti-Slop.
 
-## Yang Perlu Direview Human
+## Apa yang harus direview manusia?
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Pastikan `sub` tetap berarti UUID user, `sid` tidak dipakai sebelum task session, claim tidak membawa role/permission, dan scope tidak masuk ke login atau session management.
 
-## Output yang Diharapkan
+## Apa yang belum dikerjakan?
 
-Load RS256 keys and provide sign/verify boundary enforcing issuer, audience, expiry, applicable nbf, JTI, and algorithm restrictions.
-
-## Task Berikutnya
-
-be/09-password-hashing
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Implementasi JWT belum dibuat dalam pembaruan dokumen ini. Session persistence, refresh rotation, revocation, login, dan authorization tetap task berikutnya.

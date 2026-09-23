@@ -6,6 +6,7 @@ import { createLogging } from './logging/index.js';
 import { createRedis } from './redis/client.js';
 import { loadRedisConfig } from './redis/config.js';
 import { shutdown } from './shutdown.js';
+import { createJwt } from './jwt/index.js';
 
 async function startServer(): Promise<void> {
   const env = loadEnv();
@@ -15,6 +16,14 @@ async function startServer(): Promise<void> {
   const redis = createRedis(loadRedisConfig(env));
 
   try {
+    createJwt({
+      privateKeyPath: env.JWT_PRIVATE_KEY_PATH,
+      publicKeyPath: env.JWT_PUBLIC_KEY_PATH,
+      issuer: env.JWT_ISSUER,
+      audience: env.JWT_AUDIENCE,
+      accessTokenExpiresIn: env.JWT_ACCESS_TOKEN_EXPIRES_IN,
+      refreshTokenExpiresIn: env.JWT_REFRESH_TOKEN_EXPIRES_IN,
+    });
     await database.initialize();
     await redis.initialize();
   } catch {
