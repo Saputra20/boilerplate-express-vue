@@ -7,7 +7,7 @@ description: Convert source-of-truth documentation into small, human-reviewable 
 Use for PRD-to-task planning, task migration, or task review. This skill owns task-document structure; AGENTS.md remains higher authority.
 
 1. Read AGENTS.md, source docs in authority order, relevant code, then dependency tasks.
-2. Do not invent business rules, IDs, API paths, DB semantics, defaults, or UI behavior. Record TODO: REQUIREMENT NEEDED or block task.
+2. Do not invent business rules, IDs, API paths, DB semantics, or UI behavior. Record `TODO: REQUIREMENT NEEDED` or block task for unresolved product, security, compliance, destructive, externally visible, or irreversible decisions. For initial boilerplate infrastructure, apply only conservative, reversible, documented, project-compatible defaults allowed by `AGENTS.md`.
 3. Split independent capabilities. Small means reviewable diff plus precise contract.
 4. Write canonical technical.md: metadata, outcome, context, scope/non-goals, implementation requirements, contracts, file impact, runtime, errors, security, tests, validation, acceptance, expected results, Anti-Slop, DoD/evidence, traceability, open points.
 5. Write Indonesian explanation.md: purpose, reason, work, exclusions, dependencies, risks, verification, human review, expected output, next task.

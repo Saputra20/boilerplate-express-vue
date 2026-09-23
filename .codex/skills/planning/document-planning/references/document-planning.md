@@ -11,7 +11,7 @@ Turn repository documentation into execution contracts without turning TODO requ
 ## Workflow
 1. Read AGENTS.md, docs, relevant source, then dependency tasks.
 2. Label claims as established source behavior, documented target, or unresolved.
-3. Preserve existing task IDs and graph. Do not create feature IDs, API paths, defaults, permission catalogs, or UI behavior.
+3. Preserve existing task IDs and graph. Do not create feature IDs, API paths, permission catalogs, or UI behavior. Only document conservative, reversible infrastructure defaults when `AGENTS.md` permits them; block unresolved product, security, compliance, destructive, public-contract, or irreversible decisions.
 4. Require outcome, scope, non-goals, contracts, runtime, errors, security, tests, Anti-Slop, evidence, traceability, and open points.
 
 ## Existing Examples

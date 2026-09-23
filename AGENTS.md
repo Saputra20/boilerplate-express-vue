@@ -213,6 +213,12 @@ If any answer is no, improve contract or split task. Scale detail to complexity:
 
 For missing, ambiguous, contradictory, incomplete, or technically underspecified requirements: never invent behavior. Use `TODO: REQUIREMENT NEEDED` when work can safely continue; STOP and request clarification when product or technical decision blocks implementation. Hidden assumptions are forbidden.
 
+### Conventional Engineering Defaults
+
+Do not turn every unspecified technical constant into a human blocker. For initial foundation work, planning may establish conservative, reversible, documented, project-compatible, security-preserving engineering defaults when common practice provides a clear baseline and the choice does not define product/business behavior. Examples: bounded log rotation, reasonable timeouts, internal batch sizes, file limits, and connection-pool defaults.
+
+Human approval remains required for product semantics, destructive data behavior, authorization policy, compliance or legal retention, externally visible API behavior, pricing/business logic, and material irreversible impact. Document every approved engineering default in its task; never use this rule to invent arbitrary behavior.
+
 ## Architecture And Contracts
 
 - Request flow: middleware → route → controller → service/use case → repository → database.
@@ -293,7 +299,9 @@ If unavailable, report `Visual verification: NOT RUN — <reason>`. Do not claim
 
 ## Logging And Observability
 
-Morgan handles HTTP access logs; Pino handles application logs. Include request ID, method, path, status, duration, and user ID where appropriate. Never log secrets. Keep audit trail separate when it represents business or security events.
+Morgan handles HTTP access logs; Pino handles application logs. Include request ID, method, path, status, duration, and user ID where appropriate. Keep normal logs and audit records separate.
+
+Persisted logs must have bounded growth through project-compatible rotation and retention. Surface file transport failures with sanitized fallback logging; do not swallow them or create recursive failure loops. Degraded file logging may continue when a safe terminal/stderr path remains. Total logger initialization failure is fatal when no safe operational logging path remains. Never log passwords, password hashes, tokens, authorization headers, credential cookies, private keys, secrets, or raw credentials; configure redaction at logger boundaries.
 
 ## Anti-Slop Mandatory Quality Gate
 

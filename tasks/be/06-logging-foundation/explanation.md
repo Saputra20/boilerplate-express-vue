@@ -2,41 +2,31 @@
 
 ## Tujuan
 
-Add Morgan/Pino request-correlated terminal/file logging, error/access separation, redaction, and bounded growth behavior.
+Task ini menetapkan kontrak logging backend agar implementasi berikutnya tidak lagi terblokir oleh aturan rotasi file log yang belum jelas.
 
-## Kenapa Task Ini Dibutuhkan
+## Keputusan Yang Sudah Disetujui
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+- Morgan dipakai untuk access log HTTP.
+- Pino dipakai untuk application log dan error log.
+- Log yang relevan memakai request ID yang sudah menjadi standar repository.
+- Password, hash password, token, header otorisasi, cookie kredensial, private key, secret, dan kredensial mentah harus disamarkan sebelum keluar ke log.
+- File log aktif dirotasi saat mencapai `10 MB`.
+- History file log disimpan selama `14 hari`; file yang lebih lama dibersihkan.
 
-## Apa yang Akan Dikerjakan
+## Perilaku Saat Gagal
 
-- Add Morgan/Pino request-correlated terminal/file logging, error/access separation, redaction, and bounded growth behavior.
-- Validasi dan evidence sesuai technical.md.
+Kegagalan menulis atau merotasi file log tidak otomatis mematikan API bila logging terminal/stderr masih aman dan berfungsi. Kondisi ini harus terlihat sebagai degradasi observability dengan pesan yang sudah disanitasi, tanpa loop error logging.
 
-## Apa yang Tidak Dikerjakan
+Jika semua tujuan logging gagal saat startup sehingga tidak ada jalur logging operasional yang aman, startup harus berhenti secara deterministik dengan pesan yang tidak membocorkan secret.
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+## Batas Task
 
-## Dependency
+Task implementasi berikutnya hanya membuat fondasi logging. Audit record tetap terpisah. Session, JWT, refresh token, login, register, authorization middleware, external log aggregation, ELK, Loki, OpenTelemetry, Fluentd, dan Winston tidak termasuk.
 
-be/02-environment-validation
+## Cara Review
 
-## Risiko / Hal yang Perlu Diperhatikan
+Reviewer perlu memastikan pemisahan Morgan/Pino tetap jelas, request correlation ada, redaction diuji, rotasi dan cleanup memakai direktori sementara saat test, kegagalan file memakai fallback aman, dan kegagalan total menghentikan startup. Test tidak boleh membuat fixture `10 MB`; ambang kecil yang diinjeksikan cukup untuk membuktikan perilaku sama.
 
-Log rotation size/retention policy is not specified; request clarification before choosing one.
+## Status
 
-## Cara Verifikasi
-
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
-
-## Yang Perlu Direview Human
-
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
-
-## Output yang Diharapkan
-
-Add Morgan/Pino request-correlated terminal/file logging, error/access separation, redaction, and bounded growth behavior.
-
-## Task Berikutnya
-
-be/07-security-foundation
+Blocker rotasi sudah selesai. Task siap diimplementasikan, tetapi belum ada kode logging, dependency baru, atau perubahan aplikasi dari pembaruan kontrak ini.
