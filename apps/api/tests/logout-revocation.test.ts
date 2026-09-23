@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import express from 'express';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
-import { createAuthRouter } from '../src/modules/auth/auth.router.js';
+import { createAuthRouter } from '../src/modules/auth/v1/auth.router.js';
 import { createAccessAuthMiddleware } from '../src/middleware/authentication.middleware.js';
 import type { AccessAuthRepository } from '../src/modules/auth/services/access-auth.service.js';
 import { createAccessAuthService } from '../src/modules/auth/services/access-auth.service.js';
@@ -79,8 +79,8 @@ describe('logout and revocation routes', () => {
     const app = createApp({
       logging,
       security: { corsOrigins: ['http://localhost:5173'] },
-      auth: {
-        router: createAuthRouter({
+      routers: {
+        authV1: createAuthRouter({
           accessAuthService: createAccessAuthService(authRepository, jwt),
           logoutService: createLogoutService(logoutRepository),
         }),
@@ -88,13 +88,15 @@ describe('logout and revocation routes', () => {
     });
 
     try {
-      const first = await request(app).post('/auth/logout').set('Authorization', `Bearer ${token}`);
+      const first = await request(app)
+        .post('/api/v1/auth/logout')
+        .set('Authorization', `Bearer ${token}`);
       authRepository.revoked = true;
       const repeated = await request(app)
-        .post('/auth/logout')
+        .post('/api/v1/auth/logout')
         .set('Authorization', `Bearer ${token}`);
       const all = await request(app)
-        .post('/auth/logout-all')
+        .post('/api/v1/auth/logout-all')
         .set('Authorization', `Bearer ${token}`);
 
       expect(first.status).toBe(204);
@@ -119,8 +121,8 @@ describe('logout and revocation routes', () => {
     const app = createApp({
       logging,
       security: { corsOrigins: ['http://localhost:5173'] },
-      auth: {
-        router: createAuthRouter({
+      routers: {
+        authV1: createAuthRouter({
           accessAuthService: createAccessAuthService(authRepository, jwt),
           logoutService: createLogoutService(logoutRepository),
         }),
@@ -128,12 +130,12 @@ describe('logout and revocation routes', () => {
     });
 
     try {
-      const missing = await request(app).post('/auth/logout');
+      const missing = await request(app).post('/api/v1/auth/logout');
       const malformed = await request(app)
-        .post('/auth/logout')
+        .post('/api/v1/auth/logout')
         .set('Authorization', 'Bearer nope nope');
       const refresh = await request(app)
-        .post('/auth/logout')
+        .post('/api/v1/auth/logout')
         .set('Authorization', `Bearer ${jwt.issueToken({ sub, sid, typ: 'refresh' })}`);
 
       expect(missing.status).toBe(401);

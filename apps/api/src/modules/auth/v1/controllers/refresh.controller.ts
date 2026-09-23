@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { RequestHandler } from 'express';
 import { z } from 'zod';
-import { RefreshError, type RefreshService } from '../services/refresh-token.service.js';
+import { RefreshError, type RefreshService } from '../../services/refresh-token.service.js';
 
 const refreshRequestSchema = z.object({ refreshToken: z.string().min(1) }).strict();
 

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
-import { createAuthRouter } from '../src/modules/auth/auth.router.js';
+import { createAuthRouter } from '../src/modules/auth/v1/auth.router.js';
 import {
   createRefreshService,
   type IssuedRefreshRotation,
@@ -89,7 +89,7 @@ function createTestApp(refreshService: RefreshService) {
     app: createApp({
       logging,
       security: { corsOrigins: [origin] },
-      auth: { router: createAuthRouter({ refreshService }) },
+      routers: { authV1: createAuthRouter({ refreshService }) },
     }),
     directory,
     logging,
@@ -183,12 +183,12 @@ describe('refresh token rotation', () => {
     } = createTestApp(createRefreshService(repository, jwt));
 
     try {
-      const malformed = await request(app).post('/auth/refresh').send({});
+      const malformed = await request(app).post('/api/v1/auth/refresh').send({});
       const access = await request(app)
-        .post('/auth/refresh')
+        .post('/api/v1/auth/refresh')
         .send({ refreshToken: jwt.issueToken({ sub, sid, typ: 'access' }) });
-      const success = await request(app).post('/auth/refresh').send({ refreshToken });
-      const reused = await request(app).post('/auth/refresh').send({ refreshToken });
+      const success = await request(app).post('/api/v1/auth/refresh').send({ refreshToken });
+      const reused = await request(app).post('/api/v1/auth/refresh').send({ refreshToken });
 
       expect(malformed.status).toBe(400);
       expect(malformed.body).toEqual({ message: 'Bad request' });

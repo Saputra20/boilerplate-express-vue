@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
-import { createAuthRouter } from '../src/modules/auth/auth.router.js';
+import { createAuthRouter } from '../src/modules/auth/v1/auth.router.js';
 import {
   createLoginService,
   LoginError,
@@ -105,7 +105,7 @@ function createTestApp(loginService: LoginService) {
   const app = createApp({
     logging,
     security: { corsOrigins: [origin] },
-    auth: { router: createAuthRouter({ loginService }) },
+    routers: { authV1: createAuthRouter({ loginService }) },
   });
 
   return { app, directory, logging };
@@ -186,7 +186,7 @@ describe('login and session', () => {
 
       try {
         const response = await request(app)
-          .post('/auth/login')
+          .post('/api/v1/auth/login')
           .send({
             email: 'user@example.com',
             password:
@@ -222,11 +222,11 @@ describe('login and session', () => {
     const { app, logging, directory } = createTestApp(loginService);
 
     try {
-      const success = await request(app).post('/auth/login').send({
+      const success = await request(app).post('/api/v1/auth/login').send({
         email: 'USER@example.com',
         password: '  unchanged password  ',
       });
-      const malformed = await request(app).post('/auth/login').send({
+      const malformed = await request(app).post('/api/v1/auth/login').send({
         email: 'user@example.com',
         password,
         extra: true,
@@ -260,7 +260,7 @@ describe('login and session', () => {
 
     try {
       const response = await request(app)
-        .post('/auth/login')
+        .post('/api/v1/auth/login')
         .send({ email: 'user@example.com', password });
 
       expect(response.status).toBe(500);
@@ -272,7 +272,7 @@ describe('login and session', () => {
       repository.failAuthenticatedSession = false;
       repository.failFailedAudit = true;
       const failedAuditResponse = await request(app)
-        .post('/auth/login')
+        .post('/api/v1/auth/login')
         .send({ email: 'user@example.com', password: 'wrong password value' });
 
       expect(failedAuditResponse.status).toBe(500);
@@ -297,7 +297,7 @@ describe('login and session', () => {
 
     try {
       const response = await request(app)
-        .post('/auth/login')
+        .post('/api/v1/auth/login')
         .send({ email: 'user@example.com', password });
 
       expect(response.status).toBe(401);
@@ -330,7 +330,7 @@ describe('login and session', () => {
 
     try {
       await request(app)
-        .post('/auth/login')
+        .post('/api/v1/auth/login')
         .send({ email: 'user@example.com', password: suppliedPassword });
       const log = readFileSync(join(directory, 'application.log'), 'utf8');
 
@@ -353,7 +353,7 @@ describe('login and session', () => {
 
     try {
       const response = await request(app)
-        .post('/auth/login')
+        .post('/api/v1/auth/login')
         .send({ email: 'user@example.com', password });
 
       expect(response.status).toBe(500);

@@ -1,6 +1,6 @@
 import type { Database } from '../../config/database/client.js';
 import type { JwtService } from '../../config/jwt/jwt.js';
-import { createAuthRouter } from './auth.router.js';
+import { createAuthRouter } from './v1/auth.router.js';
 import { createAccessAuthRepository } from './repositories/access-auth.repository.js';
 import { createLoginRepository } from './repositories/login.repository.js';
 import { createLogoutRepository } from './repositories/logout.repository.js';
@@ -22,12 +22,14 @@ export function createAuthModule({ db, jwt }: AuthModuleDependencies) {
   const logoutService = createLogoutService(createLogoutRepository(db));
 
   return {
-    router: createAuthRouter({
-      loginService,
-      refreshService,
-      accessAuthService,
-      logoutService,
-    }),
+    v1: {
+      router: createAuthRouter({
+        loginService,
+        refreshService,
+        accessAuthService,
+        logoutService,
+      }),
+    },
   };
 }
 

@@ -46,9 +46,11 @@ describe('health and readiness routes', () => {
 
     try {
       const response = await request(app).get('/health');
+      const versionedResponse = await request(app).get('/api/v1/health');
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ status: 'ok' });
+      expect(versionedResponse.status).toBe(404);
       expect(databaseCalls).toBe(0);
       expect(redisCalls).toBe(0);
     } finally {

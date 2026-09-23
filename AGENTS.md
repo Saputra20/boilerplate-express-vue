@@ -369,6 +369,8 @@ Request flow remains `middleware → router → controller → service/use case 
 
 Module ownership and filesystem organization are mandatory architecture rules.
 
+HTTP API versioning belongs at module transport boundaries. Application composition owns `/api/vN/<module>` prefixes; versioned routers use module-relative paths. Do not duplicate services, repositories, database access, or business logic for a URL version without an approved incompatible business requirement. Operational routes such as `/health`, `/ready`, `/docs`, `/openapi.json`, and `/ops/queues` remain outside business API version prefixes.
+
 ## Anti-Slop Mandatory Quality Gate
 
 **Anti-Slop is mandatory for every approved task. It is never optional.** It is not skipped because work is small, frontend, UI, configuration, refactor, bug fix, or because lint, typecheck, tests, or build pass.

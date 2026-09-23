@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Behavior-preserving structural refactor |
 | Repository/App | `apps/api` |
-| Status | Partially Complete — source relocation and composition finalization executed; be/20 prerequisite evidence remains unresolved. |
+| Status | Complete — source relocation, composition, and validation evidence recorded on 2026-09-23. |
 | Priority | Architecture gate after backend quality gate |
 | Suggested Size | Medium — one bounded refactor with no behavior change |
 | Depends On | `be/20-backend-quality-gate` |
@@ -341,32 +341,32 @@ Migration action totals for the original inventory: KEEP 4; MOVE 0; RENAME 27; S
 
 ## 16. Acceptance Criteria
 
-- [ ] `be/20-backend-quality-gate` passes before implementation begins.
-- [ ] Final `apps/api/src` tree matches `references/target-source-tree.md`, with no tracked empty `common/` placeholder.
-- [ ] All current business behavior is under `modules`: auth under `modules/auth`, RBAC under `modules/rbac`, and generic audit under `modules/audit`.
-- [ ] Cross-cutting Express middleware exists only under `middleware`; module services/repositories do not move into middleware.
-- [ ] Environment, database/Drizzle, Redis, confirmed BullMQ queue infrastructure, logger, JWT/key, and HTTP security configuration exist under `config`.
-- [ ] `helpers` contains only password and deterministic token-fingerprint technical helpers; `common` remains bounded and is not a dumping ground.
-- [ ] Every row in section 10.1 is completed and no old `src/auth`, `src/audit`, `src/database`, `src/jwt`, `src/logging`, `src/password`, `src/redis`, or `src/security` directory remains without a documented exception.
-- [ ] `src/health/` no longer exists; capability lives in `modules/health`.
-- [ ] `src/openapi/` no longer exists; global infrastructure lives in `config/openapi`.
-- [ ] `src/queue/monitor.ts` moves to `config/queue/queue-monitor.ts`.
-- [ ] `/health`, `/ready`, `/docs`, `/openapi.json`, and `/ops/queues` behavior remains unchanged.
-- [ ] `/ops/queues` retains Basic Auth, read-only policy, operational-only audience, and public OpenAPI exclusion.
-- [ ] Health-specific OpenAPI contribution remains module-owned; global OpenAPI aggregation remains infrastructure-owned.
-- [ ] API paths/methods/payloads/responses/status codes/error contract, auth/session/RBAC/audit/Redis/logger/security/environment behavior remain unchanged.
-- [ ] No database schema change, migration, generated migration artifact, or Drizzle semantic change occurs.
-- [ ] Tests pass without deletion/weakened assertions; lint and typecheck pass.
-- [ ] Code Anti-Slop passes.
-- [ ] Repository-wide obsolete import/path search has no runtime or test import result.
-- [ ] `AGENTS.md`, `docs/ARCHITECTURE.md`, and applicable skills document module-first ownership; future backend task plans answer module/files/new-file/concern/root-directory questions.
-- [ ] Final source tree, `git diff --check`, `git status`, and full diff are reviewed.
+- [x] `be/20-backend-quality-gate` passes before implementation begins.
+- [x] Final `apps/api/src` tree matches `references/target-source-tree.md`, with no tracked empty `common/` placeholder.
+- [x] All current business behavior is under `modules`: auth under `modules/auth`, RBAC under `modules/rbac`, and generic audit under `modules/audit`.
+- [x] Cross-cutting Express middleware exists only under `middleware`; module services/repositories do not move into middleware.
+- [x] Environment, database/Drizzle, Redis, confirmed BullMQ queue infrastructure, logger, JWT/key, and HTTP security configuration exist under `config`.
+- [x] `helpers` contains only password and deterministic token-fingerprint technical helpers; `common` remains bounded and is not a dumping ground.
+- [x] Every row in section 10.1 is completed and no old `src/auth`, `src/audit`, `src/database`, `src/jwt`, `src/logging`, `src/password`, `src/redis`, or `src/security` directory remains without a documented exception.
+- [x] `src/health/` no longer exists; capability lives in `modules/health`.
+- [x] `src/openapi/` no longer exists; global infrastructure lives in `config/openapi`.
+- [x] `src/queue/monitor.ts` moves to `config/queue/queue-monitor.ts`.
+- [x] `/health`, `/ready`, `/docs`, `/openapi.json`, and `/ops/queues` behavior remains unchanged.
+- [x] `/ops/queues` retains Basic Auth, read-only policy, operational-only audience, and public OpenAPI exclusion.
+- [x] Health-specific OpenAPI contribution remains module-owned; global OpenAPI aggregation remains infrastructure-owned.
+- [x] API paths/methods/payloads/responses/status codes/error contract, auth/session/RBAC/audit/Redis/logger/security/environment behavior remain unchanged.
+- [x] No database schema change, migration, generated migration artifact, or Drizzle semantic change occurs.
+- [x] Tests pass without deletion/weakened assertions; lint and typecheck pass.
+- [x] Code Anti-Slop passes.
+- [x] Repository-wide obsolete import/path search has no runtime or test import result.
+- [x] `AGENTS.md`, `docs/ARCHITECTURE.md`, and applicable skills document module-first ownership; future backend task plans answer module/files/new-file/concern/root-directory questions.
+- [x] Final source tree, `git diff --check`, `git status`, and full diff are reviewed.
 
 ### 16.1 Reconciliation Status — 2026-09-23
 
 | Area | Contract | Actual State | Status | Remaining Work |
 | --- | --- | --- | --- | --- |
-| be/20 prerequisite | be/20 passes first | be/20 remains `Ready contract — execution blocked by be/19` with no completion evidence | FAIL | Complete be/19 and be/20 through separate approved work; do not bypass dependency. |
+| be/20 prerequisite | be/20 passes first | be/20 is COMPLETE with recorded quality-gate evidence | PASS | None. |
 | Filesystem/module relocation | Target tree and no legacy directories | 42-file final tree matches updated target; no tracked `common/` placeholder | PASS | None. |
 | Auth ownership | Auth module owns auth internals and router | `modules/auth` owns controllers, services, repositories, OpenAPI, router, and `auth.module.ts` | PASS | None. |
 | RBAC/audit/health ownership | Modules own confirmed business/operational behavior | RBAC, audit, and health live under `modules/` | PASS | None. |
@@ -447,16 +447,17 @@ Expected result: no runtime/test import match. Documentation/history matches req
 | Scope hygiene | `git diff --check`, `git status --short`, full `git diff`, source-tree inspection, and secret review. |
 | Architecture rules | Changed `AGENTS.md`, `docs/ARCHITECTURE.md`, relevant skills, and future task-plan checklist review. |
 
-### 19.1 Reconciliation Evidence — 2026-09-23
+### 19.1 Execution Evidence — 2026-09-23
 
-- Focused composition/regression tests: 8 suites, 46 tests passed with `--detectOpenHandles`.
-- Full API suite: 18 suites passed, 2 integration suites skipped, 124 tests passed, 6 skipped with `--detectOpenHandles`.
+- Dependency: be/20 completion evidence verified before validation.
+- Focused composition/regression tests: 8 suites, 47 tests passed with `--detectOpenHandles`.
+- Full API suite: 18 suites passed, 2 integration suites skipped, 124 tests passed, 6 skipped with `--detectOpenHandles`; skipped live integration evidence remains valid from be/19 because `apps/api/**` had no later source diff.
 - Static checks: `lint`, `typecheck`, and `format:check` passed.
 - Architecture checks: `server.ts` has no direct auth repository/service factory imports; `app.ts` has no individual auth route installers; auth router uses module-relative paths.
 - Legacy checks: old top-level source directories are absent; scoped runtime/test legacy import search returned no matches.
 - Scope checks: final source tree has 42 TypeScript files; no Drizzle/migration change; `git diff --check` passed; changed-file and secret reviews completed.
 - Code Anti-Slop: project-local core skill loaded; audit found zero blocking findings (no duplicate old/new route implementation, DI framework, compatibility shim, dead abstraction, or secret/debug addition).
-- Completion blocker: be/20 has no recorded completion evidence. This task remains partially complete until that prerequisite is completed through separate approved work.
+- Rule checks: `AGENTS.md`, `docs/ARCHITECTURE.md`, `.codex/skills/planning/document-planning/references/document-planning.md`, `.codex/skills/engineering/architecture/references/architecture.md`, and `.codex/skills/engineering/backend-patterns/references/backend-patterns.md` contain module-first ownership guidance.
 
 ## 20. Traceability
 
@@ -477,14 +478,14 @@ None.
 
 ## 22. Definition Of Done
 
-- [ ] `be/20-backend-quality-gate` passes first.
-- [ ] Every acceptance criterion passes with mapped evidence.
-- [ ] Scope stays structural; no behavior, API, database, migration, dependency, or unrelated change exists.
-- [ ] Every section 10.1 source file moves/splits exactly once and final tree is reviewed.
-- [ ] Tests, lint, typecheck, and format check pass.
-- [ ] Required Code Anti-Slop executes and passes; unavailable remains an unresolved `NOT RUN` gate.
-- [ ] No migration is generated; schema/rollback semantics remain unchanged.
-- [ ] `AGENTS.md`, architecture docs, and applicable skills contain module-first future-planning rule.
-- [ ] Obsolete-path search returns no runtime/test imports.
-- [ ] `git diff --check`, changed-file review, `git status`, full diff, and secret review pass.
-- [ ] No tracked empty common directory, compatibility shim, stale import, or unrelated change remains.
+- [x] `be/20-backend-quality-gate` passes first.
+- [x] Every acceptance criterion passes with mapped evidence.
+- [x] Scope stays structural; no behavior, API, database, migration, dependency, or unrelated change exists.
+- [x] Every section 10.1 source file moves/splits exactly once and final tree is reviewed.
+- [x] Tests, lint, typecheck, and format check pass.
+- [x] Required Code Anti-Slop executes and passes; unavailable remains an unresolved `NOT RUN` gate.
+- [x] No migration is generated; schema/rollback semantics remain unchanged.
+- [x] `AGENTS.md`, architecture docs, and applicable skills contain module-first future-planning rule.
+- [x] Obsolete-path search returns no runtime/test imports.
+- [x] `git diff --check`, changed-file review, `git status`, full diff, and secret review pass.
+- [x] No tracked empty common directory, compatibility shim, stale import, or unrelated change remains.

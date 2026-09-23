@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { RequestHandler } from 'express';
 import { z } from 'zod';
-import { LoginError, type LoginService } from '../services/login.service.js';
+import { LoginError, type LoginService } from '../../services/login.service.js';
 
 const loginRequestSchema = z
   .object({

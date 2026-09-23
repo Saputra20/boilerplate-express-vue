@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../../src/app.js';
-import { createAuthRouter } from '../../src/modules/auth/auth.router.js';
+import { createAuthRouter } from '../../src/modules/auth/v1/auth.router.js';
 import type { AccessAuthService } from '../../src/modules/auth/services/access-auth.service.js';
 import type { LoginService } from '../../src/modules/auth/services/login.service.js';
 import type { LogoutService } from '../../src/modules/auth/services/logout.service.js';
@@ -42,9 +42,9 @@ export function createTestApp(options: TestAppOptions = {}): TestApp {
   const app = createApp({
     logging,
     security: options.securityOptions ?? { corsOrigins: [TEST_CORS_ORIGIN] },
-    auth: hasAuthService
+    routers: hasAuthService
       ? {
-          router: createAuthRouter({
+          authV1: createAuthRouter({
             loginService: options.loginService,
             refreshService: options.refreshService,
             accessAuthService: options.accessAuthService,

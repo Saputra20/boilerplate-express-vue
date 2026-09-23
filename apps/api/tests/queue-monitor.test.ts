@@ -84,6 +84,9 @@ describe('queue monitor', () => {
 
     try {
       const monitor = await request(app).get(QUEUE_MONITOR_PATH).set('Authorization', basicAuth());
+      const versionedMonitor = await request(app)
+        .get('/api/v1/ops/queues')
+        .set('Authorization', basicAuth());
       const root = await request(app).get('/').set('Authorization', basicAuth());
       const crossOrigin = await request(app)
         .get(QUEUE_MONITOR_PATH)
@@ -92,6 +95,7 @@ describe('queue monitor', () => {
 
       expect(monitor.status).toBe(200);
       expect(monitor.headers['content-type']).toContain('text/html');
+      expect(versionedMonitor.status).toBe(404);
       expect(root.status).toBe(404);
       expect(root.body).toEqual({ message: 'Not found' });
       expect(crossOrigin.headers['access-control-allow-origin']).toBeUndefined();

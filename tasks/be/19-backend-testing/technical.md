@@ -12,7 +12,7 @@
 | Category | testing foundation |
 | Repository | `apps/api` |
 | Platform | Bun / Express API |
-| Status | Planned — not executed |
+| Status | Complete — reconciled from existing implementation and validation evidence on 2026-09-23. |
 | Priority | Foundation execution order 19 |
 | Suggested Size | Small — one reviewable change set |
 | Depends On | be/18-health-readiness |
@@ -155,17 +155,17 @@ Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unu
 
 ## 14. Acceptance Criteria
 
-- [ ] Create repeatable isolated test setup/helpers and representative infrastructure tests; do not create coverage theater.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
+- [x] Create repeatable isolated test setup/helpers and representative infrastructure tests; do not create coverage theater.
+- [x] In Scope work completed without Out of Scope changes.
+- [x] Valid and failure behavior has evidence.
+- [x] No sensitive data is exposed.
+- [x] Required validation and Anti-Slop evidence uses actual status.
 
 ### 14.1 Task-Level Expected Results
 
-- [ ] Backend Testing Foundation capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
+- [x] Backend Testing Foundation capability exists at documented boundary.
+- [x] Runtime follows section 9 and errors follow section 10.
+- [x] Unrelated behavior remains unchanged.
 
 ## 15. Anti-Slop Requirements
 
@@ -173,12 +173,12 @@ Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unu
 
 ## 16. Definition of Done
 
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
+- [x] Implementation Requirements and Acceptance Criteria satisfied.
+- [x] Scope respected; no unrelated files/architecture change.
+- [x] Required tests and validation pass.
+- [x] Required Anti-Slop checks pass; unavailable check is never reported PASS.
+- [x] Applicable migration/API/OpenAPI/browser evidence exists.
+- [x] `git diff --check`, changed-file review, secret review, and human review completed.
 
 ### 16.1 Required Completion Evidence
 
@@ -188,6 +188,22 @@ Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unu
 | Static correctness | `bun run --cwd apps/api lint`; `bun run --cwd apps/api typecheck` |
 | Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
 | Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
+
+### 16.2 Reconciliation Evidence — 2026-09-23
+
+| Area | Existing Implementation / Validation | Result |
+| --- | --- | --- |
+| Shared test foundation | `tests/helpers/test-app.ts` reuses real `createApp` composition for app, health, and OpenAPI tests; `tests/helpers/integration.ts` provides only test Redis/PostgreSQL config, UUID namespaces, queue names, and scoped Redis cleanup. | PASS |
+| PostgreSQL isolation | `API_INTEGRATION=true` live suite connected to disposable `postgres-test`, created/read a UUID-named table, and dropped it in `afterEach`. | PASS |
+| Redis isolation | `API_INTEGRATION=true` live suite connected to disposable `redis-test`, wrote/read UUID-namespaced key, scanned/unlinked only that namespace, and disconnected. | PASS |
+| BullMQ cleanup | Live BullMQ foundation suite passed with unique queue names, scoped Redis cleanup, and queue/worker close assertions. | PASS |
+| Open handles | Focused, full, and live integration Jest commands ran with `--detectOpenHandles` and completed without uncontrolled handle output. | PASS |
+| Focused regressions | Health/readiness, app, login, refresh, logout, and queue-monitor suites: 6 suites / 35 tests passed. | PASS |
+| Full API suite | `bun run --cwd apps/api test -- --runInBand --detectOpenHandles`: 18 suites / 124 tests passed; 2 live-integration suites and 6 tests skipped because normal test invocation does not set `API_INTEGRATION=true`. | PASS |
+| Static checks | Lint, typecheck, and format check passed. | PASS |
+| Anti-Slop | Project-local core skill loaded; helper/test audit found no generic framework, duplicate helper layer, coverage theater, forced exit, hidden TODO/FIXME/HACK, or blocking finding. | PASS — 0 blocking findings |
+| Scope and secrets | `git diff --check` passed; changed-file review found no current diff; helper/test review found only synthetic fixture values and no committed runtime credentials, keys, tokens, or logs. | PASS |
+| Database/API/browser validation | No schema, migration, API contract, or rendered UI change in be/19. | NOT APPLICABLE |
 
 ## 17. Traceability
 

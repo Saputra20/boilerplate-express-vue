@@ -32,7 +32,7 @@ export const authOpenApi: OpenApiContribution = {
     },
   },
   paths: {
-    '/auth/login': {
+    '/api/v1/auth/login': {
       post: {
         tags: ['Auth'],
         operationId: 'login',
@@ -61,7 +61,7 @@ export const authOpenApi: OpenApiContribution = {
         },
       },
     },
-    '/auth/refresh': {
+    '/api/v1/auth/refresh': {
       post: {
         tags: ['Auth'],
         operationId: 'refresh',
@@ -90,7 +90,7 @@ export const authOpenApi: OpenApiContribution = {
         },
       },
     },
-    '/auth/logout': {
+    '/api/v1/auth/logout': {
       post: {
         tags: ['Auth'],
         operationId: 'logoutCurrentSession',
@@ -104,7 +104,7 @@ export const authOpenApi: OpenApiContribution = {
         },
       },
     },
-    '/auth/logout-all': {
+    '/api/v1/auth/logout-all': {
       post: {
         tags: ['Auth'],
         operationId: 'logoutAllSessions',

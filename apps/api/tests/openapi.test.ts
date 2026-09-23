@@ -66,20 +66,22 @@ describe('OpenAPI infrastructure', () => {
       });
       expect(Object.keys(document.paths).sort()).toEqual(
         [
-          '/auth/login',
-          '/auth/logout',
-          '/auth/logout-all',
-          '/auth/refresh',
+          '/api/v1/auth/login',
+          '/api/v1/auth/logout',
+          '/api/v1/auth/logout-all',
+          '/api/v1/auth/refresh',
           '/health',
           '/ready',
           OPENAPI_DOCUMENT_PATH,
           OPENAPI_UI_PATH,
         ].sort(),
       );
-      expect(document.paths['/auth/login']?.post?.security).toBeUndefined();
-      expect(document.paths['/auth/refresh']?.post?.security).toBeUndefined();
-      expect(document.paths['/auth/logout']?.post?.security).toEqual([{ bearerAuth: [] }]);
-      expect(document.paths['/auth/logout-all']?.post?.security).toEqual([{ bearerAuth: [] }]);
+      expect(document.paths['/api/v1/auth/login']?.post?.security).toBeUndefined();
+      expect(document.paths['/api/v1/auth/refresh']?.post?.security).toBeUndefined();
+      expect(document.paths['/api/v1/auth/logout']?.post?.security).toEqual([{ bearerAuth: [] }]);
+      expect(document.paths['/api/v1/auth/logout-all']?.post?.security).toEqual([
+        { bearerAuth: [] },
+      ]);
       expect(document.paths['/health']?.get?.security).toBeUndefined();
       expect(document.paths['/ready']?.get?.security).toBeUndefined();
       expect(document.paths['/ops/queues']).toBeUndefined();

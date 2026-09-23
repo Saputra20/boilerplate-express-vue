@@ -17,7 +17,7 @@ describe('application shell', () => {
     }
   });
 
-  it('mounts an auth module router below the unchanged auth prefix', async () => {
+  it('mounts the auth v1 router below the versioned auth prefix', async () => {
     const { logging, cleanup } = createTestApp();
     const router = Router();
     router.get('/composition', (_request, response) => {
@@ -26,15 +26,17 @@ describe('application shell', () => {
     const app = createApp({
       logging,
       security: { corsOrigins: ['http://localhost:5173'] },
-      auth: { router },
+      routers: { authV1: router },
     });
 
     try {
-      const mounted = await request(app).get('/auth/composition');
+      const mounted = await request(app).get('/api/v1/auth/composition');
+      const legacy = await request(app).get('/auth/composition');
       const unmounted = await request(app).get('/composition');
 
       expect(mounted.status).toBe(200);
       expect(mounted.body).toEqual({ status: 'ok' });
+      expect(legacy.status).toBe(404);
       expect(unmounted.status).toBe(404);
     } finally {
       cleanup();

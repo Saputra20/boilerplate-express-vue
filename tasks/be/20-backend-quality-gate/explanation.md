@@ -23,7 +23,7 @@ Tidak ada route, API, database, migration, dependency, CI baru, target coverage 
 
 ## Dependency task apa?
 
-`be/20` tetap bergantung pada `be/19-backend-testing`. Saat ini be/19 masih berstatus `Planned — not executed`, sehingga kontrak be/20 sudah jelas tetapi eksekusinya tetap diblokir.
+`be/20` bergantung pada `be/19-backend-testing`. be/19 COMPLETE dengan evidence valid; dependency gate lulus pada 23 September 2026.
 
 ## Risiko utama?
 
@@ -31,7 +31,7 @@ Risiko terbesar adalah laporan selesai yang tidak jujur: misalnya Anti-Slop dian
 
 ## Bagaimana cara mengecek hasilnya?
 
-Review kontrak untuk memastikan urutan gate, bukti Anti-Slop, status PASS/FAIL/NOT RUN, perbedaan focused/full test, dan validasi kondisional sudah jelas. Saat task dieksekusi nanti, gunakan script API yang memang tersedia untuk lint, typecheck, dan test; lakukan review diff serta secret nyata.
+Review kontrak dan evidence eksekusi untuk memastikan urutan gate, bukti Anti-Slop, status PASS/FAIL/NOT RUN, perbedaan focused/full test, validasi kondisional, review diff, dan secret review sesuai repository truth.
 
 ## Apa yang harus direview manusia?
 
@@ -39,4 +39,4 @@ Pastikan be/19 benar-benar COMPLETE sebelum membuka eksekusi be/20. Pastikan lap
 
 ## Apa yang belum dikerjakan?
 
-Implementasi behavior quality gate belum dimulai. `be/21-api-module-architecture-refactor` juga tetap di luar scope sampai be/20 lulus.
+Tidak ada runtime behavior yang dikerjakan. `be/21-api-module-architecture-refactor`, `be/22-api-versioning-foundation`, `be/23-versioned-openapi-swagger`, dan `be/24-ai-governance-audit` tetap di luar scope.

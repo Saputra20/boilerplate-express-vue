@@ -17,6 +17,8 @@
 
 Dependencies flow inward: app/server compose config, middleware, and module routers; controllers depend on module services; services depend on module repositories and approved infrastructure contracts; repositories depend on database schema/client. Modules do not import app/server, infrastructure does not import business services, and global OpenAPI aggregation imports module contributions without owning module API definitions. No generic CRUD layer.
 
+API versioning belongs at HTTP transport boundaries. Application composition mounts versioned module routers, such as `/api/v1/auth`, while routers define only relative paths such as `/login`. URL versioning does not create versioned services, repositories, database access, or authorization policy by default. Operational routes remain outside business version prefixes.
+
 Operational dashboards mount inside the API only after baseline security middleware and use explicit queue/resource registration. They are internal tooling, not business API or CMS capabilities.
 
 ## Authorization

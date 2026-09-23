@@ -47,7 +47,7 @@ export async function startServer(): Promise<void> {
     app = createApp({
       logging,
       security: { corsOrigins: env.CORS_ORIGINS },
-      auth: createAuthModule({ db: database.db, jwt }),
+      routers: { authV1: createAuthModule({ db: database.db, jwt }).v1.router },
       queueMonitor: {
         queue: queues.queue,
         credentials: {

@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Quality gate documentation |
 | Repository/App | `apps/api` |
-| Status | Ready contract — execution blocked by `be/19-backend-testing` |
+| Status | Complete — quality-gate evidence recorded on 2026-09-23. |
 | Priority | Foundation execution order 20 |
 | Suggested Size | Small — focused documentation/rule update |
 | Depends On | `be/19-backend-testing` |
@@ -27,7 +27,7 @@ Establish one reusable, deterministic backend completion gate. It requires indep
 - `.codex/skills/REGISTRY.md` lists the local `antislop`, `antislop-code`, `verification-loop`, and `code-review` skills.
 - The project-local core Anti-Slop skill at `.codex/skills/antislop/` is loadable and executable. Its evidence is skill-based; no repository-supported fixed Anti-Slop CLI command exists.
 - `apps/api/package.json` provides `lint`, `typecheck`, and Jest `test`; it has no build script.
-- `be/19` is currently `Planned — not executed`; this task contract is resolved but execution remains blocked until be/19 has complete evidence.
+- `be/19` is COMPLETE with current implementation and validation evidence recorded on 2026-09-23.
 
 ## 4. Dependencies
 
@@ -183,17 +183,17 @@ Tests: NOT APPLICABLE — this task implementation changes reusable documentatio
 
 ## 16. Acceptance Criteria
 
-- [ ] `be/19` dependency is checked and never bypassed.
-- [ ] Quality-gate execution order is explicit.
-- [ ] Code Anti-Slop is an independent mandatory backend gate.
-- [ ] Project-local skill execution is accepted; no unsupported CLI syntax is required.
-- [ ] PASS requires loaded skill, executed audit, resolved findings, and zero blocking findings.
-- [ ] FAIL and NOT RUN are reported truthfully and fail/block the overall gate.
-- [ ] Focused tests and full API tests are differentiated.
-- [ ] Lint, typecheck, full tests, diff check, changed-file review, secret review, and final diff review are required where applicable.
-- [ ] Migration, OpenAPI, and browser checks are conditional on task type.
-- [ ] No numeric coverage target, custom CI, wrapper CLI, runtime behavior, or `be/21` work is introduced.
-- [ ] `be/21` remains blocked until be/20 passes.
+- [x] `be/19` dependency is checked and never bypassed.
+- [x] Quality-gate execution order is explicit.
+- [x] Code Anti-Slop is an independent mandatory backend gate.
+- [x] Project-local skill execution is accepted; no unsupported CLI syntax is required.
+- [x] PASS requires loaded skill, executed audit, resolved findings, and zero blocking findings.
+- [x] FAIL and NOT RUN are reported truthfully and fail/block the overall gate.
+- [x] Focused tests and full API tests are differentiated.
+- [x] Lint, typecheck, full tests, diff check, changed-file review, secret review, and final diff review are required where applicable.
+- [x] Migration, OpenAPI, and browser checks are conditional on task type.
+- [x] No numeric coverage target, custom CI, wrapper CLI, runtime behavior, or `be/21` work is introduced.
+- [x] `be/21` remains unstarted until be/20 passes.
 
 ## 17. Anti-Slop Requirements
 
@@ -270,6 +270,24 @@ Before PASS, run `git status --short`, `git diff --check`, and `git diff`; revie
 | Diff/secret hygiene | `git status --short`, `git diff --check`, changed-file review, secret/generated-junk review, and final `git diff` review. |
 | Truthful completion | Final report lists each gate as PASS, FAIL, or NOT RUN. |
 
+### 19.1 Execution Evidence — 2026-09-23
+
+| Gate | Evidence | Result |
+| --- | --- | --- |
+| Dependency | `tasks/be/19-backend-testing/technical.md` records COMPLETE with focused, full, live integration, static, open-handle, Anti-Slop, scope, and secret evidence; current `apps/api/**` has no diff. | PASS |
+| Focused tests | Six backend foundation suites, 35 tests, passed with `--detectOpenHandles`. | PASS |
+| Code Anti-Slop | Loaded `.codex/skills/antislop/SKILL.md` and `.codex/skills/antislop-code/SKILL.md`; audited current `apps/api/src/**`, `apps/api/tests/**`, and changed diff; zero blocking findings. | PASS |
+| Lint | `bun run --cwd apps/api lint` | PASS |
+| Typecheck | `bun run --cwd apps/api typecheck` | PASS |
+| Full tests | `bun run --cwd apps/api test`: 18 suites passed, 2 skipped; 124 tests passed, 6 skipped. Skipped integration coverage has separate current be/19 live evidence. | PASS |
+| Open handles | `bun run --cwd apps/api test -- --detectOpenHandles`: 18 suites passed, 2 skipped; 124 tests passed, 6 skipped; no open-handle report. | PASS |
+| Integration | PostgreSQL, Redis, and BullMQ live evidence reused from be/19; no source changed after that evidence. | PASS |
+| Format | Not required by be/20 contract; not run. | NOT RUN |
+| Database migration | No schema change. | NOT APPLICABLE — no schema change. |
+| OpenAPI | No API contract change. | NOT APPLICABLE — no public API change. |
+| Visual verification | Backend-only quality gate; no rendered UI. | NOT APPLICABLE |
+| Diff and review | `git diff --check`, status/diff review, generated-junk review, TODO/FIXME/HACK/debug review, and secret review completed. | PASS |
+
 ## 20. Traceability
 
 | Trace Type | References |
@@ -287,8 +305,8 @@ None.
 
 ## 22. Definition Of Done
 
-- [ ] `be/19` completion evidence permits execution; otherwise status remains dependency-blocked.
-- [ ] Reusable gate order, independent Anti-Slop evidence, conditional checks, diff/secret review, and truthful reporting are documented.
-- [ ] No unsupported Anti-Slop command, arbitrary coverage threshold, runtime code, dependency, migration, or successor work is added.
-- [ ] Documentation consistency review and `git diff --check` pass.
-- [ ] Changed-file and secret review are complete.
+- [x] `be/19` completion evidence permits execution; otherwise status remains dependency-blocked.
+- [x] Reusable gate order, independent Anti-Slop evidence, conditional checks, diff/secret review, and truthful reporting are documented.
+- [x] No unsupported Anti-Slop command, arbitrary coverage threshold, runtime code, dependency, migration, or successor work is added.
+- [x] Documentation consistency review and `git diff --check` pass.
+- [x] Changed-file and secret review are complete.

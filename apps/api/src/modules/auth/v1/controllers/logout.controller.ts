@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { RequestHandler } from 'express';
-import { getAccessPrincipal } from '../../../middleware/authentication.middleware.js';
-import type { LogoutService } from '../services/logout.service.js';
+import { getAccessPrincipal } from '../../../../middleware/authentication.middleware.js';
+import type { LogoutService } from '../../services/logout.service.js';
 
 export function createLogoutController(
   logoutService: LogoutService,

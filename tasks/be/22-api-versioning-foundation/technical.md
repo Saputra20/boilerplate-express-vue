@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | API architecture / transport composition |
 | Repository/App | `apps/api` |
-| Status | Planned — approved planning contract |
+| Status | Complete — v1 route migration and validation evidence recorded on 2026-09-23. |
 | Priority | Foundation execution order 22 |
 | Suggested Size | Medium — route composition and auth module boundary |
 | Depends On | `be/21-api-module-architecture-refactor` |
@@ -301,23 +301,23 @@ Expected paths are guidance; implementer must inspect repository before finalizi
 
 ## 16. Acceptance Criteria
 
-- [ ] `be/21-api-module-architecture-refactor` is complete and verified before execution.
-- [ ] `createAuthModule({ db, jwt })` exists with plain TypeScript composition only.
-- [ ] Auth v1 router uses `express.Router()` and only module-relative paths.
-- [ ] `app.ts` mounts auth v1 at exactly `/api/v1/auth` through named router dependencies.
-- [ ] `server.ts` composes auth at module granularity and does not manually construct auth internals.
-- [ ] No positional optional dependency soup remains in `createApp`.
-- [ ] `/api/v1/auth/login`, `/api/v1/auth/refresh`, `/api/v1/auth/logout`, and `/api/v1/auth/logout-all` work with existing semantics.
-- [ ] Legacy `/auth/*` routes are absent and return `404`.
-- [ ] `/health` and `/ready` remain unchanged; `/api/v1/health` is absent.
-- [ ] `/docs`, `/openapi.json`, and `/ops/queues` remain unversioned.
-- [ ] `/ops/queues` retains Basic Auth, read-only behavior, and OpenAPI exclusion.
-- [ ] No v2 route or v2 OpenAPI implementation exists.
-- [ ] Services, repositories, database, JWT, RBAC, audit, and auth security semantics are not version-duplicated or changed.
-- [ ] No database schema, migration, or dependency change occurs.
-- [ ] Focused route/composition tests and full applicable API tests pass.
-- [ ] No circular dependency, DI framework, generic route registry, or hidden compatibility route exists.
-- [ ] `AGENTS.md` and architecture guidance state module composition and transport-boundary versioning.
+- [x] `be/21-api-module-architecture-refactor` is complete and verified before execution.
+- [x] `createAuthModule({ db, jwt })` exists with plain TypeScript composition only.
+- [x] Auth v1 router uses `express.Router()` and only module-relative paths.
+- [x] `app.ts` mounts auth v1 at exactly `/api/v1/auth` through named router dependencies.
+- [x] `server.ts` composes auth at module granularity and does not manually construct auth internals.
+- [x] No positional optional dependency soup remains in `createApp`.
+- [x] `/api/v1/auth/login`, `/api/v1/auth/refresh`, `/api/v1/auth/logout`, and `/api/v1/auth/logout-all` work with existing semantics.
+- [x] Legacy `/auth/*` routes are absent and return `404`.
+- [x] `/health` and `/ready` remain unchanged; `/api/v1/health` is absent.
+- [x] `/docs`, `/openapi.json`, and `/ops/queues` remain unversioned.
+- [x] `/ops/queues` retains Basic Auth, read-only behavior, and OpenAPI exclusion.
+- [x] No v2 route or v2 OpenAPI implementation exists.
+- [x] Services, repositories, database, JWT, RBAC, audit, and auth security semantics are not version-duplicated or changed.
+- [x] No database schema, migration, or dependency change occurs.
+- [x] Focused route/composition tests and full applicable API tests pass.
+- [x] No circular dependency, DI framework, generic route registry, or hidden compatibility route exists.
+- [x] `AGENTS.md` and architecture guidance state module composition and transport-boundary versioning.
 
 ## 17. Anti-Slop Requirements
 
@@ -378,6 +378,23 @@ Not applicable — no UI change.
 | Scope/security | Full diff, changed-file review, secret review, dependency review, and no migration diff |
 | Anti-Slop | Actual audit output with final blocking findings `0` |
 
+### 19.1 Execution Evidence — 2026-09-23
+
+| Gate | Evidence | Result |
+| --- | --- | --- |
+| Dependency | be/21 completion status and evidence verified before implementation. | PASS |
+| Focused tests | 7 suites, 38 tests passed with `--detectOpenHandles`; auth v1, composition, OpenAPI, health, and queue-monitor paths covered. | PASS |
+| Full tests | `bun run --cwd apps/api test -- --detectOpenHandles`: 18 suites passed, 2 skipped; 124 tests passed, 6 skipped. | PASS |
+| Composition | `server.ts` creates auth module once; `app.ts` accepts named `routers.authV1`; auth internals stay outside app composition. | PASS |
+| Route boundary | `modules/auth/v1/auth.router.ts` uses only `/login`, `/refresh`, `/logout`, and `/logout-all`; app owns `/api/v1/auth`. | PASS |
+| Operational routes | Tests prove `/health`, `/ready`, `/docs`, `/openapi.json`, and `/ops/queues` remain unversioned; `/api/v1/health` and `/api/v1/ops/queues` return `404`. | PASS |
+| OpenAPI | Auth contribution uses `/api/v1/auth/*`; operational paths remain unchanged and queue monitor remains excluded. | PASS |
+| Static checks | `lint`, `typecheck`, `format:check`, and `git diff --check` passed. | PASS |
+| Legacy/v2 search | No legacy auth mount/import, no `/api/v2`, and no v2 implementation found. | PASS |
+| Database/dependencies | No migration, schema, package, or lockfile diff. | NOT APPLICABLE — no database or dependency change. |
+| Anti-Slop | Project-local `antislop` loaded; audited source, tests, and diff; no blocking findings. | PASS — 0 blocking findings |
+| Scope/security | Changed-file, secret, generated-junk, and final diff review completed. | PASS |
+
 ## 20. Traceability
 
 | Trace Type | References |
@@ -397,14 +414,14 @@ None.
 
 ## 22. Definition Of Done
 
-- [ ] All acceptance criteria pass with mapped evidence.
-- [ ] Only v1 exists; no fake v2 route or versioned OpenAPI implementation is added.
-- [ ] Auth composition is module-level and app composition uses named dependencies.
-- [ ] Existing auth behavior and security semantics remain intact under new v1 paths.
-- [ ] Operational routes remain unversioned.
-- [ ] No schema, migration, dependency, or unrelated behavior change exists.
-- [ ] Focused and full applicable tests pass.
-- [ ] Code Anti-Slop runs and passes with zero blocking findings.
-- [ ] Lint, typecheck, format check, and applicable integration checks pass.
-- [ ] `git diff --check`, changed-file review, secret review, and final diff review pass.
-- [ ] Architecture guidance is updated and no later task is started.
+- [x] All acceptance criteria pass with mapped evidence.
+- [x] Only v1 exists; no fake v2 route or versioned OpenAPI implementation is added.
+- [x] Auth composition is module-level and app composition uses named dependencies.
+- [x] Existing auth behavior and security semantics remain intact under new v1 paths.
+- [x] Operational routes remain unversioned.
+- [x] No schema, migration, dependency, or unrelated behavior change exists.
+- [x] Focused and full applicable tests pass.
+- [x] Code Anti-Slop runs and passes with zero blocking findings.
+- [x] Lint, typecheck, format check, and applicable integration checks pass.
+- [x] `git diff --check`, changed-file review, secret review, and final diff review pass.
+- [x] Architecture guidance is updated and no later task is started.

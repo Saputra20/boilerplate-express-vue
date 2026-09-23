@@ -2,7 +2,7 @@
 
 ## Apa yang dibuat?
 
-Kontrak implementasi untuk merapikan `apps/api/src` menjadi arsitektur module-first. Task ini belum memindahkan source atau mengubah perilaku API.
+`apps/api/src` sekarang memakai arsitektur module-first. Source relocation, composition boundary, dan validation evidence sudah selesai tanpa perubahan perilaku API.
 
 ## Kenapa dibuat?
 
@@ -10,7 +10,7 @@ Task ini ditempatkan setelah `be/20-backend-quality-gate` supaya fondasi yang su
 
 ## Apa yang berubah?
 
-Saat dieksekusi nanti, auth menjadi pemilik `modules/auth`; permission/RBAC menjadi `modules/rbac`; generic audit menjadi `modules/audit`; dan health/readiness menjadi `modules/health`. Middleware Express lintas fitur pindah ke `middleware`. Database, Redis, logger, JWT/key, environment, konfigurasi HTTP security, OpenAPI global, dan queue monitor pindah ke `config`. Password dan fingerprint refresh token yang stateless pindah ke `helpers`.
+Auth menjadi pemilik `modules/auth`; permission/RBAC menjadi `modules/rbac`; generic audit menjadi `modules/audit`; dan health/readiness menjadi `modules/health`. Middleware Express lintas fitur berada di `middleware`. Database, Redis, logger, JWT/key, environment, konfigurasi HTTP security, OpenAPI global, dan queue monitor berada di `config`. Password dan fingerprint refresh token yang stateless berada di `helpers`.
 
 Kontrak sekarang memetakan seluruh 37 file source saat ini. Kontribusi OpenAPI auth dan health tetap dimiliki module masing-masing; agregasi dokumen OpenAPI global tetap infrastruktur konfigurasi.
 
@@ -22,7 +22,7 @@ API, database, migrasi, JWT claims, login, refresh, logout, session, RBAC, audit
 
 ## Dependency task apa?
 
-`be/20-backend-quality-gate` harus lulus lebih dulu. Setelah task ini selesai, task backend baru yang menambah atau memperluas source API wajib memakai struktur module-first ini.
+`be/20-backend-quality-gate` lulus lebih dulu. Task backend baru yang menambah atau memperluas source API wajib memakai struktur module-first ini.
 
 ## Risiko utama?
 
@@ -38,4 +38,4 @@ Pastikan pemisahan ownership benar: domain di module, middleware hanya lintas HT
 
 ## Apa yang belum dikerjakan?
 
-Refactor belum dieksekusi. Run ini hanya memperbaiki kontrak dan referensi. Pemindahan file, perubahan import, update aturan/arsitektur/skill, dan validasi runtime memerlukan eksekusi implementasi terpisah.
+Tidak ada pekerjaan lanjutan dalam scope task ini. `be/22-api-versioning-foundation`, `be/23-versioned-openapi-swagger`, dan `be/24-ai-governance-audit` tetap belum dimulai.

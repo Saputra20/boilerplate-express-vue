@@ -2,7 +2,7 @@
 
 ## Apa yang dibuat?
 
-Kontrak implementasi untuk menyiapkan API business route pertama pada `/api/v1`. Auth akan memiliki router v1 sendiri, tetapi service dan repository tetap dipakai bersama. Task ini belum membuat v2 dan belum mengubah Swagger/OpenAPI menjadi versioned.
+API business route pertama sekarang berada pada `/api/v1`. Auth memiliki router v1 sendiri, sementara service dan repository tetap dipakai bersama. v2 dan versioned Swagger/OpenAPI belum dibuat.
 
 ## Kenapa dibuat?
 
@@ -18,7 +18,7 @@ Service, repository, database, JWT, session, RBAC, audit, authentication, dan au
 
 ## Dependency task apa?
 
-`be/21-api-module-architecture-refactor` harus selesai lebih dulu karena task ini bergantung pada `modules/auth`, `middleware`, `config`, dan module-first ownership.
+`be/21-api-module-architecture-refactor` selesai dan diverifikasi lebih dulu. Task ini memakai `modules/auth`, `middleware`, `config`, dan module-first ownership.
 
 ## Risiko utama?
 
@@ -34,4 +34,4 @@ Pastikan `server.ts` hanya menjadi composition root, `app.ts` hanya mengetahui r
 
 ## Apa yang belum dikerjakan?
 
-Versioned Swagger/OpenAPI, v2, deprecation, dan retirement v1 belum dikerjakan. Pekerjaan OpenAPI versioning diteruskan ke `be/23-versioned-openapi-swagger`.
+Tidak ada pekerjaan lanjutan dalam scope ini. Versioned Swagger/OpenAPI diteruskan ke `be/23-versioned-openapi-swagger`; v2, deprecation, dan retirement v1 tetap belum dikerjakan.
