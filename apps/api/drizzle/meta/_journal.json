@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790124024308,
+      "tag": "0000_create-users-table",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790124066481,
+      "tag": "0001_create-roles-table",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790124080513,
+      "tag": "0002_create-permissions-table",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790124099645,
+      "tag": "0003_create-user-roles-table",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790124120839,
+      "tag": "0004_create-role-permissions-table",
+      "breakpoints": true
+    }
+  ]
+}

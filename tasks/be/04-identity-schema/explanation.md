@@ -1,44 +1,42 @@
-# be/04-identity-schema — Identity Schema
+# be/04-identity-schema: Identity Schema
 
-## Tujuan
+## Apa yang dibuat?
 
-Model only documented identity entity families: users, roles, permissions, user_roles, and role_permissions; create migration-backed constraints only after unresolved semantics are approved.
+Kontrak task sekarang siap untuk fondasi `users`, `roles`, `permissions`, `user_roles`, dan `role_permissions`.
 
-## Kenapa Task Ini Dibutuhkan
+## Kenapa dibuat?
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+Blocker schema sudah selesai. Implementer tidak perlu menebak identifier user, password, soft delete, relasi RBAC, constraint, index, atau urutan migration.
 
-## Apa yang Akan Dikerjakan
+## Apa yang berubah?
 
-- Model only documented identity entity families: users, roles, permissions, user_roles, and role_permissions; create migration-backed constraints only after unresolved semantics are approved.
-- Validasi dan evidence sesuai technical.md.
+- `email` menjadi identifier login awal dan wajib lowercase sebelum disimpan.
+- Password hanya berada di `password_hash` sebagai hash Argon2id.
+- User memakai status `active` atau `disabled` dan soft delete melalui `deleted_at`.
+- RBAC memakai `user → role → permission`; tidak ada `isAdmin`.
+- Migration dibuat per entity atau relasi, bukan satu migration besar.
+- Setiap migration punya UP dan DOWN; rollback mengikuti urutan foreign key terbalik.
 
-## Apa yang Tidak Dikerjakan
+## Apa yang tidak berubah?
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+Task ini belum membuat login, register, JWT, refresh token, session, reset password, email verification, middleware authorization, seed permission, atau UI RBAC.
 
-## Dependency
+## Dependency task apa?
 
-be/03-database-foundation
+`be/03-database-foundation` menyediakan konfigurasi dan lifecycle database. Task ini tetap sebelum `be/05-redis-foundation`.
 
-## Risiko / Hal yang Perlu Diperhatikan
+## Risiko utama?
 
-TODO: REQUIREMENT NEEDED — user identifier, credential fields, role vocabulary, permission catalog, retention, and deletion semantics.
+Drizzle saat ini hanya memiliki perintah migration forward. Implementasi harus membuktikan file rollback pendamping tidak mengganggu Drizzle dan menjalankan rollback pada database uji terisolasi.
 
-## Cara Verifikasi
+## Bagaimana cara mengecek hasilnya?
 
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Generate migration, jalankan UP, uji constraint dan foreign key, jalankan DOWN terbalik, pastikan schema kembali, lalu jalankan UP lagi. Jalankan lint, typecheck, test, Code Anti-Slop, dan `git diff --check`.
 
-## Yang Perlu Direview Human
+## Apa yang harus direview manusia?
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Pastikan kolom sesuai kontrak, password bukan plaintext, email lowercase, soft delete tidak berubah menjadi hard delete, cascade hanya pada junction table saat hard delete, dan tiap migration punya rollback aman.
 
-## Output yang Diharapkan
+## Apa yang belum dikerjakan?
 
-Model only documented identity entity families: users, roles, permissions, user_roles, and role_permissions; create migration-backed constraints only after unresolved semantics are approved.
-
-## Task Berikutnya
-
-be/05-redis-foundation
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Schema dan migration belum diimplementasikan. Fitur auth dan authorization tetap berada di task berikutnya.

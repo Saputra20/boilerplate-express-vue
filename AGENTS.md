@@ -229,6 +229,17 @@ Before API change inspect consumers, schemas, auth, authorization, errors, and O
 
 Inspect schema and data impact first. Schema changes require appropriate Drizzle migration and review of data safety, indexes, foreign keys, uniqueness, nullability, query cost, and rollback. Never use manual production changes instead of migrations. Never destructively change columns, types, constraints, indexes, or data without explicit approval. Avoid N+1, unbounded queries, and unused columns.
 
+## Database Migration Discipline
+
+- Drizzle remains schema and forward-migration source of truth. Do not replace it or apply manual production DDL.
+- Migrations are small, ordered, reviewable, and scoped to one entity or tightly coupled schema concern. One task may require multiple migrations; never collapse unrelated entities into one migration.
+- Each forward migration requires an independently reviewable matching DOWN operation. Generated forward SQL lives in `apps/api/drizzle/<tag>.sql`; matching reverse SQL uses `apps/api/drizzle/<tag>.down.sql`. Drizzle journal entries reference only the forward file.
+- Before a schema task completes, prove the installed Drizzle migrator accepts sibling `.down.sql` files and execute UP, DOWN, and re-apply behavior against an isolated database through a repository-compatible rollback executor. Do not claim rollback validation without execution evidence.
+- Forward migration order follows foreign-key dependencies. Rollback uses reverse dependency order; never drop a referenced parent before junction/dependent tables.
+- Applied/shared migrations are immutable. New schema changes use a new focused migration with an operation-specific name such as `add-email-verified-at-to-users`, never `identity`, `update-db`, or `schema-fix`.
+- A DOWN operation reverses only its matching UP, is deterministic, and avoids unrelated data/schema damage. If an operation cannot safely reverse data loss, document it as irreversible and obtain explicit human approval before execution.
+- Indexes tightly coupled to an entity's initial table contract may share that entity migration. Junction tables remain separate relationship migrations.
+
 ## Backend Rules
 
 - Stack: Express, Bun, TypeScript, Drizzle/PostgreSQL, Redis, BullMQ, Zod, Morgan, Pino.

@@ -1,202 +1,230 @@
-# be/04-identity-schema — Identity Schema
+# be/04-identity-schema: Identity Schema
 
 ## 1. Metadata
 
 | Field | Value |
 | --- | --- |
 | Task ID | `be/04-identity-schema` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | N/A |
 | Workstream | Backend |
-| Category | identity foundation |
-| Repository | `apps/api` |
-| Platform | Bun / Express API |
-| Status | Blocked — requirement needed |
+| Task Category | Identity foundation |
+| Repository/App | `apps/api` |
+| Status | Ready: approved for implementation |
 | Priority | Foundation execution order 4 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | be/03-database-foundation |
-| Blocks | be/05-redis-foundation |
+| Suggested Size | Small, reviewable database change set |
+| Depends On | `be/03-database-foundation` |
+| Blocks | `be/05-redis-foundation` |
 | Execution Order | 4 |
 
 ## 2. Outcome
 
-Model only documented identity entity families: users, roles, permissions, user_roles, and role_permissions; create migration-backed constraints only after unresolved semantics are approved.
+Create Drizzle schema and migration-backed PostgreSQL identity tables for users, roles, permissions, user-role assignments, and role-permission assignments. This task creates no API, authentication, session, token, or RBAC enforcement behavior.
 
 ## 3. Context
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+`docs/ARCHITECTURE.md` defines `middleware → route → controller → service/use case → repository → database`. `docs/DATABASE.md` requires Drizzle, camelCase TypeScript fields, and snake_case PostgreSQL names. `docs/SECURITY.md` requires Argon2id passwords and no secret logging. `be/03-database-foundation` establishes `apps/api/src/database/` and `apps/api/drizzle.config.ts`.
 
-## 4. In Scope
+## 4. Dependencies
 
-- Model only documented identity entity families: users, roles, permissions, user_roles, and role_permissions; create migration-backed constraints only after unresolved semantics are approved.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+- `be/03-database-foundation` is complete.
+- Isolated PostgreSQL required for migration and constraint evidence.
+- `apps/api/drizzle` is Drizzle output root; no migration history exists.
+- `drizzle-kit migrate` supports forward journaled migrations only. This task must establish and validate repository-compatible paired rollback SQL without replacing Drizzle.
 
-## 5. Out of Scope
+## 5. In Scope
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+- Add only `users`, `roles`, `permissions`, `user_roles`, and `role_permissions` to Drizzle schema.
+- Generate entity-scoped forward migrations in `apps/api/drizzle`.
+- Add matching reverse SQL using forward Drizzle tag plus `.down.sql`; example: `0000_create_users_table.sql` and `0000_create_users_table.down.sql`.
+- Add focused database tests for columns, constraints, indexes, foreign keys, soft-delete defaults, forward migration, rollback, and re-apply behavior.
 
-## 6. Implementation Requirements
+## 6. Out of Scope
 
-- Model only documented identity entity families: users, roles, permissions, user_roles, and role_permissions; create migration-backed constraints only after unresolved semantics are approved.
-- Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+- Login, registration, password hashing service, password reset/change, email verification, JWT, refresh tokens, sessions, token revocation, authorization middleware, permission enforcement, audit records, MFA, OAuth, RBAC UI, role/permission seeds.
+- `isAdmin`, username, phone, profile, avatar, organization, MFA, OAuth, reset-token, session, or refresh-token fields.
+- Automated hard-delete or purge behavior; soft-deleted users remain indefinitely.
+- A product permission catalog. Format examples do not become seed data.
 
-### 6.1 Resolved Business Requirements
+## 7. Existing Implementation
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+- `apps/api/src/database/schema.ts` exports no tables.
+- `apps/api/drizzle.config.ts` uses `schema: './src/database/schema.ts'` and `out: './drizzle'`.
+- `apps/api/package.json` provides `db:generate` and `db:migrate`; no rollback script exists.
+- `apps/api/src/database/config.ts` validates separated database config.
+- `apps/api/tests/` uses Jest; no DB migration test harness exists.
 
-## 7. Contract and Data Impact
+## 8. Implementation Requirements
 
-### 7.1 Configuration Contract
+- Use installed Drizzle PostgreSQL primitives. TypeScript names use camelCase; PostgreSQL names use snake_case.
+- Normalize email to lowercase before persistence through a focused database-boundary path. Do not add an API.
+- `password_hash` stores Argon2id hash only. Never store, return, log, or seed plaintext/reversible passwords.
+- `users.status` permits `active` and `disabled` only.
+- `roles.code` is lowercase and machine-friendly. `permissions.code` uses lowercase `resource.action` format; `users.read` and `roles.manage` are format examples, not seed requirements.
+- `users.deleted_at` implements soft deletion. Roles and permissions have no soft deletion.
+- IDs are UUID primary keys. Junction tables use composite primary keys, not surrogate IDs.
+- Define and test insert/update behavior for required timestamps. Do not add undocumented triggers.
+- Do not add repositories, relations beyond schema support, seed data, endpoints, or business flows.
 
-Not applicable — this task does not change documented configuration.
+## 9. Applicable Contracts
 
-### 7.2 API Contract
+### Configuration Contract
 
-Not applicable — this task does not modify an API contract.
+Not applicable: established database configuration remains unchanged.
 
-### 7.3 Database Contract
+### API Contract
 
-Target entities: users, roles, permissions, role_permissions, user_roles. Exact columns, types, nullability, indexes, constraints, relations, and migration impact are unresolved.
+Not applicable: no route, request, response, authentication, or permission contract changes.
 
-### 7.4 UI Contract
+### Database Contract
 
-Not applicable — this task does not change a CMS UI contract.
+| Table | TypeScript field | PostgreSQL column | Type | Null | Constraint / behavior |
+| --- | --- | --- | --- | --- |
+| `users` | `id` | `id` | UUID | No | Primary key |
+| `users` | `email` | `email` | text | No | Lowercase login identifier; unique |
+| `users` | `passwordHash` | `password_hash` | text | No | Argon2id hash only |
+| `users` | `status` | `status` | constrained text or PostgreSQL enum | No | `active` or `disabled` only |
+| `users` | `emailVerifiedAt` | `email_verified_at` | timestamp | Yes | Schema only |
+| `users` | `lastLoginAt` | `last_login_at` | timestamp | Yes | Schema only |
+| `users` | `createdAt` / `updatedAt` | `created_at` / `updated_at` | timestamp | No | Required timestamps |
+| `users` | `deletedAt` | `deleted_at` | timestamp | Yes | Soft-delete marker; default null |
+| `roles` | `id` | `id` | UUID | No | Primary key |
+| `roles` | `code` | `code` | text | No | Unique stable lowercase machine identifier |
+| `roles` | `name` | `name` | text | No | Mutable display name |
+| `roles` | `description` | `description` | text | Yes | Mutable display description |
+| `roles` | `createdAt` / `updatedAt` | `created_at` / `updated_at` | timestamp | No | Required timestamps |
+| `permissions` | `id` | `id` | UUID | No | Primary key |
+| `permissions` | `code` | `code` | text | No | Unique stable `resource.action` identifier; no seed catalog |
+| `permissions` | `description` | `description` | text | Yes | Display description |
+| `permissions` | `createdAt` / `updatedAt` | `created_at` / `updated_at` | timestamp | No | Required timestamps |
+| `user_roles` | `userId` | `user_id` | UUID | No | FK `users.id`, `ON DELETE CASCADE` |
+| `user_roles` | `roleId` | `role_id` | UUID | No | FK `roles.id`, `ON DELETE CASCADE` |
+| `user_roles` | `createdAt` | `created_at` | timestamp | No | Required assignment timestamp |
+| `role_permissions` | `roleId` | `role_id` | UUID | No | FK `roles.id`, `ON DELETE CASCADE` |
+| `role_permissions` | `permissionId` | `permission_id` | UUID | No | FK `permissions.id`, `ON DELETE CASCADE` |
+| `role_permissions` | `createdAt` | `created_at` | timestamp | No | Required assignment timestamp |
 
-## 8. File Impact
-
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
-
-Test: `apps/api/tests/`.
-
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
-
-## 9. Runtime Behavior
-
-Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
-
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing API shell/Jest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
+| Table | Key / index | Purpose |
 | --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
+| `users` | Primary key `id`; unique `email` | Identity and login lookup |
+| `roles` | Primary key `id`; unique `code` | Stable role lookup |
+| `permissions` | Primary key `id`; unique `code` | Stable permission lookup |
+| `user_roles` | Composite primary key `(user_id, role_id)`; index `role_id` | Duplicate prevention; reverse role lookup |
+| `role_permissions` | Composite primary key `(role_id, permission_id)`; index `permission_id` | Duplicate prevention; reverse permission lookup |
 
-## 13. Validation Requirements
+Application deletion sets `users.deleted_at`; it does not cascade. Cascades occur only for actual DB hard deletes. Foundation creation has no existing identity data, backfill, destructive change, or automatic seed.
 
-### Static
+### UI Contract
 
-- `bun run --cwd apps/api lint`
-- `bun run --cwd apps/api typecheck`
-- `bun run --cwd apps/api test`
-- `git diff --check`
+Not applicable: no CMS UI change.
 
-### Automated Tests
+## 10. Migration Plan And Data Impact
 
-- Focused and full existing Jest tests applicable to changed boundary.
+Drizzle remains schema and forward-migration source of truth. Generate numbered forward tags into `apps/api/drizzle`, then add reviewed `<tag>.down.sql` reverse files. Drizzle journal entries refer only to forward `<tag>.sql`; implementation must prove sibling `.down.sql` files do not affect forward migration and add/verify a repository-compatible isolated-database rollback executor.
 
-### Build
+| Order | Operation | UP | DOWN |
+| --- | --- | --- | --- |
+| 1 | `create-users-table` | Create users, email uniqueness, status constraint, initial table-coupled indexes | Drop users after dependent tables are removed |
+| 2 | `create-roles-table` | Create roles and unique code | Drop roles after dependent tables are removed |
+| 3 | `create-permissions-table` | Create permissions and unique code | Drop permissions after dependent tables are removed |
+| 4 | `create-user-roles-table` | Create relationship, composite key, FKs, role index | Drop user_roles |
+| 5 | `create-role-permissions-table` | Create relationship, composite key, FKs, permission index | Drop role_permissions |
 
-Not applicable — API package has no build script; TypeScript typecheck is applicable.
+Forward order is 1 through 5. Rollback order is 5, 4, 3, 2, 1. Migration names state actual operations, never vague groups. Applied/shared migrations are immutable. Future changes use new focused migrations. Irreversible/destructive operations require human approval and documented rollback limits.
 
-### Database
+## 11. Runtime Behavior
 
-Validate Drizzle migration/schema if this task creates one.
+`db:generate` derives forward migrations. `db:migrate` applies them in FK dependency order. Rollback validation executes matching DOWN operations in reverse order on isolated PostgreSQL, restores prior schema, then proves UP re-applies. No application endpoint or identity business flow starts.
 
-### UI
+## 12. Error And Edge Cases
 
-Not applicable — no meaningful rendered UI change.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop and visual verification: not applicable — no CMS UI change.
-
-## 14. Acceptance Criteria
-
-- [ ] Model only documented identity entity families: users, roles, permissions, user_roles, and role_permissions; create migration-backed constraints only after unresolved semantics are approved.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Identity Schema capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop and visual verification: not applicable — no CMS UI change.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/api/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/api lint`; `bun run --cwd apps/api typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
+| Scenario | Expected result | Security / recovery |
 | --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Identity Schema boundary |
-| `docs/SECURITY.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `be/04-identity-schema` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
+| Duplicate email, code, or junction pair | PostgreSQL rejects write | Assert DB constraint; never expose password values |
+| Invalid status | PostgreSQL rejects write | Only approved states allowed |
+| Missing required field | PostgreSQL rejects write | Assert nullability |
+| Unknown FK | PostgreSQL rejects write | Assert FK integrity |
+| Hard delete parent | Junction rows cascade | Test declared behavior |
+| Parent rollback before junction rollback | Never run | Enforce reverse dependency order |
+| Irreversible future migration | Stop for approval | Never fake DOWN SQL |
 
-## 18. Open Points
+## 13. Security Requirements
 
-TODO: REQUIREMENT NEEDED — user identifier, credential fields, role vocabulary, permission catalog, retention, and deletion semantics.
+- Password fixtures use non-secret Argon2id-hash-shaped values only.
+- Do not add plaintext, reversible-password, session, token, or private-key columns.
+- Authorization remains `user → role → permission`; no `isAdmin` field.
+- Preserve safe database initialization errors.
+
+## 14. Test Requirements
+
+| Scenario | Expected result | Test type |
+| --- | --- | --- |
+| Users | Duplicate normalized email rejects; nullable timestamps accept null; required columns reject null; `deleted_at` defaults null | Database integration |
+| Roles | Duplicate code rejects | Database integration |
+| Permissions | Duplicate code rejects | Database integration |
+| User roles | Duplicate pair/unknown FK reject; parent hard delete cascades | Database integration |
+| Role permissions | Duplicate pair/unknown FK reject; parent hard delete cascades | Database integration |
+| Migrations | UP order, FK/index evidence, DOWN 5→1, schema restoration, re-apply | Migration integration |
+| Regression | Existing API shell and database foundation tests pass | Jest |
+
+Tests use isolated PostgreSQL, deterministic cleanup, and no API behavior tests.
+
+## 15. Task-Level Expected Results
+
+- Drizzle schema matches section 9 without out-of-scope fields.
+- Five entity/relationship migration units have reviewed forward and reverse behavior.
+- Constraints, indexes, FK cascades, soft-delete default, migration ordering, rollback, and re-apply have actual evidence.
+
+## 16. Acceptance Criteria
+
+- [ ] Schema contains exactly five approved identity tables and contract columns.
+- [ ] Email lowercases before persistence; uniqueness and status restriction work.
+- [ ] Junction tables use composite keys, declared cascades, and reverse indexes.
+- [ ] Five focused migration units follow forward/reverse dependency order with UP/DOWN behavior.
+- [ ] Isolated PostgreSQL proves apply, rollback to prior schema, and re-apply.
+- [ ] No API/auth/session/token/seed behavior or speculative fields appear.
+- [ ] Tests, lint, typecheck, migration validation, Anti-Slop, and diff review report actual status.
+
+## 17. Anti-Slop Requirements
+
+Code Anti-Slop required. Reject generic schema helpers, duplicated timestamp/constraint logic where Drizzle primitives suffice, unused dependencies, fake rollback files, hidden TODO/FIXME/HACK, unjustified `any`/assertions, seeds presented as requirements, and unrelated refactors. UI Anti-Slop and visual verification are not applicable.
+
+## 18. Validation Requirements
+
+- Static: `bun run --cwd apps/api lint`, `bun run --cwd apps/api typecheck`, `git diff --check`.
+- Tests: focused database/migration integration tests and `bun run --cwd apps/api test`.
+- Database: `bun run --cwd apps/api db:generate`, `bun run --cwd apps/api db:migrate`, isolated rollback/down execution, schema inspection, and re-apply evidence.
+- Build: not applicable: API has no build script.
+- Anti-Slop: Code Anti-Slop review, fix findings, rerun.
+
+## 19. Completion Evidence
+
+| Acceptance criterion | Evidence |
+| --- | --- |
+| Tables and constraints | Schema review plus integration assertions |
+| Forward migrations | `db:generate`, `db:migrate`, journal and migration review |
+| Rollback | Isolated DOWN log in 5→1 order, schema comparison, re-apply result |
+| Static/regression | Lint, typecheck, focused tests, full Jest |
+| Scope/Anti-Slop | `git diff --check`, `git diff`, `git status`, Anti-Slop report |
+
+## 20. Traceability
+
+| Trace Type | References |
+| --- | --- |
+| Architecture | `docs/ARCHITECTURE.md` |
+| Database | `docs/DATABASE.md` |
+| Security | `docs/SECURITY.md` |
+| Dependency | `be/03-database-foundation` |
+| Approved requirements | Current human instruction |
+
+## 21. Open Points
+
+None.
+
+## 22. Definition Of Done
+
+- [ ] Acceptance criteria and approved scope complete.
+- [ ] Five entity-scoped migrations and matching reverse behavior reviewed.
+- [ ] Isolated PostgreSQL evidence proves forward, rollback, restoration, and re-apply.
+- [ ] Focused/full tests, lint, typecheck, generation, migration validation, and Code Anti-Slop pass.
+- [ ] `git diff --check`, changed-file review, secret review, and human review complete.

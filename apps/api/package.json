@@ -13,7 +13,8 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
     "test:watch": "jest --watch",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:rollback": "bun scripts/db-rollback.ts"
   },
   "dependencies": {
     "argon2": "^0.44.0",
