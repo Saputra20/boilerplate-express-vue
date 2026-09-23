@@ -2,41 +2,30 @@
 
 ## Tujuan
 
-Add baseline Helmet, CORS, rate limiting, request-size limit, safe centralized errors, request IDs, and graceful shutdown.
+Task ini menetapkan kontrak security middleware API supaya implementasi tidak lagi terblokir oleh default rate limit dan CORS yang belum jelas.
 
-## Kenapa Task Ini Dibutuhkan
+## Keputusan Yang Sudah Disetujui
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+- Helmet menambahkan baseline HTTP security headers.
+- CORS hanya mengizinkan origin yang tercantum di konfigurasi tervalidasi. Wildcard tidak dipakai.
+- Konfigurasi memakai `CORS_ORIGINS`, berisi satu atau lebih origin eksplisit. Contoh lokal adalah `http://localhost:5173` berdasarkan konfigurasi API yang sudah ada.
+- CORS mengizinkan `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, dan `OPTIONS`, dengan header `Content-Type`, `Authorization`, dan `X-Request-Id`.
+- Credential cross-origin dimatikan. Cookie/session lintas origin belum dipakai.
+- Rate limit global awal adalah 100 request per 15 menit per IP. Request ke-101 mendapat `429` dengan respons aman.
+- Endpoint login, reset password, refresh token, dan operasi sensitif akan memiliki limit lebih ketat melalui task terpisah.
+- Batas JSON `1mb` tetap dipertahankan. Body terlalu besar dan JSON rusak ditolak secara aman.
+- Error internal disanitasi; detail operasional hanya masuk ke Pino yang sudah memakai request correlation.
+- Request ID dibuat server, bukan dipercaya dari header masuk yang arbitrer.
+- Shutdown `SIGINT` dan `SIGTERM` menghentikan server lalu menutup resource yang sudah ada secara teratur.
 
-## Apa yang Akan Dikerjakan
+## Batas Task
 
-- Add baseline Helmet, CORS, rate limiting, request-size limit, safe centralized errors, request IDs, and graceful shutdown.
-- Validasi dan evidence sesuai technical.md.
-
-## Apa yang Tidak Dikerjakan
-
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
-
-## Dependency
-
-be/02-environment-validation, be/06-logging-foundation
-
-## Risiko / Hal yang Perlu Diperhatikan
-
-Rate-limit thresholds and expanded CORS policy are not specified.
-
-## Cara Verifikasi
-
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Task berikutnya hanya mengimplementasikan fondasi middleware ini. JWT, authentication, login, RBAC, session, CSRF token, cookie auth, Redis/distributed rate limiting, dan layanan keamanan cloud belum termasuk.
 
 ## Yang Perlu Direview Human
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Pastikan origin production diberikan lewat deployment configuration, bukan hard-code. Review middleware order, exact origin matching, tidak adanya wildcard atau credentials, perilaku `429`, error tanpa detail internal, dan shutdown resource saat terminasi.
 
-## Output yang Diharapkan
+## Status
 
-Add baseline Helmet, CORS, rate limiting, request-size limit, safe centralized errors, request IDs, and graceful shutdown.
-
-## Task Berikutnya
-
-be/08-jwt-foundation
+Blocker rate limit dan CORS sudah selesai. Task siap diimplementasikan; pembaruan ini tidak mengubah aplikasi atau middleware.

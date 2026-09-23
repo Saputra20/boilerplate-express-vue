@@ -23,7 +23,7 @@ const validEnv = () => ({
   JWT_REFRESH_TOKEN_EXPIRES_IN: '7d',
   QUEUE_MONITOR_USERNAME: 'queue-monitor',
   QUEUE_MONITOR_PASSWORD: 'test-queue-password',
-  CORS_ORIGIN: 'http://localhost:5173',
+  CORS_ORIGINS: 'http://localhost:5173',
 });
 
 describe('loadEnv', () => {
@@ -37,6 +37,7 @@ describe('loadEnv', () => {
       REDIS_PORT: 6379,
       REDIS_DATABASE: 0,
       REDIS_TLS: false,
+      CORS_ORIGINS: ['http://localhost:5173'],
     });
   });
 
@@ -45,7 +46,12 @@ describe('loadEnv', () => {
     ['empty required value', { DATABASE_HOST: '' }, 'DATABASE_HOST'],
     ['malformed integer', { PORT: '3000.5' }, 'PORT'],
     ['unsupported boolean', { DATABASE_SSL: 'yes' }, 'DATABASE_SSL'],
-    ['malformed URL', { CORS_ORIGIN: 'not a URL' }, 'CORS_ORIGIN'],
+    ['malformed origin', { CORS_ORIGINS: 'not a URL' }, 'CORS_ORIGINS'],
+    [
+      'duplicate origin',
+      { CORS_ORIGINS: 'http://localhost:5173,http://localhost:5173' },
+      'CORS_ORIGINS',
+    ],
     ['empty secret', { DATABASE_PASSWORD: '' }, 'DATABASE_PASSWORD'],
   ])('rejects %s without exposing values', (_scenario, overrides, invalidKey) => {
     const secret = 'do-not-expose-this-secret';

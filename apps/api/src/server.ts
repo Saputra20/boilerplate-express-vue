@@ -5,11 +5,12 @@ import { loadDatabaseConfig } from './database/config.js';
 import { createLogging } from './logging/index.js';
 import { createRedis } from './redis/client.js';
 import { loadRedisConfig } from './redis/config.js';
+import { shutdown } from './shutdown.js';
 
 async function startServer(): Promise<void> {
   const env = loadEnv();
   const logging = createLogging();
-  const app = createApp(logging);
+  const app = createApp(logging, { corsOrigins: env.CORS_ORIGINS });
   const database = createDatabase(loadDatabaseConfig(env));
   const redis = createRedis(loadRedisConfig(env));
 
@@ -24,9 +25,28 @@ async function startServer(): Promise<void> {
     throw new Error('API startup failed');
   }
 
-  app.listen(env.PORT, () => {
+  const server = app.listen(env.PORT, () => {
     logging.logger.info({ port: env.PORT }, 'API listening');
   });
+  let shuttingDown = false;
+
+  const handleShutdown = (signal: 'SIGINT' | 'SIGTERM') => {
+    if (shuttingDown) return;
+
+    shuttingDown = true;
+    logging.logger.info({ signal }, 'API shutdown started');
+    void shutdown(server, { database, redis, logging })
+      .then(() => {
+        process.exitCode = 0;
+      })
+      .catch(() => {
+        process.stderr.write('API shutdown failed\n');
+        process.exitCode = 1;
+      });
+  };
+
+  process.once('SIGINT', () => handleShutdown('SIGINT'));
+  process.once('SIGTERM', () => handleShutdown('SIGTERM'));
 }
 
 void startServer().catch((error) => {

@@ -6,7 +6,7 @@ description: Review project-specific authentication, authorization, input, secre
 
 Activate for auth, JWT, permissions, user input, uploads, sensitive data, API endpoints, secrets, payments, or third-party integration.
 
-- Zod at trust boundaries; centralized safe errors; Helmet, CORS, rate limits, body limits, request IDs, and graceful shutdown remain intact.
+- Zod at trust boundaries; centralized safe errors; Helmet, exact-origin allowlist CORS without wildcard/credentials, bounded IP rate limits with safe proxy handling, body limits, request IDs, and graceful shutdown remain intact.
 - JWT: RS256 only; verify issuer, audience, expiry, applicable nbf, JTI, and revocation/session policy.
 - Passwords: Argon2id; never log/store plaintext.
 - Authorization: explicit user → role → permission → action; server decides; deny by default; no isAdmin design.

@@ -9,7 +9,7 @@ describe('application shell', () => {
   it('returns JSON for an unknown route', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'api-app-test-'));
     const logging = createLogging({ directory, stderr: null });
-    const app = createApp(logging);
+    const app = createApp(logging, { corsOrigins: ['http://localhost:5173'] });
 
     try {
       const response = await request(app).get('/unknown');

@@ -2,13 +2,50 @@ import { z } from 'zod';
 
 const nonEmptyString = z.string().trim().min(1);
 const booleanFromString = z.enum(['true', 'false']).transform((value) => value === 'true');
+const corsOriginsFromString = z.string().transform((value, context) => {
+  const origins = value.split(',').map((origin) => origin.trim());
+
+  if (origins.length === 0 || origins.some((origin) => origin.length === 0)) {
+    context.addIssue({ code: 'custom', message: 'Expected one or more origins' });
+    return z.NEVER;
+  }
+
+  const uniqueOrigins = new Set<string>();
+  for (const origin of origins) {
+    try {
+      const url = new URL(origin);
+      if (!['http:', 'https:'].includes(url.protocol) || url.origin !== origin) {
+        context.addIssue({ code: 'custom', message: 'Expected an origin' });
+        return z.NEVER;
+      }
+    } catch {
+      context.addIssue({ code: 'custom', message: 'Expected an origin' });
+      return z.NEVER;
+    }
+
+    if (uniqueOrigins.has(origin)) {
+      context.addIssue({ code: 'custom', message: 'Origins must be unique' });
+      return z.NEVER;
+    }
+
+    uniqueOrigins.add(origin);
+  }
+
+  return origins;
+});
 const integerFromString = (minimum: number, maximum?: number) =>
   z
     .string()
     .trim()
     .regex(/^\d+$/, 'Expected an integer')
     .transform(Number)
-    .pipe(z.number().int().min(minimum).max(maximum ?? Number.MAX_SAFE_INTEGER));
+    .pipe(
+      z
+        .number()
+        .int()
+        .min(minimum)
+        .max(maximum ?? Number.MAX_SAFE_INTEGER),
+    );
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']),
@@ -33,7 +70,7 @@ const envSchema = z.object({
   JWT_REFRESH_TOKEN_EXPIRES_IN: nonEmptyString,
   QUEUE_MONITOR_USERNAME: nonEmptyString,
   QUEUE_MONITOR_PASSWORD: nonEmptyString,
-  CORS_ORIGIN: z.url(),
+  CORS_ORIGINS: corsOriginsFromString,
 });
 
 export type Env = z.infer<typeof envSchema>;
