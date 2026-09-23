@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  type AnyPgColumn,
   check,
   customType,
   index,
@@ -67,6 +68,12 @@ export const refreshTokens = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    replacedByTokenId: uuid('replaced_by_token_id').references(
+      (): AnyPgColumn => refreshTokens.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
   },
   (table) => [
     index('refresh_tokens_session_id_index').on(table.sessionId),
@@ -91,11 +98,11 @@ export const authAuditEvents = pgTable(
     index('auth_audit_events_created_at_index').on(table.createdAt),
     check(
       'auth_audit_events_event_type_check',
-      sql`${table.eventType} IN ('auth.login.succeeded', 'auth.login.failed')`,
+      sql`${table.eventType} IN ('auth.login.succeeded', 'auth.login.failed', 'auth.refresh.succeeded', 'auth.refresh.failed', 'auth.refresh.reuse_detected', 'auth.session.revoked_due_to_refresh_reuse')`,
     ),
     check(
       'auth_audit_events_reason_check',
-      sql`${table.reason} IS NULL OR ${table.reason} IN ('INVALID_CREDENTIALS', 'ACCOUNT_DISABLED', 'ACCOUNT_DELETED', 'RATE_LIMITED', 'INTERNAL_ERROR')`,
+      sql`${table.reason} IS NULL OR ${table.reason} IN ('INVALID_CREDENTIALS', 'ACCOUNT_DISABLED', 'ACCOUNT_DELETED', 'RATE_LIMITED', 'INTERNAL_ERROR', 'INVALID_REFRESH_TOKEN', 'TOKEN_EXPIRED', 'TOKEN_REVOKED', 'TOKEN_REUSED', 'SESSION_EXPIRED', 'SESSION_REVOKED')`,
     ),
   ],
 );

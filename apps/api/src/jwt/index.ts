@@ -18,6 +18,7 @@ const issueTokenSchema = z
     typ: tokenTypeSchema,
     sid: uuidSchema.optional(),
     nbf: numericDateSchema.optional(),
+    expiresAt: numericDateSchema.optional(),
   })
   .strict();
 
@@ -71,7 +72,7 @@ export function createJwt(config: JwtConfig): JwtService {
           audience: config.audience,
           subject: parsedInput.data.sub,
           jwtid: randomUUID(),
-          expiresIn: expirationFor(parsedInput.data.typ, config),
+          expiresIn: expirationFor(parsedInput.data, config),
         });
       } catch {
         throw new JwtError('issuance');
@@ -113,9 +114,15 @@ function createPayload(input: IssueTokenInput): { typ: TokenType; sid?: string; 
   };
 }
 
-function expirationFor(type: TokenType, config: JwtConfig): SignOptions['expiresIn'] {
+function expirationFor(input: IssueTokenInput, config: JwtConfig): SignOptions['expiresIn'] {
+  if (input.expiresAt !== undefined) {
+    const seconds = input.expiresAt - Math.floor(Date.now() / 1000);
+    if (seconds < 1) throw new JwtError('issuance');
+    return seconds;
+  }
+
   const parsedDuration = tokenDurationSchema.safeParse(
-    type === 'access' ? config.accessTokenExpiresIn : config.refreshTokenExpiresIn,
+    input.typ === 'access' ? config.accessTokenExpiresIn : config.refreshTokenExpiresIn,
   );
 
   if (!parsedDuration.success) throw new JwtError('issuance');

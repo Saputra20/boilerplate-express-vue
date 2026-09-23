@@ -1,44 +1,42 @@
-# be/11-refresh-token — Refresh Token Rotation
+# be/11-refresh-token - Refresh Token Rotation
 
-## Tujuan
+## Apa yang dibuat?
 
-Implement session-bound refresh-token issuance, validation, atomic rotation, and reuse detection only after storage and API policy approval.
+Task ini sekarang punya kontrak eksekusi untuk `POST /auth/refresh`, rotasi refresh token, deteksi replay, dan audit refresh.
 
-## Kenapa Task Ini Dibutuhkan
+## Kenapa dibuat?
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+Refresh token adalah credential jangka lebih panjang. Rotasi membuat setiap token hanya bisa dipakai sekali sehingga pemakaian ulang token lama dapat dianggap tanda compromise.
 
-## Apa yang Akan Dikerjakan
+## Apa yang berubah?
 
-- Implement session-bound refresh-token issuance, validation, atomic rotation, and reuse detection only after storage and API policy approval.
-- Validasi dan evidence sesuai technical.md.
+- Refresh token dikirim melalui JSON body dan token pengganti kembali melalui JSON, sama seperti kontrak login.
+- Setiap refresh sukses membuat access token dan refresh token baru dengan JTI baru, tetapi `sub` user dan `sid` session tetap sama.
+- Token refresh lama dikonsumsi dan hanya boleh dipakai sekali.
+- Reuse token lama merevoke session terkait saja; session lain milik user tidak ikut direvoke.
+- Masa hidup session tidak diperpanjang. Expiry refresh token baru tidak boleh melewati expiry session awal.
+- Database menambah lineage token dan vocabulary audit refresh yang fokus, bukan tabel refresh baru.
 
-## Apa yang Tidak Dikerjakan
+## Apa yang tidak berubah?
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+Raw refresh token tidak disimpan. Access token juga tidak disimpan. Cookie, CSRF, logout, revoke-all session, dan generic revocation tetap bukan scope task ini.
 
-## Dependency
+## Dependency task apa?
 
-be/10-login-session
+Task ini memakai JWT foundation dan login/session foundation, termasuk `auth_sessions`, `refresh_tokens`, audit, request ID, dan rate limit global.
 
-## Risiko / Hal yang Perlu Diperhatikan
+## Risiko utama?
 
-TODO: REQUIREMENT NEEDED — transport, token-record schema, rotation/reuse policy, expiry, error contract.
+Rotasi harus atomik. Dua request memakai token sama tidak boleh menghasilkan dua token pengganti. Jika token lama dipakai ulang setelah rotasi, hanya session yang mungkin compromise yang direvoke dan respons publik tetap generik.
 
-## Cara Verifikasi
+## Bagaimana cara mengecek hasilnya?
 
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Review request/response, claim `sub`/`sid`/JTI, lineage, concurrent refresh, reuse, expiry cap, audit redaction, dan tidak adanya raw token di database/log. Jalankan migration UP/DOWN/re-apply terisolasi, lint, typecheck, test, `git diff --check`, dan Code Anti-Slop.
 
-## Yang Perlu Direview Human
+## Apa yang harus direview manusia?
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Pastikan transport JSON tetap konsisten, session expiry tidak sliding, reuse tidak merevoke session lain, dan migrasi hanya menambah lineage/audit vocabulary yang diperlukan.
 
-## Output yang Diharapkan
+## Apa yang belum dikerjakan?
 
-Implement session-bound refresh-token issuance, validation, atomic rotation, and reuse detection only after storage and API policy approval.
-
-## Task Berikutnya
-
-be/12-logout-revocation
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Implementasi refresh belum dibuat dalam pembaruan dokumen ini. Logout, revoke-all, dan general revocation API tetap task `be/12-logout-revocation`.

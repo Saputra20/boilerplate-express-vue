@@ -1,6 +1,8 @@
 import { createApp } from './app.js';
 import { createLoginRepository } from './auth/login-repository.js';
 import { createLoginService } from './auth/login-service.js';
+import { createRefreshRepository } from './auth/refresh-repository.js';
+import { createRefreshService } from './auth/refresh-service.js';
 import { loadEnv } from './config/env.js';
 import { createDatabase } from './database/client.js';
 import { loadDatabaseConfig } from './database/config.js';
@@ -40,6 +42,7 @@ async function startServer(): Promise<void> {
     logging,
     { corsOrigins: env.CORS_ORIGINS },
     createLoginService(createLoginRepository(database.db), jwt),
+    createRefreshService(createRefreshRepository(database.db), jwt),
   );
 
   const server = app.listen(env.PORT, () => {

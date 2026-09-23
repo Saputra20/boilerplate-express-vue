@@ -1,0 +1,2 @@
+ALTER TABLE "refresh_tokens" ADD COLUMN "replaced_by_token_id" uuid;--> statement-breakpoint
+ALTER TABLE "refresh_tokens" ADD CONSTRAINT "refresh_tokens_replaced_by_token_id_refresh_tokens_id_fk" FOREIGN KEY ("replaced_by_token_id") REFERENCES "public"."refresh_tokens"("id") ON DELETE set null ON UPDATE no action;
