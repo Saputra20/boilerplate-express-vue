@@ -4,7 +4,7 @@ import {
   PasswordError,
   hashPassword,
   verifyPassword,
-} from '../src/password/index.js';
+} from '../src/helpers/password.helper.js';
 
 const validPassword = 'lowercase passphrase';
 

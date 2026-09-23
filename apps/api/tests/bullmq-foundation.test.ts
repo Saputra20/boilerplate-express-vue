@@ -7,7 +7,7 @@ import {
   DEFAULT_QUEUE_NAME,
   FAILED_JOB_RETENTION_SECONDS,
   createQueueInfrastructure,
-} from '../src/queue/index.js';
+} from '../src/config/queue/queue.js';
 import { shutdown } from '../src/shutdown.js';
 import {
   API_INTEGRATION_ENABLED,

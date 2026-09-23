@@ -13,6 +13,7 @@ Turn repository documentation into execution contracts without turning TODO requ
 2. Label claims as established source behavior, documented target, or unresolved.
 3. Preserve existing task IDs and graph. Do not create feature IDs, API paths, permission catalogs, or UI behavior. Only document conservative, reversible infrastructure defaults when `AGENTS.md` permits them; block unresolved product, security, compliance, destructive, public-contract, or irreversible decisions.
 4. Require outcome, scope, non-goals, contracts, runtime, errors, security, tests, Anti-Slop, evidence, traceability, and open points.
+5. For every backend file impact, state owning module, existing files changing, whether new module files are needed, classification (`module`, `config`, `middleware`, `common`, or `helper`), and whether it would create a forbidden new `apps/api/src` root directory.
 
 ## Existing Examples
 - tasks/be/02-environment-validation/technical.md has a concrete configuration/startup contract.
@@ -22,3 +23,5 @@ Turn repository documentation into execution contracts without turning TODO requ
 - [ ] Dependency exists and has no cycle.
 - [ ] Acceptance criteria have observable evidence.
 - [ ] Open points block unsafe implementation.
+- [ ] Backend file ownership and import direction match `docs/ARCHITECTURE.md`.
+- [ ] Plan does not create a new top-level API feature/infrastructure directory.

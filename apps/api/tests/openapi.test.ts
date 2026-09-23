@@ -6,7 +6,7 @@ import {
   OPENAPI_INFO_VERSION,
   OPENAPI_UI_PATH,
   OPENAPI_VERSION,
-} from '../src/openapi/index.js';
+} from '../src/config/openapi/openapi.js';
 
 function createTestApp() {
   return createApiTestApp();

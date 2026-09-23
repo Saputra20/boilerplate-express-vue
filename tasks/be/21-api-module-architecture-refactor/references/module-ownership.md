@@ -2,7 +2,7 @@
 
 ## Auth
 
-`modules/auth` owns current login, refresh rotation, logout/session revocation, and access-token authentication services/repositories plus auth router/controllers. It owns no generic RBAC permission lookup.
+`modules/auth` owns current login, refresh rotation, logout/session revocation, access-token authentication services/repositories, auth router/controllers, and auth-specific OpenAPI contribution. It owns no generic RBAC permission lookup.
 
 ## RBAC
 
@@ -12,9 +12,21 @@
 
 `modules/audit` owns generic audit event validation, recording, cleanup, and persistence. It has no HTTP endpoint. Existing auth-specific audit writes remain inside their current auth repository transaction ownership; this task does not merge audit domains or change writes.
 
+## Health
+
+`modules/health` owns liveness and readiness routes plus the health/readiness OpenAPI contribution. It does not own PostgreSQL clients, Redis clients, the global OpenAPI document, or application security middleware.
+
+## OpenAPI
+
+`config/openapi` owns global document generation, Swagger UI, contribution aggregation, and reusable global security/error components. Modules retain API documentation for their own routes.
+
+## Queue Monitor
+
+`config/queue` owns bull-board adapter setup, operational monitor authentication, and read-only monitor mounting. Future feature/module tasks own business queue processors.
+
 ## Config
 
-`config` owns startup/configuration and lifecycle infrastructure: environment, PostgreSQL/Drizzle, Redis, confirmed BullMQ queue infrastructure, logger, JWT/key initialization, and HTTP security policy configuration. It must not import business modules.
+`config` owns startup/configuration and lifecycle infrastructure: environment, PostgreSQL/Drizzle, Redis, confirmed BullMQ queue infrastructure, logger, JWT/key initialization, HTTP security policy configuration, global OpenAPI infrastructure, and queue monitor infrastructure. It must not import business modules.
 
 ## Middleware
 

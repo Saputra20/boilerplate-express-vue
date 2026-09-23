@@ -1,6 +1,6 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readRollbackMigrations } from '../src/database/rollback.js';
+import { readRollbackMigrations } from '../src/config/drizzle/rollback.js';
 import {
   auditEvents,
   authAuditEvents,
@@ -12,7 +12,7 @@ import {
   userRoles,
   users,
   userStatus,
-} from '../src/database/schema.js';
+} from '../src/config/drizzle/schema.js';
 
 const migrationsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '../drizzle');
 const tableColumns = (table: object) => Object.keys(table).filter((key) => key !== 'enableRLS');

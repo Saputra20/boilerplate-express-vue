@@ -5,8 +5,8 @@ import {
   checkReadiness,
   READINESS_TIMEOUT_MS,
   type HealthRouteOptions,
-} from '../src/health/index.js';
-import { OPENAPI_DOCUMENT_PATH } from '../src/openapi/index.js';
+} from '../src/modules/health/health.router.js';
+import { OPENAPI_DOCUMENT_PATH } from '../src/config/openapi/openapi.js';
 import { createTestApp as createApiTestApp, TEST_CORS_ORIGIN } from './helpers/test-app.js';
 
 const origin = TEST_CORS_ORIGIN;

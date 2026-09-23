@@ -2,14 +2,14 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createApp } from '../../src/app.js';
-import type { AccessAuthService } from '../../src/auth/access-auth-service.js';
-import type { LoginService } from '../../src/auth/login-service.js';
-import type { LogoutService } from '../../src/auth/logout-service.js';
-import type { RefreshService } from '../../src/auth/refresh-service.js';
-import type { HealthRouteOptions } from '../../src/health/index.js';
-import { createLogging, type Logging } from '../../src/logging/index.js';
-import type { QueueMonitorOptions } from '../../src/queue/monitor.js';
-import type { SecurityOptions } from '../../src/security/index.js';
+import type { AccessAuthService } from '../../src/modules/auth/services/access-auth.service.js';
+import type { LoginService } from '../../src/modules/auth/services/login.service.js';
+import type { LogoutService } from '../../src/modules/auth/services/logout.service.js';
+import type { RefreshService } from '../../src/modules/auth/services/refresh-token.service.js';
+import type { HealthRouteOptions } from '../../src/modules/health/health.router.js';
+import { createLogging, type Logging } from '../../src/config/logger/logger.js';
+import type { QueueMonitorOptions } from '../../src/config/queue/queue-monitor.js';
+import type { SecurityOptions } from '../../src/config/security/http-security.config.js';
 
 export const TEST_CORS_ORIGIN = 'http://localhost:5173';
 

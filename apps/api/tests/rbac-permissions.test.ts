@@ -4,17 +4,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import express from 'express';
 import request from 'supertest';
-import { createAccessAuthMiddleware } from '../src/auth/access-auth-middleware.js';
-import type { AccessAuthRepository } from '../src/auth/access-auth-service.js';
-import { createAccessAuthService } from '../src/auth/access-auth-service.js';
-import { createPermissionMiddleware } from '../src/auth/permission-middleware.js';
+import { createAccessAuthMiddleware } from '../src/middleware/authentication.middleware.js';
+import type { AccessAuthRepository } from '../src/modules/auth/services/access-auth.service.js';
+import { createAccessAuthService } from '../src/modules/auth/services/access-auth.service.js';
+import { createPermissionMiddleware } from '../src/middleware/permission.middleware.js';
 import {
   createPermissionService,
   type PermissionRepository,
-} from '../src/auth/permission-service.js';
-import { createErrorHandler } from '../src/security/index.js';
-import { createJwt, type JwtService } from '../src/jwt/index.js';
-import { createLogging } from '../src/logging/index.js';
+} from '../src/modules/rbac/services/permission.service.js';
+import { createErrorHandler } from '../src/middleware/error.middleware.js';
+import { createJwt, type JwtService } from '../src/config/jwt/jwt.js';
+import { createLogging } from '../src/config/logger/logger.js';
 
 class MemoryAccessAuthRepository implements AccessAuthRepository {
   async findPrincipal({ sub, sid, jti }: Parameters<AccessAuthRepository['findPrincipal']>[0]) {

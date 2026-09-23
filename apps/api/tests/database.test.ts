@@ -1,5 +1,5 @@
-import { createDatabase } from '../src/database/client.js';
-import { loadDatabaseConfig } from '../src/database/config.js';
+import { createDatabase } from '../src/config/database/client.js';
+import { loadDatabaseConfig } from '../src/config/database/config.js';
 
 const validDatabaseEnv = () => ({
   DATABASE_HOST: 'localhost',

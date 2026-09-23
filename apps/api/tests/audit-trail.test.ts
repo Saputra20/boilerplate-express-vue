@@ -5,7 +5,7 @@ import {
   type AuditEvent,
   type AuditLogger,
   type AuditRepository,
-} from '../src/audit/audit-service.js';
+} from '../src/modules/audit/services/audit.service.js';
 
 type MemoryTransaction = {
   committed: boolean;

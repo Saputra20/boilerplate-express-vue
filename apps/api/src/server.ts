@@ -1,21 +1,21 @@
 import { createApp } from './app.js';
-import { createLoginRepository } from './auth/login-repository.js';
-import { createLoginService } from './auth/login-service.js';
-import { createAccessAuthRepository } from './auth/access-auth-repository.js';
-import { createAccessAuthService } from './auth/access-auth-service.js';
-import { createLogoutRepository } from './auth/logout-repository.js';
-import { createLogoutService } from './auth/logout-service.js';
-import { createRefreshRepository } from './auth/refresh-repository.js';
-import { createRefreshService } from './auth/refresh-service.js';
+import { createLoginRepository } from './modules/auth/repositories/login.repository.js';
+import { createLoginService } from './modules/auth/services/login.service.js';
+import { createAccessAuthRepository } from './modules/auth/repositories/access-auth.repository.js';
+import { createAccessAuthService } from './modules/auth/services/access-auth.service.js';
+import { createLogoutRepository } from './modules/auth/repositories/logout.repository.js';
+import { createLogoutService } from './modules/auth/services/logout.service.js';
+import { createRefreshRepository } from './modules/auth/repositories/refresh-token.repository.js';
+import { createRefreshService } from './modules/auth/services/refresh-token.service.js';
 import { loadEnv } from './config/env.js';
-import { createDatabase } from './database/client.js';
-import { loadDatabaseConfig } from './database/config.js';
-import { createLogging } from './logging/index.js';
-import { createQueueInfrastructure } from './queue/index.js';
-import { createRedis } from './redis/client.js';
-import { loadRedisConfig } from './redis/config.js';
+import { createDatabase } from './config/database/client.js';
+import { loadDatabaseConfig } from './config/database/config.js';
+import { createLogging } from './config/logger/logger.js';
+import { createQueueInfrastructure } from './config/queue/queue.js';
+import { createRedis } from './config/redis/client.js';
+import { loadRedisConfig } from './config/redis/config.js';
 import { shutdown } from './shutdown.js';
-import { createJwt, type JwtService } from './jwt/index.js';
+import { createJwt, type JwtService } from './config/jwt/jwt.js';
 import { sql } from 'drizzle-orm';
 
 async function startServer(): Promise<void> {

@@ -10,9 +10,9 @@ import {
   type RefreshFailureReason,
   type RefreshRotationRepository,
   type RefreshService,
-} from '../src/auth/refresh-service.js';
-import { createJwt, type JwtService } from '../src/jwt/index.js';
-import { createLogging } from '../src/logging/index.js';
+} from '../src/modules/auth/services/refresh-token.service.js';
+import { createJwt, type JwtService } from '../src/config/jwt/jwt.js';
+import { createLogging } from '../src/config/logger/logger.js';
 
 const origin = 'http://localhost:5173';
 

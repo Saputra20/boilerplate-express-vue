@@ -1,5 +1,5 @@
-import { createRedis } from '../src/redis/client.js';
-import { loadRedisConfig } from '../src/redis/config.js';
+import { createRedis } from '../src/config/redis/client.js';
+import { loadRedisConfig } from '../src/config/redis/config.js';
 
 const validRedisEnv = () => ({
   REDIS_HOST: 'localhost',

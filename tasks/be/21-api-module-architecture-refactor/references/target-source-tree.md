@@ -19,11 +19,14 @@ apps/api/src/
       jwt.ts
     logger/
       logger.ts
+    openapi/
+      openapi.ts
+    queue/
+      queue.ts
+      queue-monitor.ts
     redis/
       client.ts
       config.ts
-    queue/
-      queue.ts
     security/
       http-security.config.ts
   common/
@@ -44,6 +47,7 @@ apps/api/src/
         audit.service.ts
     auth/
       auth.router.ts
+      auth.openapi.ts
       controllers/
         login.controller.ts
         logout.controller.ts
@@ -58,6 +62,9 @@ apps/api/src/
         login.service.ts
         logout.service.ts
         refresh-token.service.ts
+    health/
+      health.router.ts
+      health.openapi.ts
     rbac/
       repositories/
         permission.repository.ts

@@ -1,20 +1,18 @@
 import express from 'express';
-import { installLoginRoute } from './auth/login-route.js';
-import type { LoginService } from './auth/login-service.js';
-import { installLogoutRoutes } from './auth/logout-route.js';
-import type { AccessAuthService } from './auth/access-auth-service.js';
-import type { LogoutService } from './auth/logout-service.js';
-import { installRefreshRoute } from './auth/refresh-route.js';
-import type { RefreshService } from './auth/refresh-service.js';
-import { installHealthRoutes, type HealthRouteOptions } from './health/index.js';
-import type { Logging } from './logging/index.js';
-import { installOpenApiRoutes } from './openapi/index.js';
-import { installQueueMonitor, type QueueMonitorOptions } from './queue/monitor.js';
-import {
-  createErrorHandler,
-  installSecurityMiddleware,
-  type SecurityOptions,
-} from './security/index.js';
+import { installLoginRoute } from './modules/auth/auth.router.js';
+import type { LoginService } from './modules/auth/services/login.service.js';
+import { installLogoutRoutes } from './modules/auth/auth.router.js';
+import type { AccessAuthService } from './modules/auth/services/access-auth.service.js';
+import type { LogoutService } from './modules/auth/services/logout.service.js';
+import { installRefreshRoute } from './modules/auth/auth.router.js';
+import type { RefreshService } from './modules/auth/services/refresh-token.service.js';
+import { installHealthRoutes, type HealthRouteOptions } from './modules/health/health.router.js';
+import type { Logging } from './config/logger/logger.js';
+import { installOpenApiRoutes } from './config/openapi/openapi.js';
+import { installQueueMonitor, type QueueMonitorOptions } from './config/queue/queue-monitor.js';
+import { type SecurityOptions } from './config/security/http-security.config.js';
+import { createErrorHandler } from './middleware/error.middleware.js';
+import { installSecurityMiddleware } from './middleware/security.middleware.js';
 
 export function createApp(
   logging: Logging,

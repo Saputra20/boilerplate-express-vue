@@ -1,10 +1,12 @@
 # Current API Source Tree
 
-Inspected on September 23, 2026. This is the complete current `apps/api/src` file tree used by the migration matrix.
+Current live source inventory before the be/21 refactor. Every listed file is represented once in `technical.md` section 10.1.
 
 ```text
 apps/api/src/
   app.ts
+  server.ts
+  shutdown.ts
   audit/
     audit-repository.ts
     audit-service.ts
@@ -18,6 +20,7 @@ apps/api/src/
     logout-repository.ts
     logout-route.ts
     logout-service.ts
+    openapi.ts
     permission-middleware.ts
     permission-repository.ts
     permission-service.ts
@@ -31,21 +34,25 @@ apps/api/src/
     config.ts
     rollback.ts
     schema.ts
+  health/
+    index.ts
+    openapi.ts
   jwt/
     index.ts
   logging/
+    index.ts
+  openapi/
     index.ts
   password/
     index.ts
   queue/
     index.ts
+    monitor.ts
   redis/
     client.ts
     config.ts
   security/
     index.ts
-  server.ts
-  shutdown.ts
 ```
 
-Count: 32 TypeScript files. `technical.md` section 10.1 maps each file exactly once.
+Count: 37 TypeScript files.

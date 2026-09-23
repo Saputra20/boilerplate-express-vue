@@ -1,7 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadDatabaseConfig } from '../src/database/config.js';
-import { rollbackMigrations } from '../src/database/rollback.js';
+import { loadDatabaseConfig } from '../src/config/database/config.js';
+import { rollbackMigrations } from '../src/config/drizzle/rollback.js';
 
 if (process.env.NODE_ENV !== 'test') {
   throw new Error('Database rollback requires NODE_ENV=test');

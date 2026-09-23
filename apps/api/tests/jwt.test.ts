@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { sign, type SignOptions } from 'jsonwebtoken';
-import { createJwt, JwtError, type JwtConfig } from '../src/jwt/index.js';
+import { createJwt, JwtError, type JwtConfig } from '../src/config/jwt/jwt.js';
 
 const issuer = 'app-api';
 const audience = 'app-cms';

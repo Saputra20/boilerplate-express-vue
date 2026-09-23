@@ -11,7 +11,11 @@
 
 `middleware → route → controller → service/use case → repository → database`
 
-Cross-cutting concerns live in focused infrastructure modules. Business modules own their routes, controllers, services, repositories, schemas, and tests. No generic CRUD layer.
+`apps/api/src/modules/<module>/` owns business capabilities. Auth owns authentication/session behavior, RBAC owns permission resolution, audit owns audit persistence, and health owns liveness/readiness routes plus its OpenAPI contribution. A module may omit layers it does not need.
+
+`apps/api/src/middleware/` owns cross-cutting Express enforcement. `apps/api/src/config/` owns infrastructure setup: environment, database/Drizzle, Redis, BullMQ, logger, JWT, HTTP security, and global OpenAPI aggregation. `apps/api/src/helpers/` owns small stateless technical helpers. `common/` is reserved for genuine non-domain primitives, not a dumping ground.
+
+Dependencies flow inward: app/server compose config, middleware, and module routers; controllers depend on module services; services depend on module repositories and approved infrastructure contracts; repositories depend on database schema/client. Modules do not import app/server, infrastructure does not import business services, and global OpenAPI aggregation imports module contributions without owning module API definitions. No generic CRUD layer.
 
 Operational dashboards mount inside the API only after baseline security middleware and use explicit queue/resource registration. They are internal tooling, not business API or CMS capabilities.
 

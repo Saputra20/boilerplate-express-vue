@@ -5,12 +5,15 @@ import { join } from 'node:path';
 import express from 'express';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
-import { createAccessAuthMiddleware } from '../src/auth/access-auth-middleware.js';
-import type { AccessAuthRepository } from '../src/auth/access-auth-service.js';
-import { createAccessAuthService } from '../src/auth/access-auth-service.js';
-import { createLogoutService, type LogoutRepository } from '../src/auth/logout-service.js';
-import { createJwt, type JwtService } from '../src/jwt/index.js';
-import { createLogging } from '../src/logging/index.js';
+import { createAccessAuthMiddleware } from '../src/middleware/authentication.middleware.js';
+import type { AccessAuthRepository } from '../src/modules/auth/services/access-auth.service.js';
+import { createAccessAuthService } from '../src/modules/auth/services/access-auth.service.js';
+import {
+  createLogoutService,
+  type LogoutRepository,
+} from '../src/modules/auth/services/logout.service.js';
+import { createJwt, type JwtService } from '../src/config/jwt/jwt.js';
+import { createLogging } from '../src/config/logger/logger.js';
 
 class MemoryAccessAuthRepository implements AccessAuthRepository {
   revoked = false;

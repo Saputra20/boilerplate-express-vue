@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { Writable } from 'node:stream';
 import express from 'express';
 import request from 'supertest';
-import { createLogging } from '../src/logging/index.js';
+import { createLogging } from '../src/config/logger/logger.js';
 
 class MemoryStream extends Writable {
   output = '';

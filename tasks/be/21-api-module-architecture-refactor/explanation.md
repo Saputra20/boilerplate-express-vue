@@ -10,13 +10,15 @@ Task ini ditempatkan setelah `be/20-backend-quality-gate` supaya fondasi yang su
 
 ## Apa yang berubah?
 
-Saat dieksekusi nanti, auth menjadi pemilik `modules/auth`; permission/RBAC menjadi `modules/rbac`; generic audit menjadi `modules/audit`. Middleware Express lintas fitur pindah ke `middleware`. Database, Redis, logger, JWT/key, environment, dan konfigurasi HTTP security pindah ke `config`. Password dan fingerprint refresh token yang stateless pindah ke `helpers`.
+Saat dieksekusi nanti, auth menjadi pemilik `modules/auth`; permission/RBAC menjadi `modules/rbac`; generic audit menjadi `modules/audit`; dan health/readiness menjadi `modules/health`. Middleware Express lintas fitur pindah ke `middleware`. Database, Redis, logger, JWT/key, environment, konfigurasi HTTP security, OpenAPI global, dan queue monitor pindah ke `config`. Password dan fingerprint refresh token yang stateless pindah ke `helpers`.
+
+Kontrak sekarang memetakan seluruh 37 file source saat ini. Kontribusi OpenAPI auth dan health tetap dimiliki module masing-masing; agregasi dokumen OpenAPI global tetap infrastruktur konfigurasi.
 
 `common` bukan tempat menaruh apa saja. Tidak ada source saat ini yang memenuhi syarat shared non-domain primitive, jadi task tidak akan membuat folder kosong atau placeholder.
 
 ## Apa yang tidak berubah?
 
-API, database, migrasi, JWT claims, login, refresh, logout, session, RBAC, audit, Redis, logger, security middleware, environment, dan graceful shutdown tidak berubah. Tidak ada endpoint RBAC/audit baru. Tidak ada BullMQ atau fitur backend berikutnya.
+API, database, migrasi, JWT claims, login, refresh, logout, session, RBAC, audit, Redis, logger, security middleware, environment, dan graceful shutdown tidak berubah. `/health`, `/ready`, `/docs`, `/openapi.json`, dan `/ops/queues` juga tidak berubah. Tidak ada endpoint RBAC/audit baru atau fitur backend berikutnya.
 
 ## Dependency task apa?
 
@@ -36,4 +38,4 @@ Pastikan pemisahan ownership benar: domain di module, middleware hanya lintas HT
 
 ## Apa yang belum dikerjakan?
 
-Refactor belum dieksekusi. Pemindahan file, perubahan import, update aturan/arsitektur/skill, dan validasi runtime hanya dilakukan setelah `be/20` lulus dan task ini disetujui untuk implementasi.
+Refactor belum dieksekusi. Run ini hanya memperbaiki kontrak dan referensi. Pemindahan file, perubahan import, update aturan/arsitektur/skill, dan validasi runtime memerlukan eksekusi implementasi terpisah.

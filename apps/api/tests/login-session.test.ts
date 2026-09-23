@@ -12,10 +12,10 @@ import {
   type LoginRepository,
   type LoginService,
   type LoginUser,
-} from '../src/auth/login-service.js';
-import { createJwt, type JwtService } from '../src/jwt/index.js';
-import { createLogging } from '../src/logging/index.js';
-import { hashPassword } from '../src/password/index.js';
+} from '../src/modules/auth/services/login.service.js';
+import { createJwt, type JwtService } from '../src/config/jwt/jwt.js';
+import { createLogging } from '../src/config/logger/logger.js';
+import { hashPassword } from '../src/helpers/password.helper.js';
 
 const password = 'correct horse battery staple';
 const origin = 'http://localhost:5173';

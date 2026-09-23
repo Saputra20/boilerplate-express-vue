@@ -313,6 +313,30 @@ Persisted logs must have bounded growth through project-compatible rotation and 
 
 Audit records are append-only durable history, not log copies. Construct audit metadata from explicit allowlists, bound its size, and never store raw credentials, tokens, secrets, headers, cookies, payload dumps, or exception stacks. Source-record deletion must not cascade-delete audit history. Security/state changes fail closed only when their approved owner requires durable audit in the same transaction; explicitly informational events may be best-effort. Public audit reads require an approved RBAC contract and retention/compliance policy must not be invented.
 
+## Backend Module Organization
+
+Backend uses module-first organization.
+
+Business/domain capabilities live under `apps/api/src/modules/<module>/`.
+
+A module owns its controller, router, service/use case, repository, validation, schema, types, and module-specific helpers.
+
+Cross-cutting Express middleware lives under `apps/api/src/middleware/`.
+
+Infrastructure/configuration lives under `apps/api/src/config/`.
+
+Reusable non-domain primitives live under `apps/api/src/common/`.
+
+Small stateless technical helpers live under `apps/api/src/helpers/`.
+
+Do not create new top-level feature/infrastructure directories under `apps/api/src`.
+
+Do not organize business behavior into global technical-layer folders.
+
+Request flow remains `middleware → router → controller → service/use case → repository → database`.
+
+Module ownership and filesystem organization are mandatory architecture rules.
+
 ## Anti-Slop Mandatory Quality Gate
 
 **Anti-Slop is mandatory for every approved task. It is never optional.** It is not skipped because work is small, frontend, UI, configuration, refactor, bug fix, or because lint, typecheck, tests, or build pass.

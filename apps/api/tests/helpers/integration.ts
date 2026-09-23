@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Redis } from 'ioredis';
-import { loadDatabaseConfig, type DatabaseConfig } from '../../src/database/config.js';
-import { loadRedisConfig, type RedisConfig } from '../../src/redis/config.js';
+import { loadDatabaseConfig, type DatabaseConfig } from '../../src/config/database/config.js';
+import { loadRedisConfig, type RedisConfig } from '../../src/config/redis/config.js';
 
 export const API_INTEGRATION_ENABLED = process.env.API_INTEGRATION === 'true';
 

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
-import { createDatabase } from '../src/database/client.js';
+import { createDatabase } from '../src/config/database/client.js';
 import { API_INTEGRATION_ENABLED, testDatabaseConfig } from './helpers/integration.js';
 
 const integrationDescribe = API_INTEGRATION_ENABLED ? describe : describe.skip;

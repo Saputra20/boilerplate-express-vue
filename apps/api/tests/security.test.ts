@@ -4,8 +4,9 @@ import { join } from 'node:path';
 import express from 'express';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
-import { createLogging } from '../src/logging/index.js';
-import { createErrorHandler, installSecurityMiddleware } from '../src/security/index.js';
+import { createLogging } from '../src/config/logger/logger.js';
+import { createErrorHandler } from '../src/middleware/error.middleware.js';
+import { installSecurityMiddleware } from '../src/middleware/security.middleware.js';
 import { shutdown } from '../src/shutdown.js';
 
 const origin = 'http://localhost:5173';

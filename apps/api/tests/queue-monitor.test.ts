@@ -5,13 +5,13 @@ import { Queue } from 'bullmq';
 import express from 'express';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
-import { createLogging } from '../src/logging/index.js';
+import { createLogging } from '../src/config/logger/logger.js';
 import {
   installQueueMonitor,
   QUEUE_MONITOR_PATH,
   QUEUE_MONITOR_REALM,
-} from '../src/queue/monitor.js';
-import { DEFAULT_QUEUE_NAME } from '../src/queue/index.js';
+} from '../src/config/queue/queue-monitor.js';
+import { DEFAULT_QUEUE_NAME } from '../src/config/queue/queue.js';
 
 const monitorCredentials = {
   username: 'queue-monitor',

@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Behavior-preserving structural refactor |
 | Repository/App | `apps/api` |
-| Status | Blocked — execute only after `be/20-backend-quality-gate` passes. |
+| Status | Ready — contract reconciled after predecessor source additions; source refactor requires separate approved execution. |
 | Priority | Architecture gate after backend quality gate |
 | Suggested Size | Medium — one bounded refactor with no behavior change |
 | Depends On | `be/20-backend-quality-gate` |
@@ -27,7 +27,7 @@ Reorganize existing API source into approved module-first ownership without chan
 - `docs/ARCHITECTURE.md` defines `middleware → route → controller → service/use case → repository → database` and prohibits generic CRUD.
 - `docs/DEVELOPMENT.md`, `docs/DATABASE.md`, `docs/SECURITY.md`, and `docs/API.md` define validation, database, security, and API contract baselines.
 - `be/10-login-session`, `be/11-refresh-token`, `be/12-logout-revocation`, `be/13-rbac-permissions`, and `be/14-audit-trail` establish current auth, RBAC, and audit behavior. `be/20-backend-quality-gate` must pass first.
-- Current source groups auth, audit, database, JWT, logging, password, queue, Redis, and security beside root composition files. This mixes domain, middleware, and infrastructure ownership.
+- Current source groups auth, audit, database, health, JWT, logging, OpenAPI, password, queue, Redis, and security beside root composition files. This mixes domain, middleware, and infrastructure ownership.
 - Actual current tree: `references/current-source-tree.md`. Deterministic target tree: `references/target-source-tree.md`. Module ownership: `references/module-ownership.md`.
 
 ## 4. Dependencies
@@ -54,14 +54,14 @@ Reorganize existing API source into approved module-first ownership without chan
 - Any API path, method, request, response, status-code, error-envelope, JWT-claim, authentication, authorization, audit, Redis, logger, environment, or shutdown behavior change.
 - New HTTP endpoints, including RBAC or audit endpoints.
 - Database schema, Drizzle semantic, migration, journal, snapshot, data, or retention-policy change.
-- BullMQ, queue-monitor, OpenAPI, health/readiness, or future feature implementation.
+- New BullMQ, queue-monitor, OpenAPI, health/readiness, or future feature implementation. Approved relocation of their existing files remains in scope.
 - New dependencies, aliases, generic base classes, generic repositories/services/controllers, compatibility re-export files, or empty module templates.
 - Moving application files during this planning task.
 
 ## 7. Existing Implementation
 
-- API source: all 28 files listed in section 10.1; current tree is preserved in `references/current-source-tree.md`.
-- API tests: `apps/api/tests/app.test.ts`, `audit-trail.test.ts`, `bullmq-foundation.test.ts`, `database.test.ts`, `env.test.ts`, `identity-schema.test.ts`, `jwt.test.ts`, `logging.test.ts`, `login-session.test.ts`, `logout-revocation.test.ts`, `password.test.ts`, `rbac-permissions.test.ts`, `redis.test.ts`, `refresh-token.test.ts`, and `security.test.ts`.
+- API source: all 37 current files listed in section 10.1; current tree is preserved in `references/current-source-tree.md`.
+- API tests: `apps/api/tests/app.test.ts`, `audit-trail.test.ts`, `bullmq-foundation.test.ts`, `database.test.ts`, `env.test.ts`, `health-readiness.test.ts`, `identity-schema.test.ts`, `jwt.test.ts`, `logging.test.ts`, `login-session.test.ts`, `logout-revocation.test.ts`, `openapi.test.ts`, `password.test.ts`, `queue-monitor.test.ts`, `rbac-permissions.test.ts`, `redis.test.ts`, `refresh-token.test.ts`, and `security.test.ts`.
 - Bootstrap/config: `apps/api/package.json`, `apps/api/tsconfig.json`, `apps/api/drizzle.config.ts`, and `apps/api/scripts/db-rollback.ts`.
 - No TypeScript path aliases exist: `apps/api/tsconfig.json` has no `baseUrl` or `paths`; preserve relative ESM `.js` import convention.
 - `apps/api/package.json` exposes `lint`, `format:check`, `typecheck`, `test`, `db:generate`, `db:migrate`, and `db:rollback`; root package scripts delegate API checks.
@@ -100,9 +100,16 @@ Reorganize existing API source into approved module-first ownership without chan
 - `app.ts` is HTTP composition only. `server.ts` is process/runtime bootstrap only. `shutdown.ts` stays lifecycle cleanup only.
 - Use direct leaf imports; do not introduce barrels. Before removal, run static cycle inspection through existing lint/typecheck and repository-wide import search. If a cycle appears, move only shared non-domain type/utility to `common`; do not invert direction or create a compatibility file.
 
-### 8.4 Behavior freeze
+### 8.4 OpenAPI and operational HTTP ownership
 
-Preserve API paths, methods, payloads, responses, status codes, safe error contract, JWT claims, login/refresh/logout/session semantics, RBAC behavior, audit behavior, Redis behavior, logger behavior, security middleware behavior, environment contract, database schema, and migration history exactly. File moves and internal symbol relocation are permitted only when tests prove equivalent behavior.
+- Module-specific API documentation stays with its owning module. `modules/auth/auth.openapi.ts` and `modules/health/health.openapi.ts` define only their module contributions.
+- `config/openapi/openapi.ts` owns global contribution aggregation, document generation, Swagger UI, reusable global components, security schemes, and document validation.
+- Health/readiness remains a module because it owns routes and independent operational behavior. The bull-board monitor remains `config/queue` because it configures third-party operational infrastructure rather than a business/use-case module.
+- This distinction applies only to current documented ownership. It does not create a broader taxonomy or empty module templates.
+
+### 8.5 Behavior freeze
+
+Preserve API paths, methods, payloads, responses, status codes, safe error contract, JWT claims, login/refresh/logout/session semantics, RBAC behavior, audit behavior, Redis behavior, logger behavior, security middleware behavior, environment contract, database schema, and migration history exactly. This includes `GET /health`, `GET /ready`, `GET /docs`, `GET /openapi.json`, and `/ops/queues/*`; the monitor retains Basic Auth, read-only mode, operational-only audience, and public OpenAPI exclusion. File moves and internal symbol relocation are permitted only when tests prove equivalent behavior.
 
 ## 9. Applicable Contracts
 
@@ -112,7 +119,7 @@ No configuration semantic change. Existing environment variables, validation, de
 
 ### 9.2 API Contract
 
-No API contract change. Preserve existing `/auth/login`, `/auth/refresh`, `/auth/logout`, and `/auth/logout/all` behavior plus current fallback/security/error middleware behavior. Do not add RBAC or audit endpoints.
+No API contract change. Preserve existing `/auth/login`, `/auth/refresh`, `/auth/logout`, and `/auth/logout/all` behavior plus `GET /health`, `GET /ready`, `GET /docs`, `GET /openapi.json`, `/ops/queues/*`, and current fallback/security/error middleware behavior. Do not add RBAC or audit endpoints.
 
 ### 9.3 Database Contract
 
@@ -135,6 +142,11 @@ Not applicable — no CMS/UI change.
 - `apps/api/src/modules/auth/controllers/refresh.controller.ts`
 - `apps/api/src/modules/auth/controllers/logout.controller.ts`
 - `apps/api/src/config/security/http-security.config.ts`
+- `apps/api/src/config/openapi/openapi.ts`
+- `apps/api/src/config/queue/queue-monitor.ts`
+- `apps/api/src/modules/auth/auth.openapi.ts`
+- `apps/api/src/modules/health/health.router.ts`
+- `apps/api/src/modules/health/health.openapi.ts`
 - `apps/api/src/middleware/security.middleware.ts`
 - `apps/api/src/middleware/error.middleware.ts`
 - `apps/api/src/helpers/token-fingerprint.helper.ts`
@@ -170,6 +182,7 @@ Every current source file under `apps/api/src/**` is represented exactly once.
 | `apps/api/src/server.ts` | `apps/api/src/server.ts` | Process bootstrap | KEEP | Update imports/composition only; preserve initialization, listen, and signal wiring. |
 | `apps/api/src/shutdown.ts` | `apps/api/src/shutdown.ts` | Graceful shutdown | KEEP | Update imported resource types only if required; preserve close order and errors. |
 | `apps/api/src/config/env.ts` | `apps/api/src/config/env.ts` | Environment validation | KEEP | Already valid config ownership. |
+| `apps/api/src/openapi/index.ts` | `apps/api/src/config/openapi/openapi.ts` | Global OpenAPI/Swagger infrastructure and contribution aggregation | RENAME | Preserve `/docs`, `/openapi.json`, OpenAPI 3.0.3, security scheme, server `/`, and `/ops/queues` exclusion. |
 | `apps/api/src/database/client.ts` | `apps/api/src/config/database/client.ts` | PostgreSQL lifecycle client | RENAME | Infrastructure client; no query behavior change. |
 | `apps/api/src/database/config.ts` | `apps/api/src/config/database/config.ts` | Database configuration parsing | RENAME | Preserve config schema and values. |
 | `apps/api/src/database/rollback.ts` | `apps/api/src/config/drizzle/rollback.ts` | Drizzle rollback support | RENAME | Update rollback script import only. |
@@ -177,9 +190,12 @@ Every current source file under `apps/api/src/**` is represented exactly once.
 | `apps/api/src/redis/client.ts` | `apps/api/src/config/redis/client.ts` | Redis lifecycle client | RENAME | Preserve initialization and close behavior. |
 | `apps/api/src/redis/config.ts` | `apps/api/src/config/redis/config.ts` | Redis configuration parsing | RENAME | Preserve config schema and values. |
 | `apps/api/src/queue/index.ts` | `apps/api/src/config/queue/queue.ts` | BullMQ queue lifecycle infrastructure | RENAME | Preserve current queue defaults, initialization, worker lifecycle, error logging, and close behavior; do not add queue features. |
+| `apps/api/src/queue/monitor.ts` | `apps/api/src/config/queue/queue-monitor.ts` | Read-only bull-board operational monitor | RENAME | Preserve `/ops/queues`, Basic Auth, read-only mode, credential handling, and queue registration. |
 | `apps/api/src/logging/index.ts` | `apps/api/src/config/logger/logger.ts` | Logging initialization and lifecycle | RENAME | Preserve Morgan/Pino behavior, redaction, rotation, and exported contract. |
 | `apps/api/src/jwt/index.ts` | `apps/api/src/config/jwt/jwt.ts` | JWT/key initialization and typed issue/verify service | RENAME | Keep JWT configuration and key loading in config; preserve claims and RS256 behavior. |
 | `apps/api/src/password/index.ts` | `apps/api/src/helpers/password.helper.ts` | Stateless Argon2id policy/hash/verify helper | RENAME | Preserve password behavior; no module ownership. |
+| `apps/api/src/health/index.ts` | `apps/api/src/modules/health/health.router.ts` | Health/readiness routes and readiness probe orchestration | RENAME | Preserve `/health`, `/ready`, 2-second probes, response bodies, logging, and public exposure exactly. |
+| `apps/api/src/health/openapi.ts` | `apps/api/src/modules/health/health.openapi.ts` | Module-owned OpenAPI contribution for health/readiness | RENAME | Preserve exact documented paths/schemas/status codes; update only import paths. |
 | `apps/api/src/security/index.ts` | `apps/api/src/config/security/http-security.config.ts`; `apps/api/src/middleware/security.middleware.ts`; `apps/api/src/middleware/error.middleware.ts` | HTTP security policy, global middleware, safe errors | SPLIT | Move constants/options to config; move Express installation and error handler to focused middleware files. |
 | `apps/api/src/auth/access-auth-middleware.ts` | `apps/api/src/middleware/authentication.middleware.ts` | Cross-cutting bearer authentication | RENAME | Preserve `createAccessAuthMiddleware` and `getAccessPrincipal` semantics. |
 | `apps/api/src/auth/permission-middleware.ts` | `apps/api/src/middleware/permission.middleware.ts` | Cross-cutting permission enforcement | RENAME | Preserve explicit permission enforcement and `403` behavior. |
@@ -194,21 +210,23 @@ Every current source file under `apps/api/src/**` is represented exactly once.
 | `apps/api/src/auth/logout-service.ts` | `apps/api/src/modules/auth/services/logout.service.ts` | Current/all-session logout use case | RENAME | Preserve current-vs-all-session semantics. |
 | `apps/api/src/auth/logout-repository.ts` | `apps/api/src/modules/auth/repositories/logout.repository.ts` | Logout/revocation persistence | RENAME | Preserve token/session revocation and audit writes. |
 | `apps/api/src/auth/logout-route.ts` | `apps/api/src/modules/auth/auth.router.ts`; `apps/api/src/modules/auth/controllers/logout.controller.ts` | Logout route mounts and controllers | SPLIT | Router owns registrations; controller retains auth/permission composition and existing status/error behavior. |
+| `apps/api/src/auth/openapi.ts` | `apps/api/src/modules/auth/auth.openapi.ts` | Module-owned OpenAPI contribution for authentication | RENAME | Preserve exact documented auth paths/schemas/status codes; global aggregation imports this module contribution. |
 | `apps/api/src/auth/permission-service.ts` | `apps/api/src/modules/rbac/services/permission.service.ts` | Permission resolution use case | RENAME | RBAC ownership; preserve denies and audit behavior. |
 | `apps/api/src/auth/permission-repository.ts` | `apps/api/src/modules/rbac/repositories/permission.repository.ts` | User-role-permission lookup | RENAME | Preserve query and permission result behavior. |
 | `apps/api/src/audit/audit-service.ts` | `apps/api/src/modules/audit/services/audit.service.ts` | Generic audit validation/recording/cleanup | RENAME | Preserve input validation, required/informational semantics, and safe metadata rules. |
 | `apps/api/src/audit/audit-repository.ts` | `apps/api/src/modules/audit/repositories/audit.repository.ts` | Generic audit persistence | RENAME | Preserve append/cleanup behavior and schema import. |
 
-Migration action totals: KEEP 4; MOVE 0; RENAME 22; SPLIT 6; MERGE 0; DELETE AFTER MOVE 0. Old directories are removed only as a result of moved/split files; no standalone compatibility files remain.
+Migration action totals: KEEP 4; MOVE 0; RENAME 27; SPLIT 6; MERGE 0; DELETE AFTER MOVE 0. All 37 current source files are represented exactly once. Old directories are removed only as a result of moved/split files; no standalone compatibility files remain.
 
 ## 11. Runtime Behavior
 
 1. `server.ts` validates environment, initializes logging/database/Redis/JWT and confirmed queue infrastructure, composes focused module services/repositories, creates app, listens, and wires graceful shutdown exactly as before.
-2. `app.ts` creates Express, installs request logging, global HTTP security middleware, access logging, mounts `modules/auth/auth.router.ts`, installs fallback 404, then centralized error middleware.
-3. Auth requests flow through relevant global middleware, module router, focused controller, service, repository, and Drizzle client with unchanged payload/status/error semantics.
-4. Protected routes use `middleware/authentication.middleware.ts` and `middleware/permission.middleware.ts`, which delegate to auth/RBAC services without moving business lookup logic into middleware.
-5. Audit service calls remain module service → module repository → Drizzle schema/client. No HTTP audit route is created.
-6. Startup, request, and shutdown failures retain current sanitized logging/error behavior; import path changes alone must not alter runtime order.
+2. `app.ts` creates Express, installs request logging, global HTTP security middleware, access logging, mounts health/readiness routes, global OpenAPI `/docs` and `/openapi.json`, the auth router, and the protected read-only `/ops/queues` monitor in the existing order, then installs fallback 404 and centralized error middleware.
+3. Health requests flow through `modules/health/health.router.ts`; `/health` remains public liveness and `/ready` remains public readiness with unchanged two-second dependency probes, statuses, bodies, and logging.
+4. Global OpenAPI infrastructure aggregates module-owned auth and health contributions, preserves `/docs`, `/openapi.json`, reusable components, security schemes, and excludes `/ops/queues` from public OpenAPI.
+5. Auth requests flow through relevant global middleware, module router, focused controller, service, repository, and Drizzle client with unchanged payload/status/error semantics. Protected routes use `middleware/authentication.middleware.ts` and `middleware/permission.middleware.ts`, which delegate to auth/RBAC services without moving business lookup logic into middleware.
+6. Audit service calls remain module service → module repository → Drizzle schema/client. Queue monitor configuration remains infrastructure-owned, retains Basic Auth and read-only mode, and does not become a business module.
+7. Startup, request, and shutdown failures retain current sanitized logging/error behavior; import path changes alone must not alter runtime order.
 
 ## 12. Error And Edge Cases
 
@@ -219,7 +237,7 @@ Migration action totals: KEEP 4; MOVE 0; RENAME 22; SPLIT 6; MERGE 0; DELETE AFT
 | Shared token-fingerprint extraction changes bytes/algorithm | Login/refresh tests fail; helper must use existing SHA-256 hex algorithm exactly. | Never persist/log raw refresh token. |
 | Middleware move introduces cycle | Static import inspection/typecheck fails. | Restore allowed direction; move only actual shared primitive if needed. |
 | Drizzle or queue path changes | Drizzle config/rollback/schema tests or bootstrap typecheck fail. | Update paths only; do not generate migration or queue feature. |
-| Old directory remains imported | Repository-wide legacy-path search returns match. | Update import/reference or remove stale compatibility code before completion. |
+| Old directory remains imported | Repository-wide legacy-path search for `auth`, `audit`, `database`, `health`, `jwt`, `logging`, `openapi`, `password`, `queue`, `redis`, or `security` returns a runtime/test import match. | Update import/reference or remove stale compatibility code before completion. |
 | Unrelated user changes present | Leave untouched and exclude from this task diff review. | Never reset, overwrite, or fold them into this task. |
 
 ## 13. Security Requirements
@@ -228,6 +246,7 @@ Migration action totals: KEEP 4; MOVE 0; RENAME 22; SPLIT 6; MERGE 0; DELETE AFT
 - No plaintext password, JWT, refresh token, authorization header, cookie, private key, environment secret, or database credential enters new logs, tests, docs, or compatibility code.
 - Preserve authentication-vs-authorization status distinction: invalid authentication remains `401`; denied permission remains `403`.
 - Do not change middleware order or introduce module imports into configuration/infrastructure.
+- Preserve `/ops/queues` Basic Auth, read-only mode, operational-only audience, and public OpenAPI exclusion.
 
 ## 14. Test Requirements
 
@@ -256,6 +275,9 @@ Migration action totals: KEEP 4; MOVE 0; RENAME 22; SPLIT 6; MERGE 0; DELETE AFT
 - `apps/api/tests/identity-schema.test.ts`: Drizzle schema/rollback imports change.
 - `apps/api/tests/jwt.test.ts`: JWT import changes.
 - `apps/api/tests/logging.test.ts`: logger import changes.
+- `apps/api/tests/queue-monitor.test.ts`: queue monitor, queue foundation, and logger import changes; preserve Basic Auth, read-only, queue registration, and OpenAPI-exclusion assertions.
+- `apps/api/tests/openapi.test.ts`: global OpenAPI infrastructure import changes; preserve `/docs`, `/openapi.json`, document, security-scheme, and contribution assertions.
+- `apps/api/tests/health-readiness.test.ts`: health router and global OpenAPI infrastructure import changes; preserve `/health`, `/ready`, timeout, safe logging, rate-limit exemption, and OpenAPI assertions.
 - `apps/api/tests/login-session.test.ts`: JWT/logger/password imports and auth route composition imports change.
 - `apps/api/tests/logout-revocation.test.ts`: auth service and authentication-middleware imports change.
 - `apps/api/tests/password.test.ts`: password helper import changes.
@@ -324,6 +346,12 @@ Migration action totals: KEEP 4; MOVE 0; RENAME 22; SPLIT 6; MERGE 0; DELETE AFT
 - [ ] Environment, database/Drizzle, Redis, confirmed BullMQ queue infrastructure, logger, JWT/key, and HTTP security configuration exist under `config`.
 - [ ] `helpers` contains only password and deterministic token-fingerprint technical helpers; `common` remains bounded and is not a dumping ground.
 - [ ] Every row in section 10.1 is completed and no old `src/auth`, `src/audit`, `src/database`, `src/jwt`, `src/logging`, `src/password`, `src/redis`, or `src/security` directory remains without a documented exception.
+- [ ] `src/health/` no longer exists; capability lives in `modules/health`.
+- [ ] `src/openapi/` no longer exists; global infrastructure lives in `config/openapi`.
+- [ ] `src/queue/monitor.ts` moves to `config/queue/queue-monitor.ts`.
+- [ ] `/health`, `/ready`, `/docs`, `/openapi.json`, and `/ops/queues` behavior remains unchanged.
+- [ ] `/ops/queues` retains Basic Auth, read-only policy, operational-only audience, and public OpenAPI exclusion.
+- [ ] Health-specific OpenAPI contribution remains module-owned; global OpenAPI aggregation remains infrastructure-owned.
 - [ ] API paths/methods/payloads/responses/status codes/error contract, auth/session/RBAC/audit/Redis/logger/security/environment behavior remain unchanged.
 - [ ] No database schema change, migration, generated migration artifact, or Drizzle semantic change occurs.
 - [ ] Tests pass without deletion/weakened assertions; lint and typecheck pass.
@@ -371,14 +399,14 @@ Not applicable — no UI change.
 
 ### Anti-Slop
 
-- Run installed Code Anti-Slop command/tool during implementation. Planning inspection reports no repository command for it; if still unavailable, report `NOT RUN — no installed Code Anti-Slop command/tool` and do not call task complete without human resolution.
+- Run the project-local Code Anti-Slop skill audit during implementation. No fixed repository CLI is required; report loaded skill, audited diff, findings, fixes, and final blocking-findings count. If the skill is unavailable, report `NOT RUN — <reason>` and do not call task complete without human resolution.
 
 ### Legacy Path Search
 
 Run after obsolete directories are removed:
 
 ```sh
-rg -n "src/(auth|audit|database|jwt|logging|password|queue|redis|security)/|\./(auth|audit|database|jwt|logging|password|queue|redis|security)/|\.\./(auth|audit|database|jwt|logging|password|queue|redis|security)/" apps/api --glob '!drizzle/**'
+rg -n "src/(auth|audit|database|health|jwt|logging|openapi|password|queue|redis|security)/|\./(auth|audit|database|health|jwt|logging|openapi|password|queue|redis|security)/|\.\./(auth|audit|database|health|jwt|logging|openapi|password|queue|redis|security)/" apps/api --glob '!drizzle/**'
 ```
 
 Expected result: no runtime/test import match. Documentation/history matches require deliberate review and update only where current architecture references must change.
