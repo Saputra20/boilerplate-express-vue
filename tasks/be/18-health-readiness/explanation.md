@@ -1,44 +1,42 @@
-# be/18-health-readiness — Health And Readiness
+# be/18-health-readiness — Penjelasan
 
-## Tujuan
+## Apa yang dibuat?
 
-Implement separate process liveness GET /health and dependency readiness GET /ready without exposing dependency secrets or internals.
+Task ini menambah dua endpoint operasional: `/health` untuk liveness proses dan `/ready` untuk kesiapan dependency.
 
-## Kenapa Task Ini Dibutuhkan
+## Kenapa dibuat?
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+Load balancer dan platform deployment perlu membedakan proses API yang masih hidup dari proses yang belum bisa melayani traffic bergantung database/Redis.
 
-## Apa yang Akan Dikerjakan
+## Apa yang berubah?
 
-- Implement separate process liveness GET /health and dependency readiness GET /ready without exposing dependency secrets or internals.
-- Validasi dan evidence sesuai technical.md.
+- `/health` public, tanpa JWT/RBAC, dan hanya mengembalikan `200 { "status": "ok" }`.
+- `/ready` juga public, mengecek PostgreSQL dan Redis secara bersamaan dengan batas dua detik per probe.
+- Jika salah satu dependency gagal atau timeout, `/ready` mengembalikan `503 { "status": "not_ready" }`.
+- Kedua route masuk OpenAPI sebagai endpoint operasional public.
 
-## Apa yang Tidak Dikerjakan
+## Apa yang tidak berubah?
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+- `/health` tidak mengecek PostgreSQL atau Redis.
+- Tidak ada migration, environment variable baru, probe tulis, queue/worker health, atau endpoint diagnostic detail.
+- `/ops/queues` tetap dashboard terpisah dan tidak berubah menjadi health endpoint.
 
-## Dependency
+## Dependency task apa?
 
-be/03-database-foundation, be/05-redis-foundation, be/07-security-foundation
+Task ini menggunakan database, Redis, middleware keamanan, logging, dan fondasi OpenAPI yang sudah ada.
 
-## Risiko / Hal yang Perlu Diperhatikan
+## Risiko utama?
 
-TODO: REQUIREMENT NEEDED — exact status/body contract and network/auth exposure policy.
+Response readiness yang terlalu detail dapat membocorkan topology atau credential. Response public karena itu hanya memuat status; detail aman hanya masuk log internal yang sudah disanitasi.
 
-## Cara Verifikasi
+## Bagaimana cara mengecek hasilnya?
 
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Periksa `/health` saat dependency gagal: tetap `200`. Periksa `/ready`: `200` hanya bila PostgreSQL dan Redis lolos, selain itu `503`. Periksa OpenAPI dan test timeout/concurrency.
 
-## Yang Perlu Direview Human
+## Apa yang harus direview manusia?
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Review bahwa endpoint public dan pengecualian rate limit hanya berlaku untuk `/health` serta `/ready`, bukan route lain.
 
-## Output yang Diharapkan
+## Apa yang belum dikerjakan?
 
-Implement separate process liveness GET /health and dependency readiness GET /ready without exposing dependency secrets or internals.
-
-## Task Berikutnya
-
-be/19-backend-testing
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Metrics, Kubernetes manifest, dashboard health, latency report, worker readiness, dan downstream business probe tetap di luar task ini.

@@ -51,7 +51,13 @@ describe('OpenAPI infrastructure', () => {
         openapi: string;
         info: { version: string };
         servers: Array<{ url: string }>;
-        paths: Record<string, { post?: { security?: Array<Record<string, string[]>> } }>;
+        paths: Record<
+          string,
+          {
+            get?: { security?: Array<Record<string, string[]>> };
+            post?: { security?: Array<Record<string, string[]>> };
+          }
+        >;
         components: {
           securitySchemes: { bearerAuth: { type: string; scheme: string; bearerFormat: string } };
         };
@@ -71,6 +77,8 @@ describe('OpenAPI infrastructure', () => {
           '/auth/logout',
           '/auth/logout-all',
           '/auth/refresh',
+          '/health',
+          '/ready',
           OPENAPI_DOCUMENT_PATH,
           OPENAPI_UI_PATH,
         ].sort(),
@@ -79,6 +87,8 @@ describe('OpenAPI infrastructure', () => {
       expect(document.paths['/auth/refresh']?.post?.security).toBeUndefined();
       expect(document.paths['/auth/logout']?.post?.security).toEqual([{ bearerAuth: [] }]);
       expect(document.paths['/auth/logout-all']?.post?.security).toEqual([{ bearerAuth: [] }]);
+      expect(document.paths['/health']?.get?.security).toBeUndefined();
+      expect(document.paths['/ready']?.get?.security).toBeUndefined();
       expect(document.paths['/ops/queues']).toBeUndefined();
     } finally {
       logging.close();

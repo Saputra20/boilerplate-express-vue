@@ -49,6 +49,9 @@ export function installSecurityMiddleware(
       limit: rateLimitOptions.limit,
       standardHeaders: true,
       legacyHeaders: false,
+      skip(request) {
+        return request.path === '/health' || request.path === '/ready';
+      },
       handler(request, response) {
         logger.warn({ requestId: request.id, statusCode: 429 }, 'Rate limit exceeded');
         response.status(429).json({ message: 'Too many requests' });

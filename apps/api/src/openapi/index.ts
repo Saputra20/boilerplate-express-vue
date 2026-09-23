@@ -2,6 +2,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import type { Express } from 'express';
 import { authOpenApi } from '../auth/openapi.js';
+import { healthOpenApi } from '../health/openapi.js';
 
 export const OPENAPI_DOCUMENT_PATH = '/openapi.json';
 export const OPENAPI_UI_PATH = '/docs';
@@ -24,7 +25,7 @@ export type OpenApiDocument = Record<string, unknown> & {
   };
 };
 
-const contributions = [authOpenApi];
+const contributions = [authOpenApi, healthOpenApi];
 
 export function installOpenApiRoutes(app: Express): void {
   const document = createOpenApiDocument();

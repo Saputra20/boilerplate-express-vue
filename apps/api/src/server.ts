@@ -16,6 +16,7 @@ import { createRedis } from './redis/client.js';
 import { loadRedisConfig } from './redis/config.js';
 import { shutdown } from './shutdown.js';
 import { createJwt, type JwtService } from './jwt/index.js';
+import { sql } from 'drizzle-orm';
 
 async function startServer(): Promise<void> {
   const env = loadEnv();
@@ -52,6 +53,15 @@ async function startServer(): Promise<void> {
         credentials: {
           username: env.QUEUE_MONITOR_USERNAME,
           password: env.QUEUE_MONITOR_PASSWORD,
+        },
+      },
+      {
+        async databaseProbe() {
+          await database.db.execute(sql`SELECT 1`);
+        },
+        async redisProbe() {
+          if ((await redis.client.ping()) !== 'PONG')
+            throw new Error('Redis readiness probe failed');
         },
       },
     );

@@ -6,6 +6,7 @@ import type { AccessAuthService } from './auth/access-auth-service.js';
 import type { LogoutService } from './auth/logout-service.js';
 import { installRefreshRoute } from './auth/refresh-route.js';
 import type { RefreshService } from './auth/refresh-service.js';
+import { installHealthRoutes, type HealthRouteOptions } from './health/index.js';
 import type { Logging } from './logging/index.js';
 import { installOpenApiRoutes } from './openapi/index.js';
 import { installQueueMonitor, type QueueMonitorOptions } from './queue/monitor.js';
@@ -23,6 +24,7 @@ export function createApp(
   accessAuthService?: AccessAuthService,
   logoutService?: LogoutService,
   queueMonitor?: QueueMonitorOptions,
+  healthRoutes?: HealthRouteOptions,
 ) {
   const app = express();
 
@@ -30,6 +32,7 @@ export function createApp(
   app.use(logging.requestLogger);
   installSecurityMiddleware(app, logging.logger, securityOptions);
   app.use(logging.accessLogger);
+  if (healthRoutes) installHealthRoutes(app, healthRoutes, logging.logger);
   installOpenApiRoutes(app);
 
   if (loginService) installLoginRoute(app, loginService);
