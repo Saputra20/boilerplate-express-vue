@@ -231,6 +231,8 @@ Human approval remains required for product semantics, destructive data behavior
 
 Before API change inspect consumers, schemas, auth, authorization, errors, and OpenAPI. Breaking response shapes, field names, status codes, auth, or permissions need explicit scope. Update affected schemas, tests, OpenAPI, and CMS consumers.
 
+OpenAPI documents actual application routes only. Keep public/protected security declarations aligned with middleware, exclude operational dashboards, never place secrets in schemas/examples, and do not confuse document version metadata with URL versioning. Do not hard-code deployment hosts without an approved server-URL contract.
+
 ## Database Rules
 
 Inspect schema and data impact first. Schema changes require appropriate Drizzle migration and review of data safety, indexes, foreign keys, uniqueness, nullability, query cost, and rollback. Never use manual production changes instead of migrations. Never destructively change columns, types, constraints, indexes, or data without explicit approval. Avoid N+1, unbounded queries, and unused columns.

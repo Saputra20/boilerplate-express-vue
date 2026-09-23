@@ -1,44 +1,43 @@
-# be/17-openapi — OpenAPI Infrastructure
+# be/17-openapi — Penjelasan
 
-## Tujuan
+## Apa yang dibuat?
 
-Implement reusable OpenAPI generation, security/error components, and module registration convention without fake business endpoints.
+Fondasi dokumentasi OpenAPI untuk API saat ini menyediakan Swagger UI di `/docs` dan dokumen JSON mentah di `/openapi.json`.
 
-## Kenapa Task Ini Dibutuhkan
+## Kenapa dibuat?
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+Developer dan alat integrasi memerlukan kontrak API yang dapat dibaca manusia maupun mesin. Satu dokumen yang dibuat saat startup mencegah daftar endpoint manual yang berbeda dari route sebenarnya.
 
-## Apa yang Akan Dikerjakan
+## Apa yang berubah?
 
-- Implement reusable OpenAPI generation, security/error components, and module registration convention without fake business endpoints.
-- Validasi dan evidence sesuai technical.md.
+- Spesifikasi memakai OpenAPI `3.0.3`.
+- Karena `apps/api/package.json` belum memiliki versi aplikasi, `info.version` memakai `0.1.0`.
+- Dokumen memakai server relatif `/`, sehingga tidak mengunci localhost atau hostname deployment tertentu.
+- Route login dan refresh didokumentasikan sebagai public. Logout dan logout-all memakai bearer JWT sesuai middleware yang sudah ada.
+- Kontribusi OpenAPI tinggal dekat dengan module pemilik route, lalu didaftarkan eksplisit pada fondasi OpenAPI.
 
-## Apa yang Tidak Dikerjakan
+## Apa yang tidak berubah?
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+- `info.version` tidak mengubah URL menjadi `/v1` atau `/api/v1`.
+- Tidak ada endpoint bisnis palsu, migration database, environment variable baru, atau desain Swagger UI kustom.
+- `/ops/queues` tetap dashboard operasional Bull Board dan tidak masuk spesifikasi public.
 
-## Dependency
+## Dependency task apa?
 
-be/07-security-foundation
+Task ini memakai kontrak keamanan dan route auth dari fondasi security, JWT, login, refresh, logout, RBAC, serta aturan pengecualian queue monitor.
 
-## Risiko / Hal yang Perlu Diperhatikan
+## Risiko utama?
 
-TODO: REQUIREMENT NEEDED — documentation path, exposure policy, versioning, server URL policy.
+Dokumentasi yang tidak cocok dengan route atau bocor secret dapat menyesatkan konsumen API. Karena itu dokumen hanya memuat route yang terbukti ada, memakai security per-route, dan diuji tanpa nilai credential nyata.
 
-## Cara Verifikasi
+## Bagaimana cara mengecek hasilnya?
 
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Periksa `/openapi.json` untuk versi `3.0.3`, server `/`, `bearerAuth`, route auth yang benar, dan tidak adanya `/ops/queues`. Buka `/docs` untuk Swagger UI bila browser tersedia.
 
-## Yang Perlu Direview Human
+## Apa yang harus direview manusia?
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Review bahwa kontrak auth sesuai perilaku API sekarang dan bahwa endpoint dokumentasi boleh public di semua environment.
 
-## Output yang Diharapkan
+## Apa yang belum dikerjakan?
 
-Implement reusable OpenAPI generation, security/error components, and module registration convention without fake business endpoints.
-
-## Task Berikutnya
-
-be/18-health-readiness
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Business endpoint, URL API versioning, client generation, custom Swagger UI, serta kebijakan deployment yang membatasi dokumentasi tetap di luar task ini.

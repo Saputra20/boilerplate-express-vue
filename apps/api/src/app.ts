@@ -7,6 +7,7 @@ import type { LogoutService } from './auth/logout-service.js';
 import { installRefreshRoute } from './auth/refresh-route.js';
 import type { RefreshService } from './auth/refresh-service.js';
 import type { Logging } from './logging/index.js';
+import { installOpenApiRoutes } from './openapi/index.js';
 import { installQueueMonitor, type QueueMonitorOptions } from './queue/monitor.js';
 import {
   createErrorHandler,
@@ -29,6 +30,7 @@ export function createApp(
   app.use(logging.requestLogger);
   installSecurityMiddleware(app, logging.logger, securityOptions);
   app.use(logging.accessLogger);
+  installOpenApiRoutes(app);
 
   if (loginService) installLoginRoute(app, loginService);
   if (refreshService) installRefreshRoute(app, refreshService);
