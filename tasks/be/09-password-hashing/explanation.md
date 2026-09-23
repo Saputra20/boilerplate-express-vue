@@ -1,44 +1,42 @@
-# be/09-password-hashing — Password Hashing
+# be/09-password-hashing - Password Hashing
 
-## Tujuan
+## Apa yang dibuat?
 
-Provide Argon2id hash and verify boundary without plaintext persistence, logging, or product password-policy invention.
+Task ini sekarang punya kontrak eksekusi untuk boundary hashing dan verification password lokal dengan Argon2id.
 
-## Kenapa Task Ini Dibutuhkan
+## Kenapa dibuat?
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+Task login dan pendaftaran berikutnya membutuhkan cara yang konsisten untuk membuat dan memeriksa hash password tanpa menyimpan plaintext.
 
-## Apa yang Akan Dikerjakan
+## Apa yang berubah?
 
-- Provide Argon2id hash and verify boundary without plaintext persistence, logging, or product password-policy invention.
-- Validasi dan evidence sesuai technical.md.
+- Password memakai Argon2id.
+- Panjang minimum adalah 12 karakter dan maksimum 128 karakter.
+- Tidak ada aturan wajib huruf besar, angka, atau simbol. Passphrase panjang tetap valid.
+- Password tidak di-trim, dinormalisasi, atau diubah sebelum hashing.
+- Argon2 membuat salt acak untuk setiap hash.
+- Plaintext dan encoded hash tidak boleh masuk log, error, atau response.
 
-## Apa yang Tidak Dikerjakan
+## Apa yang tidak berubah?
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+Task ini belum membuat registration, login, password change/reset, session, JWT, atau authorization. Breached-password check, MFA, credential history, dan forced password expiration juga belum dibuat.
 
-## Dependency
+## Dependency task apa?
 
-be/04-identity-schema
+Task ini memakai kontrak `users.password_hash` dari identity schema dan package Argon2 yang sudah terpasang.
 
-## Risiko / Hal yang Perlu Diperhatikan
+## Risiko utama?
 
-TODO: REQUIREMENT NEEDED — password length and complexity policy.
+Password adalah credential opaque. Perubahan kecil seperti trim otomatis dapat membuat password yang sama tidak lagi cocok. Error juga tidak boleh membocorkan password atau hash.
 
-## Cara Verifikasi
+## Bagaimana cara mengecek hasilnya?
 
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Review test batas 11/12/128/129 karakter, password tanpa kombinasi karakter, whitespace, salt acak, verification benar/salah, hash malformed, dan error aman. Jalankan lint, typecheck, seluruh test API, `git diff --check`, dan Code Anti-Slop.
 
-## Yang Perlu Direview Human
+## Apa yang harus direview manusia?
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Pastikan panjang 12 sampai 128 diterapkan tanpa trim, Argon2id memakai parameter eksplisit, tidak ada breach service, dan scope tidak masuk ke login atau registration.
 
-## Output yang Diharapkan
+## Apa yang belum dikerjakan?
 
-Provide Argon2id hash and verify boundary without plaintext persistence, logging, or product password-policy invention.
-
-## Task Berikutnya
-
-be/10-login-session
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Implementasi hashing belum dibuat dalam pembaruan dokumen ini. Registration, login, reset, rotation, breach check, dan lifecycle credential tetap task terpisah.

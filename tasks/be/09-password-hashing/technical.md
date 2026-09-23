@@ -1,202 +1,279 @@
-# be/09-password-hashing — Password Hashing
+# be/09-password-hashing - Password Hashing
 
 ## 1. Metadata
 
 | Field | Value |
 | --- | --- |
 | Task ID | `be/09-password-hashing` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | N/A |
 | Workstream | Backend |
-| Category | password foundation |
-| Repository | `apps/api` |
-| Platform | Bun / Express API |
-| Status | Blocked — requirement needed |
+| Task Category | Password foundation |
+| Repository/App | `apps/api` |
+| Status | Ready: approved for implementation |
 | Priority | Foundation execution order 9 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | be/04-identity-schema |
-| Blocks | be/10-login-session |
+| Suggested Size | Small - focused local password hashing/verification module and tests |
+| Depends On | `be/04-identity-schema` |
+| Blocks | `be/10-login-session` |
 | Execution Order | 9 |
 
 ## 2. Outcome
 
-Provide Argon2id hash and verify boundary without plaintext persistence, logging, or product password-policy invention.
+Provide an Argon2id password hashing and verification boundary. It accepts only passwords from 12 to 128 Unicode code points without mutating credential content, returns encoded hashes only, and never persists, logs, or returns plaintext passwords.
 
 ## 3. Context
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+- `docs/SECURITY.md` and `AGENTS.md` require Argon2id and forbid password logging.
+- `tasks/be/04-identity-schema/technical.md` defines `users.password_hash` as an Argon2id-hash-only field.
+- `apps/api/package.json` already includes `argon2`.
+- Installed `argon2` types expose `hash`, `verify`, `needsRehash`, `argon2id`, `memoryCost`, `timeCost`, and `parallelism`. No new dependency is needed.
+- Current API modules use focused top-level infrastructure directories and Jest tests under `apps/api/tests`.
 
-## 4. In Scope
+## 4. Dependencies
 
-- Provide Argon2id hash and verify boundary without plaintext persistence, logging, or product password-policy invention.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+- Installed repository-compatible `argon2` package.
+- Identity schema contract for storing only encoded `password_hash` values.
+- Existing logging redaction and safe-error rules.
+- No database access, API endpoint, session, JWT, external breach service, or configuration variable is required.
 
-## 5. Out of Scope
+## 5. In Scope
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+- Validate password length before hashing.
+- Hash valid password strings with explicit Argon2id parameters and library-managed random salt behavior.
+- Verify an encoded Argon2id hash against a candidate password.
+- Return safe outcomes for invalid lengths, malformed hashes, and Argon2 failures.
+- Add isolated focused tests and full applicable validation evidence.
 
-## 6. Implementation Requirements
+## 6. Out of Scope
 
-- Provide Argon2id hash and verify boundary without plaintext persistence, logging, or product password-policy invention.
-- Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+- Registration, login, password change/reset, forgot-password flow, UI validation, or password strength meter.
+- Breached-password checks, remote services, offline breach data, or third-party quality services.
+- Account lockout, credential history/reuse prevention, forced expiration/rotation, MFA, session/JWT issuance, or authorization.
+- New user columns such as `password_expires_at`, separate salt storage, static/global salts, or manual salt reuse.
+- Character-class composition requirements, password normalization, trimming, or truncation.
+- Automatic rehash-on-login or password upgrade infrastructure. A later task may use the installed `needsRehash` API if approved.
 
-### 6.1 Resolved Business Requirements
+## 7. Existing Implementation
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+- `apps/api/src/database/schema.ts` - `users.passwordHash` maps to required `password_hash` storage.
+- `apps/api/src/logging/index.ts` - password redaction rules and safe logging conventions.
+- `apps/api/src/security/index.ts` - centralized safe error behavior.
+- `apps/api/tests/` - Jest test structure.
+- `apps/api/package.json` and installed `argon2` type definitions - existing hashing dependency and supported options.
 
-## 7. Contract and Data Impact
+## 8. Implementation Requirements
 
-### 7.1 Configuration Contract
+### Password policy
 
-Not applicable — this task does not change documented configuration.
+- Password input is opaque credential material. Never trim, normalize, lowercase, uppercase, truncate, or otherwise mutate it before hashing or verification.
+- Password length uses Unicode code-point count via a repository-compatible equivalent of `Array.from(password).length`. It is not byte count and does not normalize grapheme sequences.
+- Reject fewer than 12 code points before hashing. Accept exactly 12 code points.
+- Reject more than 128 code points before hashing. Accept exactly 128 code points.
+- Do not require uppercase, lowercase, digit, symbol, or any character-class combination. A valid-length lowercase passphrase, no-symbol password, and no-number password remain valid.
+- Password policy does not include breached-password checks. Do not call external services or load breach datasets.
+- Do not add periodic forced password expiration without a later approved policy/compliance task.
 
-### 7.2 API Contract
+### Argon2id contract
 
-Not applicable — this task does not modify an API contract.
+- Use installed `argon2` with type/algorithm `argon2id` only.
+- Use explicit production options: `memoryCost: 19456` KiB, `timeCost: 2`, and `parallelism: 1`.
+- Omit manual `salt` configuration so the library creates a secure random per-password salt. The encoded hash must preserve the Argon2 parameters and salt needed for later verification.
+- Do not replace Argon2id with bcrypt, scrypt, PBKDF2, direct SHA-family hashing, or custom cryptography.
+- Provide one focused hash function equivalent to `hashPassword(plaintextPassword): Promise<string>` and one verification function equivalent to `verifyPassword(encodedHash, candidatePassword): Promise<boolean>`. Use repository-consistent final names after inspecting current module conventions.
+- Hashing validates length before invoking Argon2, returns only the encoded hash, and never writes credential data.
+- Verification validates candidate length without mutation, calls Argon2 verification with encoded hash and candidate only, and returns `false` for a wrong candidate or malformed stored hash. Unexpected Argon2 operation failure must raise a sanitized internal error without credential values.
+- Do not create a generic credential service, repository, route, controller, or account-existence behavior.
 
-### 7.3 Database Contract
+## 9. Applicable Contracts
 
-Not applicable — this task does not change a database contract.
+### Configuration Contract
 
-### 7.4 UI Contract
+Not applicable - production Argon2 parameters are explicit internal constants in the password module. No environment variable, implicit default, or secret configuration is introduced.
 
-Not applicable — this task does not change a CMS UI contract.
+### API Contract
 
-## 8. File Impact
+Not applicable - this task creates no route, request, response, OpenAPI operation, or client-visible password error.
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
+### Database Contract
 
-Test: `apps/api/tests/`.
+No schema change. Hash output is only suitable for the existing required `users.password_hash` field. No plaintext password, separate salt, breach result, password history, or expiration field is persisted.
 
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
+### UI Contract
 
-## 9. Runtime Behavior
+Not applicable - this task creates no UI validation or CMS behavior.
 
-Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
+## 10. File Impact
 
-## 10. Error and Edge Cases
+Expected paths are based on current focused infrastructure-module patterns and must be verified before editing.
 
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
+### Expected Create
 
-## 11. Security Requirements
+- `apps/api/src/password/index.ts` - focused policy validation, Argon2id hashing, and verification boundary.
+- `apps/api/tests/password.test.ts` - isolated password-boundary tests.
 
-Never log or expose password, access token, refresh token, private key, or credential. Enforce documented server-side validation and safe failure behavior; do not leak account/session existence.
+### Expected Modify
 
-## 12. Test Requirements
+- No existing application module is expected to change unless discovery finds a direct approved password-boundary consumer.
+
+### Expected Not Modified
+
+- API routes/controllers, login/session/JWT modules, database schema/migrations, CMS code, environment configuration, package dependencies, audit behavior, and unrelated security middleware.
+
+## 11. Runtime Behavior
+
+1. An approved future caller passes a candidate password to the focused boundary.
+2. The boundary preserves the exact input and counts Unicode code points.
+3. Passwords outside 12 to 128 code points reject before Argon2 runs.
+4. A valid password hashes with explicit Argon2id options and library-generated random salt, returning one encoded hash string.
+5. Verification preserves the candidate, validates its length, then verifies against the supplied encoded hash.
+6. Correct candidate returns `true`; wrong candidate or malformed encoded hash returns `false`; unexpected Argon2 failure returns a sanitized internal failure.
+7. No route, persistence, logging, session, token, or authorization behavior is triggered.
+
+## 12. Error And Edge Cases
+
+| Scenario | Expected Result | Security / Recovery |
+| --- | --- | --- |
+| 11 code points | Reject before Argon2 hashing. | Do not log or mutate credential. |
+| 12 code points | Accept if otherwise valid. | No composition rule. |
+| 128 code points | Accept if otherwise valid. | No truncation. |
+| 129 code points | Reject before Argon2 hashing. | Do not truncate or hash a prefix. |
+| Lowercase/no-number/no-symbol valid-length password | Accept. | Passphrases and password-manager output remain valid. |
+| Leading/trailing whitespace | Preserve it exactly. | Candidate with trimmed value must not silently verify. |
+| Same password hashed twice | Encoded hashes differ due to random salts. | Both verify with original exact candidate. |
+| Wrong password | Return `false`. | No account/session information or credential data leaks. |
+| Malformed encoded hash | Return `false`. | Do not expose Argon2 parser details. |
+| Unexpected Argon2 failure | Raise sanitized internal failure. | Never include plaintext, encoded hash, salt, or implementation detail. |
+| Breached-password lookup | Not performed. | Deferred to separate approved credential-policy task. |
+
+## 13. Security Requirements
+
+- Argon2id is required with `memoryCost: 19456`, `timeCost: 2`, and `parallelism: 1`.
+- Use library-managed secure random per-password salts; never static, derived, reused, or separately persisted salts.
+- Plaintext passwords never enter logs, exceptions, test snapshots, structured metadata, persistence, API responses, or fixtures.
+- Encoded password hashes are sensitive credential material. Do not log or return them outside approved persistence behavior.
+- Passwords are opaque strings. Length validation must not alter their bytes/code points before Argon2 receives them.
+- Keep account-existence, timing, login, and authorization decisions outside this local primitive.
+- Breach checking, forced password expiration, and composition policy changes require separate explicit approval.
+
+## 14. Test Requirements
 
 ### Happy Path
 
-Prove the documented outcome at focused module/integration boundary.
+- Hash and verify valid password values with Argon2id.
+- Verify two hashes from the same password differ while both verify correctly.
 
-### Validation / Business Rules
+### Validation
 
-Prove each relevant scenario in section 10.
+- Test 11 rejected, 12 accepted, 128 accepted, and 129 rejected before hashing.
+- Test valid-length lowercase-only, no-symbol, and no-number passwords without composition rejection.
+- Test leading/trailing whitespace remains part of the credential.
 
-### Negative / Recovery
+### Negative / Failure
 
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
+- Test wrong password returns `false`.
+- Test malformed encoded hash returns `false` without raw Argon2 error detail.
+- Test sanitized Argon2 failure path if the module permits deterministic dependency failure injection without adding abstraction solely for tests.
 
-### Isolation / Security
+### Security and Isolation
 
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
+- Use clearly synthetic passwords only. Never commit real credentials, salts, hashes, or snapshots containing credential values.
+- Assert output differs from plaintext and does not appear in safe error messages/logging metadata.
+- Do not assert exact encoded hash strings. Tests must be isolated, order-independent, and deterministic apart from expected salt uniqueness.
 
 ### Regression
 
-Existing API shell/Jest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
+- Run all current API Jest tests unchanged.
 
 | Scenario | Expected Result | Test Type |
 | --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
+| Length boundaries | 11/129 reject; 12/128 accept before hashing | Unit |
+| No composition policy | Valid lowercase/no-symbol/no-number passwords hash | Unit |
+| Whitespace | Exact whitespace verifies; trimmed candidate fails | Unit |
+| Salt behavior | Two hashes differ; both verify | Unit |
+| Verification | Correct candidate succeeds; wrong/malformed fails safely | Unit |
+| Sensitive failure | No password/hash value in safe errors or logs | Unit |
+| Existing API suite | No regression | Regression |
 
-## 13. Validation Requirements
+## 15. Task-Level Expected Results
+
+- One narrow local Argon2id hash/verify boundary exists.
+- Valid password policy is explicit, stable, and shared by future password-acceptance tasks.
+- Encoded hashes use random per-password salt and required Argon2id parameters.
+- No product auth flow, persistence, breach integration, or credential lifecycle behavior exists.
+
+## 16. Acceptance Criteria
+
+- [ ] Argon2id is the sole password hashing algorithm.
+- [ ] Minimum password length is exactly 12 Unicode code points.
+- [ ] Maximum password length is exactly 128 Unicode code points.
+- [ ] No uppercase, lowercase, number, or symbol composition rule is enforced.
+- [ ] Password values are not trimmed, normalized, truncated, or otherwise mutated.
+- [ ] Breached-password checking is explicitly out of scope.
+- [ ] Explicit Argon2 options use memory cost 19456 KiB, time cost 2, and parallelism 1.
+- [ ] Random per-password library salt behavior is preserved; no separate/static/reused salt exists.
+- [ ] Plaintext passwords and encoded hashes are never persisted, logged, returned, or exposed in errors.
+- [ ] Correct verification succeeds; wrong password and malformed encoded hash fail safely.
+- [ ] Focused boundary tests cover length, complexity absence, whitespace, salt, verification, and sensitive-data cases.
+- [ ] No registration, login, password reset/change, breach check, MFA, credential history, session, or JWT behavior is introduced.
+- [ ] Code Anti-Slop, lint, typecheck, full applicable tests, and `git diff --check` pass.
+
+## 17. Anti-Slop Requirements
+
+Code Anti-Slop: required. Reject custom cryptography, library-default Argon2 parameters, duplicated policy checks, hidden TODO/FIXME/HACK, unjustified `any`/assertions, generic credential abstractions, static fixtures/salts, secret logging, fake breach checks, and scope creep into auth flows. UI Anti-Slop and visual verification: not applicable - no UI change.
+
+## 18. Validation Requirements
 
 ### Static
 
 - `bun run --cwd apps/api lint`
 - `bun run --cwd apps/api typecheck`
-- `bun run --cwd apps/api test`
 - `git diff --check`
 
 ### Automated Tests
 
-- Focused and full existing Jest tests applicable to changed boundary.
+- Focused `apps/api/tests/password.test.ts`.
+- `bun run --cwd apps/api test`.
 
-### Build
+### Build / Database / UI
 
-Not applicable — API package has no build script; TypeScript typecheck is applicable.
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Not applicable — no meaningful rendered UI change.
+Not applicable - API package has no build script; no database or UI change is expected.
 
 ### Anti-Slop
 
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop and visual verification: not applicable — no CMS UI change.
+- Run Code Anti-Slop during implementation and again after fixes.
 
-## 14. Acceptance Criteria
+## 19. Completion Evidence
 
-- [ ] Provide Argon2id hash and verify boundary without plaintext persistence, logging, or product password-policy invention.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Password Hashing capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop and visual verification: not applicable — no CMS UI change.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
+| Acceptance criterion | Evidence |
 | --- | --- |
-| Outcome behavior | Focused test(s) under `apps/api/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/api lint`; `bun run --cwd apps/api typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
+| Length and no-composition policy | `apps/api/tests/password.test.ts` boundary cases |
+| Argon2id options and salt behavior | Focused hash/verify tests and encoded metadata assertions without fixed hash fixtures |
+| Whitespace and no plaintext exposure | Focused exact-candidate/error assertions |
+| Wrong/malformed verification behavior | Focused negative tests |
+| No regression | `bun run --cwd apps/api test` |
+| Static correctness | lint and typecheck command output |
+| Scope and whitespace hygiene | `git status`, `git diff`, and `git diff --check` review |
+| Anti-Slop | Code Anti-Slop output or exact unavailable reason |
 
-## 17. Traceability
+## 20. Traceability
 
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Password Hashing boundary |
-| `docs/SECURITY.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `be/09-password-hashing` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
+| Trace Type | References |
+| --- | --- |
+| Security | `docs/SECURITY.md`, `AGENTS.md`, and `.codex/skills/security/security-review/SKILL.md` |
+| Database | `tasks/be/04-identity-schema/technical.md` `users.password_hash` contract |
+| Dependency | Installed `argon2` type definitions under `apps/api/node_modules/argon2/argon2.d.cts` |
+| Test IDs | Not applicable - project has no test-ID system |
 
-## 18. Open Points
+## 21. Open Points
 
-TODO: REQUIREMENT NEEDED — password length and complexity policy.
+None.
+
+## 22. Definition Of Done
+
+- [ ] Acceptance criteria and approved scope are satisfied.
+- [ ] Argon2id boundary validates length before hashing and preserves credential content.
+- [ ] Focused and applicable full tests pass with synthetic password values only.
+- [ ] Code Anti-Slop passes; UI Anti-Slop and visual verification are documented as not applicable.
+- [ ] Lint, typecheck, and `git diff --check` pass.
+- [ ] Changed files and diff are reviewed; no plaintext, hash fixture, salt, secret, generated junk, or unrelated change remains.
+- [ ] No migration, API route, login/session behavior, OpenAPI update, or UI work is claimed without evidence.
