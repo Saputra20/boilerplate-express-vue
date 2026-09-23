@@ -17,6 +17,8 @@
     "db:rollback": "bun scripts/db-rollback.ts"
   },
   "dependencies": {
+    "@bull-board/api": "9.10.1",
+    "@bull-board/express": "9.10.1",
     "argon2": "^0.44.0",
     "bullmq": "^5.65.0",
     "cors": "^2.8.5",

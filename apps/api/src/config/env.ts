@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
 const nonEmptyString = z.string().trim().min(1);
+const queueMonitorPassword = z
+  .string()
+  .min(16)
+  .refine((value) => value.trim().length > 0, 'Expected a non-empty password');
 const booleanFromString = z.enum(['true', 'false']).transform((value) => value === 'true');
 const corsOriginsFromString = z.string().transform((value, context) => {
   const origins = value.split(',').map((origin) => origin.trim());
@@ -69,7 +73,7 @@ const envSchema = z.object({
   JWT_ACCESS_TOKEN_EXPIRES_IN: nonEmptyString,
   JWT_REFRESH_TOKEN_EXPIRES_IN: nonEmptyString,
   QUEUE_MONITOR_USERNAME: nonEmptyString,
-  QUEUE_MONITOR_PASSWORD: nonEmptyString,
+  QUEUE_MONITOR_PASSWORD: queueMonitorPassword,
   CORS_ORIGINS: corsOriginsFromString,
 });
 

@@ -7,6 +7,7 @@ import type { LogoutService } from './auth/logout-service.js';
 import { installRefreshRoute } from './auth/refresh-route.js';
 import type { RefreshService } from './auth/refresh-service.js';
 import type { Logging } from './logging/index.js';
+import { installQueueMonitor, type QueueMonitorOptions } from './queue/monitor.js';
 import {
   createErrorHandler,
   installSecurityMiddleware,
@@ -20,6 +21,7 @@ export function createApp(
   refreshService?: RefreshService,
   accessAuthService?: AccessAuthService,
   logoutService?: LogoutService,
+  queueMonitor?: QueueMonitorOptions,
 ) {
   const app = express();
 
@@ -33,6 +35,7 @@ export function createApp(
   if (accessAuthService && logoutService) {
     installLogoutRoutes(app, accessAuthService, logoutService);
   }
+  if (queueMonitor) installQueueMonitor(app, queueMonitor, logging.logger);
 
   app.use((_request, response) => {
     response.status(404).json({ message: 'Not found' });

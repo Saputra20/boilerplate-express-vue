@@ -25,6 +25,7 @@ async function startServer(): Promise<void> {
   const redis = createRedis(redisConfig);
   let queues: ReturnType<typeof createQueueInfrastructure> | undefined;
   let jwt: JwtService;
+  let app: ReturnType<typeof createApp>;
 
   try {
     jwt = createJwt({
@@ -39,6 +40,21 @@ async function startServer(): Promise<void> {
     await redis.initialize();
     queues = createQueueInfrastructure(redisConfig, logging.logger);
     await queues.initialize();
+    app = createApp(
+      logging,
+      { corsOrigins: env.CORS_ORIGINS },
+      createLoginService(createLoginRepository(database.db), jwt),
+      createRefreshService(createRefreshRepository(database.db), jwt),
+      createAccessAuthService(createAccessAuthRepository(database.db), jwt),
+      createLogoutService(createLogoutRepository(database.db)),
+      {
+        queue: queues.queue,
+        credentials: {
+          username: env.QUEUE_MONITOR_USERNAME,
+          password: env.QUEUE_MONITOR_PASSWORD,
+        },
+      },
+    );
   } catch {
     await queues?.close().catch(() => undefined);
     await database.close().catch(() => undefined);
@@ -47,15 +63,7 @@ async function startServer(): Promise<void> {
     logging.close();
     throw new Error('API startup failed');
   }
-
-  const app = createApp(
-    logging,
-    { corsOrigins: env.CORS_ORIGINS },
-    createLoginService(createLoginRepository(database.db), jwt),
-    createRefreshService(createRefreshRepository(database.db), jwt),
-    createAccessAuthService(createAccessAuthRepository(database.db), jwt),
-    createLogoutService(createLogoutRepository(database.db)),
-  );
+  if (!queues) throw new Error('API startup failed');
 
   const server = app.listen(env.PORT, () => {
     logging.logger.info({ port: env.PORT }, 'API listening');

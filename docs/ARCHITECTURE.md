@@ -13,6 +13,8 @@
 
 Cross-cutting concerns live in focused infrastructure modules. Business modules own their routes, controllers, services, repositories, schemas, and tests. No generic CRUD layer.
 
+Operational dashboards mount inside the API only after baseline security middleware and use explicit queue/resource registration. They are internal tooling, not business API or CMS capabilities.
+
 ## Authorization
 
 `user → role → permission → action`. API enforces permission decisions. CMS only hides unavailable UX.

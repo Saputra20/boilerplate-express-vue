@@ -252,6 +252,7 @@ Inspect schema and data impact first. Schema changes require appropriate Drizzle
 - Keep business logic testable outside HTTP. Centralize errors. Use request IDs. Safe production errors only.
 - Morgan is HTTP access logging; Pino is application logging. Audit records remain separate from ordinary logs when recording security/business events.
 - Queue tasks reuse validated Redis infrastructure, use bounded retries/retention, and define cleanup eligibility separately from exact deletion timing. Do not invent business queues, schedulers, or trusted generic job payloads before an owning producer task exists. Queue logs never dump payloads or credentials.
+- Operational dashboards require explicit authentication and stay internal by default. Prefer read-only monitors; browser tooling with Basic/cookie credentials needs an explicit CSRF decision before any mutation. Never log dashboard credentials, and third-party dashboard responses never become public API contracts.
 
 ## Security Rules
 

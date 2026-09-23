@@ -1,44 +1,31 @@
 # be/16-queue-monitor — Queue Monitor
 
-## Tujuan
+## Apa yang dibuat?
 
-Expose protected queue-monitor capability using environment credentials only after monitor route/auth policy approval.
+Task ini menyiapkan dashboard Bull Board untuk melihat queue BullMQ `default` pada path `/ops/queues`.
 
-## Kenapa Task Ini Dibutuhkan
+## Kenapa dibuat?
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+Developer dan operator internal perlu melihat status queue tanpa menjadikannya fitur produk atau API publik.
 
-## Apa yang Akan Dikerjakan
+## Perilaku utama
 
-- Expose protected queue-monitor capability using environment credentials only after monitor route/auth policy approval.
-- Validasi dan evidence sesuai technical.md.
+- Dashboard memakai `@bull-board/api` dan adapter Express `@bull-board/express`.
+- Akses hanya untuk developer/operator tepercaya melalui HTTP Basic Auth dari environment.
+- Ini bukan login JWT aplikasi dan bukan RBAC bisnis.
+- Dashboard hanya baca. Retry, delete, promote, clean, pause/resume, dan operasi mutasi lain tidak tersedia.
 
-## Apa yang Tidak Dikerjakan
+## Keamanan
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+- Username dan password wajib dari environment, tervalidasi saat startup, dan tidak pernah dicatat di log.
+- Karena tidak ada operasi mutasi, CSRF middleware belum diperlukan. Task masa depan yang mengaktifkan mutasi wajib mendefinisikan CSRF, otorisasi lebih kuat, dan audit.
+- CORS tidak dibuat permisif. Helmet dan proteksi global tetap berlaku.
+- Hanya queue `default` yang didaftarkan; queue Redis lain tidak dicari otomatis.
 
-## Dependency
+## Yang tidak berubah
 
-be/15-bullmq-foundation, be/07-security-foundation
+Tidak ada CMS menu, public OpenAPI operation, database migration, queue bisnis, processor, JWT/RBAC monitor, atau dashboard kustom.
 
-## Risiko / Hal yang Perlu Diperhatikan
+## Dependency dan review
 
-TODO: REQUIREMENT NEEDED — monitor package, path, auth/permission, audience, CSRF behavior.
-
-## Cara Verifikasi
-
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
-
-## Yang Perlu Direview Human
-
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
-
-## Output yang Diharapkan
-
-Expose protected queue-monitor capability using environment credentials only after monitor route/auth policy approval.
-
-## Task Berikutnya
-
-be/17-openapi
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Task bergantung pada Redis, security middleware, dan queue foundation yang sudah ada. Reviewer perlu memastikan Basic Auth berada sebelum router Bull Board, mode read-only benar-benar dikonfigurasi di server, serta dashboard dapat dibuka di browser bila capability tersedia.

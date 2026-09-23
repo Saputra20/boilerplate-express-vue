@@ -53,6 +53,9 @@ describe('loadEnv', () => {
       'CORS_ORIGINS',
     ],
     ['empty secret', { DATABASE_PASSWORD: '' }, 'DATABASE_PASSWORD'],
+    ['empty monitor username', { QUEUE_MONITOR_USERNAME: '' }, 'QUEUE_MONITOR_USERNAME'],
+    ['empty monitor password', { QUEUE_MONITOR_PASSWORD: '' }, 'QUEUE_MONITOR_PASSWORD'],
+    ['short monitor password', { QUEUE_MONITOR_PASSWORD: 'too-short' }, 'QUEUE_MONITOR_PASSWORD'],
   ])('rejects %s without exposing values', (_scenario, overrides, invalidKey) => {
     const secret = 'do-not-expose-this-secret';
     const input = { ...validEnv(), DATABASE_PASSWORD: secret, ...overrides };
