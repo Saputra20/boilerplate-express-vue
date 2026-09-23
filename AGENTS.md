@@ -22,6 +22,36 @@ Work only on one human-approved task. Before edits, read its `technical.md`, `ex
 
 Then: identify affected files and required Anti-Slop checks; implement only approved scope; validate; inspect `git status`, `git diff --check`, and `git diff`; report result. Never start future tasks. If another task is needed, STOP, name dependency, explain blocker, and wait for approval.
 
+## Hotfix And Small Maintenance Exception
+
+A full approved task document is not required only when all conditions hold:
+
+1. Human explicitly requests change in current conversation.
+2. Change is small and bounded.
+3. Affected behavior is clear and needs no product or business decision.
+4. Change introduces no feature or public capability.
+5. Change requires no database schema or migration unless human explicitly approves it.
+6. Change does not alter authorization policy, permission model, pricing, compliance, or destructive data behavior.
+7. One small diff can safely review implementation.
+
+Examples that may use this path: environment-validation correction, optional configuration value allowed empty, startup failure fix, obvious runtime bug, broken import/path, regression, error handling defect, small security/configuration defect, or test correction for intended existing behavior.
+
+Examples that still require a normal approved task: new API endpoint, database table/column, business rule, permission/role, user-facing feature, external integration, broad architecture refactor, destructive migration, compliance/retention policy, or authentication/authorization redesign.
+
+### Hotfix Authority
+
+For a valid hotfix, current explicit human instruction is approved execution contract.
+
+Agent must still inspect affected code and tests before editing, keep intended scope bounded, preserve unrelated behavior, add or update focused tests, run applicable lint/typecheck/tests and Anti-Slop, run `git diff --check`, review changed files and secrets, and report PASS/FAIL/NOT RUN truthfully.
+
+Agent must not stop only because no `tasks/.../technical.md` exists when request qualifies under this exception. If inspection expands request into architectural, product, or security decision, STOP and request normal task contract.
+
+### Configuration Hotfixes
+
+Small configuration fixes may proceed directly when intended behavior is explicit.
+
+For example, instruction to allow empty `REDIS_USERNAME` and `REDIS_PASSWORD` for local Redis and terminate API startup when Redis initialization fails is sufficient hotfix approval when implementation keeps Redis host/port/config validation intact, treats empty credentials as not configured, does not log credentials, fails startup deterministically when required Redis initialization fails, adds focused unauthenticated-local-Redis and connection-failure tests, and does not change unrelated Redis/BullMQ behavior.
+
 ## Skill Activation
 
 Load project skills from `.codex/skills/REGISTRY.md` by task type. `document-planning` owns task generation; architecture, coding, security, testing, review, and verification skills apply only when relevant. External Anti-Slop skills remain mandatory additive filters, not replacements for project skills. Skills never override this file, approved task scope, validation, or human approval.

@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
 const nonEmptyString = z.string().trim().min(1);
+const optionalRedisCredential = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => value || undefined);
 const booleanValue = z.union([
   z.enum(['true', 'false']).transform((value) => value === 'true'),
   z.boolean(),
@@ -19,8 +24,8 @@ const integerValue = (minimum: number) =>
 const redisConfigSchema = z.object({
   REDIS_HOST: nonEmptyString,
   REDIS_PORT: integerValue(1).pipe(z.number().max(65535)),
-  REDIS_USERNAME: nonEmptyString,
-  REDIS_PASSWORD: nonEmptyString,
+  REDIS_USERNAME: optionalRedisCredential,
+  REDIS_PASSWORD: optionalRedisCredential,
   REDIS_DATABASE: integerValue(0),
   REDIS_TLS: booleanValue,
 });
@@ -28,8 +33,8 @@ const redisConfigSchema = z.object({
 export type RedisConfig = {
   host: string;
   port: number;
-  username: string;
-  password: string;
+  username?: string;
+  password?: string;
   db: number;
   tls: boolean;
 };

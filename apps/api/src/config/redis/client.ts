@@ -5,8 +5,8 @@ export function createRedis(config: RedisConfig) {
   const client = new Redis({
     host: config.host,
     port: config.port,
-    username: config.username,
-    password: config.password,
+    ...(config.username === undefined ? {} : { username: config.username }),
+    ...(config.password === undefined ? {} : { password: config.password }),
     db: config.db,
     tls: config.tls ? {} : undefined,
     lazyConnect: true,

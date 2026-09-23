@@ -41,6 +41,13 @@ describe('loadEnv', () => {
     });
   });
 
+  it('treats empty Redis credentials as unset', () => {
+    const env = loadEnv({ ...validEnv(), REDIS_USERNAME: '', REDIS_PASSWORD: '' });
+
+    expect(env.REDIS_USERNAME).toBeUndefined();
+    expect(env.REDIS_PASSWORD).toBeUndefined();
+  });
+
   it.each([
     ['missing required value', { DATABASE_HOST: undefined }, 'DATABASE_HOST'],
     ['empty required value', { DATABASE_HOST: '' }, 'DATABASE_HOST'],

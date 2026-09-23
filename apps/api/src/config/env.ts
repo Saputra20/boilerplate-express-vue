@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
 const nonEmptyString = z.string().trim().min(1);
+const optionalRedisCredential = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => value || undefined);
 const queueMonitorPassword = z
   .string()
   .min(16)
@@ -62,8 +67,8 @@ const envSchema = z.object({
   DATABASE_SSL: booleanFromString,
   REDIS_HOST: nonEmptyString,
   REDIS_PORT: integerFromString(1, 65535),
-  REDIS_USERNAME: nonEmptyString,
-  REDIS_PASSWORD: nonEmptyString,
+  REDIS_USERNAME: optionalRedisCredential,
+  REDIS_PASSWORD: optionalRedisCredential,
   REDIS_DATABASE: integerFromString(0),
   REDIS_TLS: booleanFromString,
   JWT_PRIVATE_KEY_PATH: nonEmptyString,

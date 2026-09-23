@@ -17,16 +17,23 @@ import { loadRedisConfig } from './config/redis/config.js';
 import { shutdown } from './shutdown.js';
 import { createJwt, type JwtService } from './config/jwt/jwt.js';
 import { sql } from 'drizzle-orm';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-async function startServer(): Promise<void> {
-  const env = loadEnv();
-  const logging = createLogging();
-  const database = createDatabase(loadDatabaseConfig(env));
-  const redisConfig = loadRedisConfig(env);
-  const redis = createRedis(redisConfig);
+export async function startServer(): Promise<void> {
+  const env = initializeStartupPhase('environment validation', () => loadEnv());
+  const logging = initializeStartupPhase('logging initialization', () => createLogging());
+  const database = initializeStartupPhase('PostgreSQL configuration', () =>
+    createDatabase(loadDatabaseConfig(env)),
+  );
+  const redisConfig = initializeStartupPhase('Redis configuration', () => loadRedisConfig(env));
+  const redis = initializeStartupPhase('Redis client initialization', () =>
+    createRedis(redisConfig),
+  );
   let queues: ReturnType<typeof createQueueInfrastructure> | undefined;
   let jwt: JwtService;
   let app: ReturnType<typeof createApp>;
+  let startupPhase = 'JWT initialization';
 
   try {
     jwt = createJwt({
@@ -37,8 +44,11 @@ async function startServer(): Promise<void> {
       accessTokenExpiresIn: env.JWT_ACCESS_TOKEN_EXPIRES_IN,
       refreshTokenExpiresIn: env.JWT_REFRESH_TOKEN_EXPIRES_IN,
     });
+    startupPhase = 'PostgreSQL initialization';
     await database.initialize();
+    startupPhase = 'Redis initialization';
     await redis.initialize();
+    startupPhase = 'BullMQ initialization';
     queues = createQueueInfrastructure(redisConfig, logging.logger);
     await queues.initialize();
     app = createApp(
@@ -69,9 +79,9 @@ async function startServer(): Promise<void> {
     await queues?.close().catch(() => undefined);
     await database.close().catch(() => undefined);
     redis.close();
-    logging.logger.error('API startup failed');
+    logging.logger.error({ startupPhase }, 'API startup failed');
     logging.close();
-    throw new Error('API startup failed');
+    throw new Error(`API startup failed during ${startupPhase}`);
   }
   if (!queues) throw new Error('API startup failed');
 
@@ -99,7 +109,38 @@ async function startServer(): Promise<void> {
   process.once('SIGTERM', () => handleShutdown('SIGTERM'));
 }
 
-void startServer().catch((error) => {
-  process.stderr.write(`${error instanceof Error ? error.message : 'API startup failed'}\n`);
-  process.exitCode = 1;
-});
+export async function runServer(
+  start: () => Promise<void> = startServer,
+  writeError: (message: string) => void = (message) => process.stderr.write(message),
+): Promise<void> {
+  try {
+    await start();
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message.startsWith('API startup failed during ')
+        ? error.message
+        : 'API startup failed';
+    writeError(`${message}\n`);
+    process.exitCode = 1;
+  }
+}
+
+const entrypoint = process.argv[1];
+if (entrypoint !== undefined && import.meta.url === pathToFileURL(resolve(entrypoint)).href) {
+  void runServer();
+}
+
+function initializeStartupPhase<T>(phase: string, initialize: () => T): T {
+  try {
+    return initialize();
+  } catch (error) {
+    const detail =
+      error instanceof Error &&
+      /^(Invalid environment|Invalid database configuration|Invalid Redis configuration):/.test(
+        error.message,
+      )
+        ? `: ${error.message}`
+        : '';
+    throw new Error(`API startup failed during ${phase}${detail}`);
+  }
+}
