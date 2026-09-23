@@ -306,6 +306,8 @@ Morgan handles HTTP access logs; Pino handles application logs. Include request 
 
 Persisted logs must have bounded growth through project-compatible rotation and retention. Surface file transport failures with sanitized fallback logging; do not swallow them or create recursive failure loops. Degraded file logging may continue when a safe terminal/stderr path remains. Total logger initialization failure is fatal when no safe operational logging path remains. Never log passwords, password hashes, tokens, authorization headers, credential cookies, private keys, secrets, or raw credentials; configure redaction at logger boundaries.
 
+Audit records are append-only durable history, not log copies. Construct audit metadata from explicit allowlists, bound its size, and never store raw credentials, tokens, secrets, headers, cookies, payload dumps, or exception stacks. Source-record deletion must not cascade-delete audit history. Security/state changes fail closed only when their approved owner requires durable audit in the same transaction; explicitly informational events may be best-effort. Public audit reads require an approved RBAC contract and retention/compliance policy must not be invented.
+
 ## Anti-Slop Mandatory Quality Gate
 
 **Anti-Slop is mandatory for every approved task. It is never optional.** It is not skipped because work is small, frontend, UI, configuration, refactor, bug fix, or because lint, typecheck, tests, or build pass.

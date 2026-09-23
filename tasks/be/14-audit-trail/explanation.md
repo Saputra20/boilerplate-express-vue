@@ -2,43 +2,38 @@
 
 ## Tujuan
 
-Implement durable redacted audit-event boundary with actor, action, resource, request ID, IP, metadata, and outcome only after event policy approval.
+Task ini membuat fondasi audit trail generik yang durable untuk event keamanan atau bisnis yang disetujui task pemiliknya.
 
-## Kenapa Task Ini Dibutuhkan
+## Apa yang Berubah
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+- Tabel generik `audit_events` dibuat terpisah dari `auth_audit_events`.
+- `auth_audit_events` tetap dipakai login, refresh, dan logout. Tidak ada migrasi data lama atau dual-write otomatis.
+- Nama event memakai format machine-readable, misalnya `rbac.permission.denied`.
+- Metadata harus dibuat eksplisit, JSON aman, dibatasi 8 KB, dan tidak boleh memuat password, secret, token, cookie, header Authorization, atau payload mentah.
+- Retention awal audit generik adalah 90 hari. Baris lama boleh dibersihkan oleh boundary internal, tetapi scheduler belum dibuat.
 
-## Apa yang Akan Dikerjakan
+## Kebijakan Tulis
 
-- Implement durable redacted audit-event boundary with actor, action, resource, request ID, IP, metadata, and outcome only after event policy approval.
-- Validasi dan evidence sesuai technical.md.
+Untuk perubahan keamanan/state yang kontraknya mewajibkan audit, insert audit dan perubahan state memakai transaksi yang sama. Jika audit gagal, operasi gagal. Event informasional boleh best-effort hanya bila task pemiliknya menyetujuinya; kegagalan dicatat aman tanpa metadata dan tanpa audit berulang.
 
-## Apa yang Tidak Dikerjakan
+## Yang Tidak Dikerjakan
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+- API atau UI untuk membaca audit.
+- Permission `audit.read`, export, SIEM, scheduler BullMQ, atau katalog event bisnis besar.
+- Perubahan tabel atau perilaku `auth_audit_events`.
 
 ## Dependency
 
-be/03-database-foundation, be/06-logging-foundation
-
-## Risiko / Hal yang Perlu Diperhatikan
-
-TODO: REQUIREMENT NEEDED — event taxonomy, retention, access control, fail-open/fail-closed policy.
+`be/03-database-foundation`, `be/06-logging-foundation`, dan fondasi auth/RBAC yang sudah ada.
 
 ## Cara Verifikasi
 
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Jalankan test metadata, transaksi, retention, dan migrasi PostgreSQL UP/DOWN/re-UP; lalu format, lint, typecheck, test API, `git diff --check`, dan Code Anti-Slop.
 
-## Yang Perlu Direview Human
+## Review Human
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Review batas metadata, retention 90 hari, pemisahan `auth_audit_events`, dan penggunaan fail-closed hanya untuk event security/state yang benar-benar wajib.
 
-## Output yang Diharapkan
+## Yang Belum Dikerjakan
 
-Implement durable redacted audit-event boundary with actor, action, resource, request ID, IP, metadata, and outcome only after event policy approval.
-
-## Task Berikutnya
-
-be/15-bullmq-foundation
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Audit viewer/API, akses RBAC audit, dan scheduler cleanup tetap task berikutnya.

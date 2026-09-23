@@ -4,6 +4,7 @@ import {
   check,
   customType,
   index,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -131,6 +132,34 @@ export const authAuditEvents = pgTable(
       'auth_audit_events_reason_check',
       sql`${table.reason} IS NULL OR ${table.reason} IN ('INVALID_CREDENTIALS', 'ACCOUNT_DISABLED', 'ACCOUNT_DELETED', 'RATE_LIMITED', 'INTERNAL_ERROR', 'INVALID_REFRESH_TOKEN', 'TOKEN_EXPIRED', 'TOKEN_REVOKED', 'TOKEN_REUSED', 'SESSION_EXPIRED', 'SESSION_REVOKED', 'LOGOUT', 'LOGOUT_ALL')`,
     ),
+  ],
+);
+
+export const auditEvents = pgTable(
+  'audit_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    eventType: text('event_type').notNull(),
+    actorUserId: uuid('actor_user_id').references(() => users.id, { onDelete: 'set null' }),
+    actorType: text('actor_type').notNull(),
+    resourceType: text('resource_type'),
+    resourceId: text('resource_id'),
+    outcome: text('outcome').notNull(),
+    reasonCode: text('reason_code'),
+    requestId: uuid('request_id'),
+    sessionId: uuid('session_id').references(() => authSessions.id, { onDelete: 'set null' }),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('audit_events_created_at_index').on(table.createdAt),
+    index('audit_events_event_type_index').on(table.eventType),
+    index('audit_events_actor_user_id_index').on(table.actorUserId),
+    index('audit_events_resource_type_resource_id_index').on(table.resourceType, table.resourceId),
+    check('audit_events_actor_type_check', sql`${table.actorType} IN ('user', 'system')`),
+    check('audit_events_outcome_check', sql`${table.outcome} IN ('success', 'failure')`),
   ],
 );
 

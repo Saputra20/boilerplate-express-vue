@@ -2,6 +2,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readRollbackMigrations } from '../src/database/rollback.js';
 import {
+  auditEvents,
   authAuditEvents,
   authSessions,
   permissions,
@@ -56,6 +57,22 @@ describe('identity schema', () => {
       'reason',
       'createdAt',
     ]);
+    expect(tableColumns(auditEvents)).toEqual([
+      'id',
+      'eventType',
+      'actorUserId',
+      'actorType',
+      'resourceType',
+      'resourceId',
+      'outcome',
+      'reasonCode',
+      'requestId',
+      'sessionId',
+      'ipAddress',
+      'userAgent',
+      'metadata',
+      'createdAt',
+    ]);
     expect(tableColumns(roles)).toEqual([
       'id',
       'code',
@@ -86,6 +103,7 @@ describe('identity schema', () => {
     const migrations = await readRollbackMigrations(migrationsDirectory);
 
     expect(migrations.map((migration) => migration.tag)).toEqual([
+      '0011_create-audit-events-table',
       '0010_create-token-revocations-table',
       '0009_extend-auth-audit-event-vocabulary',
       '0008_add-refresh-token-rotation-lineage',
@@ -99,6 +117,7 @@ describe('identity schema', () => {
       '0000_create-users-table',
     ]);
     expect(migrations.flatMap((migration) => migration.statements)).toEqual([
+      'DROP TABLE "audit_events";',
       'ALTER TABLE "auth_audit_events" DROP CONSTRAINT "auth_audit_events_event_type_check";',
       'ALTER TABLE "auth_audit_events" DROP CONSTRAINT "auth_audit_events_reason_check";',
       "ALTER TABLE \"auth_audit_events\" ADD CONSTRAINT \"auth_audit_events_event_type_check\" CHECK (\"auth_audit_events\".\"event_type\" IN ('auth.login.succeeded', 'auth.login.failed', 'auth.refresh.succeeded', 'auth.refresh.failed', 'auth.refresh.reuse_detected', 'auth.session.revoked_due_to_refresh_reuse'));",
