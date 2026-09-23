@@ -2,201 +2,311 @@
 
 ## 1. Metadata
 
-| Field | Value |
-| --- | --- |
-| Task ID | `be/12-logout-revocation` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
-| Workstream | Backend |
-| Category | logout foundation |
-| Repository | `apps/api` |
-| Platform | Bun / Express API |
-| Status | Blocked — requirement needed |
-| Priority | Foundation execution order 12 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | be/11-refresh-token, be/05-redis-foundation |
-| Blocks | be/13-rbac-permissions |
-| Execution Order | 12 |
+| Field           | Value                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------- |
+| Task ID         | `be/12-logout-revocation`                                                                 |
+| Batch           | N/A                                                                                       |
+| Owning Feature  | N/A                                                                                       |
+| Workstream      | Backend                                                                                   |
+| Task Category   | Logout and revocation                                                                     |
+| Repository/App  | `apps/api`                                                                                |
+| Status          | Complete — validation evidence recorded below                                             |
+| Priority        | Foundation execution order 12                                                             |
+| Suggested Size  | Small — authenticated logout routes, revocation enforcement, one focused table, and tests |
+| Depends On      | `be/05-redis-foundation`, `be/11-refresh-token`                                           |
+| Blocks          | `be/13-rbac-permissions`                                                                  |
+| Execution Order | 12                                                                                        |
 
 ## 2. Outcome
 
-Implement session/JTI revocation and idempotent logout only after endpoint, storage, and all-device policy approval.
+Provide authenticated current-session logout and explicit all-session logout. Revocation persists in PostgreSQL, invalidates related refresh credentials, blocks revoked session/JTI access through authentication middleware, records redacted audit events, and never stores raw credentials.
 
 ## 3. Context
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+- `docs/SECURITY.md`, `docs/DATABASE.md`, `docs/API.md`, and `docs/ARCHITECTURE.md` define current platform rules.
+- `be/08-jwt-foundation` defines RS256 access-token claims: `sub` user UUID, `sid` session UUID where session-aware, `jti`, `typ=access`, issuer, audience, and expiry.
+- `be/10-login-session` creates `auth_sessions`, `refresh_tokens`, and `auth_audit_events`.
+- `be/11-refresh-token` defines refresh rotation, consumed-token replay detection, and refresh audit vocabulary.
+- `apps/api/src/auth/` contains login, refresh, access-authentication, and logout route/service/repository modules.
+- `apps/api/src/redis/client.ts` exposes a lifecycle-managed ioredis client only; no revocation cache or auth lookup integration exists.
 
-## 4. In Scope
+## 4. Dependencies
 
-- Implement session/JTI revocation and idempotent logout only after endpoint, storage, and all-device policy approval.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+- `be/05-redis-foundation` has recorded focused Redis lifecycle and disposable Redis validation evidence.
+- `be/11-refresh-token` has recorded isolated PostgreSQL migration, concurrent rotation, reuse detection, and failure-atomicity evidence.
+- PostgreSQL migration execution must use isolated test infrastructure. Do not run rollback against a shared or unknown database.
 
-## 5. Out of Scope
+## 5. In Scope
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+- `POST /auth/logout` for only caller's current session.
+- `POST /auth/logout-all` for all sessions belonging to caller's user UUID.
+- Focused access-token authentication/revocation enforcement for protected routes.
+- Persistent `token_revocations` records for explicit current access-token JTI revocation.
+- Session and usable refresh-token revocation in atomic database operations.
+- Redacted logout and logout-all audit events.
+- Focused schema migration, tests, and API documentation only if OpenAPI infrastructure exists at implementation time.
 
-## 6. Implementation Requirements
+## 6. Out of Scope
 
-- Implement session/JTI revocation and idempotent logout only after endpoint, storage, and all-device policy approval.
-- Request → middleware → Zod validation → controller → use case → repository/storage → safe response. Missing API contract blocks implementation before route creation.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+- Refresh rotation, replay detection, login, registration, password reset, RBAC, OAuth, MFA, cookie transport, token introspection, session UI, device listing/naming, admin revocation of another user's sessions, and password-change-triggered logout.
+- Access-token persistence/enumeration tables.
+- Redis-only revocation correctness, new distributed cache infrastructure, and changing `be/11` behavior.
 
-### 6.1 Resolved Business Requirements
+## 7. Existing Implementation
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+- `apps/api/src/database/schema.ts` defines `authSessions`, `refreshTokens`, `tokenRevocations`, and `authAuditEvents`.
+- `apps/api/src/auth/refresh-repository.ts` revokes a compromised session and its active refresh records after reuse. Preserve this history and do not delete consumed records.
+- `apps/api/src/jwt/index.ts` verifies typed RS256 claims; access authentication parses bearer headers and checks session/JTI revocation under `apps/api/src/auth/`.
+- `apps/api/src/app.ts` installs security middleware then public and authenticated auth routes.
+- `apps/api/src/redis/client.ts` provides only Redis initialization and shutdown.
+- `apps/api/src/auth/login-route.ts` and `apps/api/src/auth/refresh-route.ts` establish strict Zod request validation and sanitized `message` responses.
 
-## 7. Contract and Data Impact
+## 8. Implementation Requirements
 
-### 7.1 Configuration Contract
+### 8.1 Access Authentication And Revocation Enforcement
 
-Not applicable — this task does not change documented configuration.
+- Add focused access-token middleware under existing `apps/api/src/auth/` boundary. Parse only `Authorization: Bearer <token>`.
+- Verify RS256 access tokens through JWT foundation with expected `typ=access`; require UUID `sub`, `sid`, and `jti` for authenticated session routes.
+- Load user/session state and reject expired, revoked, disabled, or soft-deleted principals.
+- Check persistent JTI revocation by `jti` and reject an unexpired revoked access token.
+- Attach only typed verified principal data needed by controllers: user UUID, session UUID, JTI, token expiry, and request ID. Never attach raw JWT text.
+- Apply this middleware to protected routes introduced by this task and preserve it as the required boundary for later protected routes. Revocation storage without middleware enforcement is incomplete.
+- Normal protected routes reject revoked session/JTI credentials. A narrowly scoped logout verifier may accept an otherwise cryptographically valid, unexpired token for its already-revoked session only to complete idempotent state transition. It still enforces issuer, audience, signature, type, `sub`, `sid`, `jti`, account state, and session ownership. It must not authorize other application access.
 
-### 7.2 API Contract
+### 8.2 Current Session Logout
 
-Not applicable — required path, auth, request/response, status/error, or permission contract is not specified; task remains blocked.
+- Route: `POST /auth/logout`.
+- Require bearer access authentication. No request body, query token, path token, or client-supplied refresh token is accepted.
+- Resolve `sid` and require its session belongs to `sub`.
+- In one PostgreSQL transaction, set `auth_sessions.revoked_at` when absent, set `revoked_at` on still-usable refresh records for that session, insert current access JTI revocation through original `exp`, and write `auth.logout.succeeded`.
+- Repeated state transition is a no-op success. Do not reveal whether session/JTI was already revoked and do not create duplicate revocation rows.
+- Return `204 No Content` without session, token, JTI, timestamp, or reason data.
+- Do not revoke other sessions for this user or any session for another user.
 
-### 7.3 Database Contract
+### 8.3 All-Session Logout
 
-Potential auth session/refresh/revocation records are named in docs; exact schema and migration are unresolved.
+- Route: `POST /auth/logout-all`.
+- Require bearer access authentication. No request body is accepted.
+- In one PostgreSQL transaction, revoke every active/non-expired session belonging to `sub`, revoke usable refresh records attached to those sessions, persist current JTI revocation, and write one `auth.logout_all.succeeded` event.
+- Do not create one audit event per revoked session unless a later approved requirement needs that detail.
+- Do not enumerate or persist all access tokens. Session revocation invalidates access tokens tied to those sessions; only current known JTI is persisted explicitly.
+- Return `204 No Content`. Never affect another user's sessions.
 
-### 7.4 UI Contract
+### 8.4 Refresh Credentials, JTI Records, And Retention
 
-Not applicable — this task does not change a CMS UI contract.
+- `auth_sessions.revoked_at` remains session-revocation source of truth. Do not add `isRevoked`, `isActive`, `loggedOut`, or other duplicate lifecycle state.
+- Retain revoked/consumed `refresh_tokens` records for existing replay-detection retention. Mark usable records revoked; do not delete history.
+- `token_revocations` stores no raw JWT. Each access-token JTI record remains through `expires_at`, then becomes eligible for cleanup. Do not delete it before expiry or retain it forever.
+- Baseline revocation persistence is PostgreSQL. Redis is not required because no revocation lookup cache exists. If a later approved change adds Redis, key must never include raw JWT, TTL must not exceed token expiry, persistent lookup remains correctness source, and cache failure must not allow revoked access.
 
-## 8. File Impact
+### 8.5 Audit And Error Behavior
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
+- Add approved audit event types: `auth.logout.succeeded`, `auth.logout_all.succeeded`, `auth.logout.failed`, and `auth.logout_all.failed`.
+- Success events include `userId`, applicable `sessionId`, `requestId`, event type, and creation time. Failure events use a machine-readable sanitized reason only where actor can safely be identified.
+- Never audit raw JWTs, refresh tokens, passwords, authorization headers, private keys, or token hashes.
+- Missing, malformed, refresh-type, expired, invalid-signature, revoked-JTI, revoked-session, disabled, and soft-deleted authentication attempts use one existing centralized generic `401` authentication response. Do not expose token/session/account reason.
+- Logout persistence/audit failure must roll back database revocation changes and return centralized sanitized `500`. Rate-limit rejection remains `429`.
 
-Test: `apps/api/tests/`.
+## 9. Applicable Contracts
 
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
+### Configuration Contract
 
-## 9. Runtime Behavior
+Not applicable — no new environment variable. Existing JWT, PostgreSQL, Redis, rate-limit, and request-ID configuration remains required.
 
-Request → middleware → Zod validation → controller → use case → repository/storage → safe response. Missing API contract blocks implementation before route creation.
+### API Contract
 
-## 10. Error and Edge Cases
+| Operation               | Authentication                                                   | Request | Success          | Public failure                        |
+| ----------------------- | ---------------------------------------------------------------- | ------- | ---------------- | ------------------------------------- |
+| `POST /auth/logout`     | Valid bearer access token with `sub`, `sid`, `jti`, `typ=access` | No body | `204 No Content` | Generic `401`; `429`; sanitized `500` |
+| `POST /auth/logout-all` | Valid bearer access token with `sub`, `sid`, `jti`, `typ=access` | No body | `204 No Content` | Generic `401`; `429`; sanitized `500` |
 
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
+OpenAPI: not applicable at planning time — `docs/API.md` states OpenAPI infrastructure precedes endpoint reference documentation. When infrastructure exists, document both operations with bearer access authentication and only `204`, `401`, `429`, and `500`.
 
-## 11. Security Requirements
+### Database Contract
 
-Never log or expose password, access token, refresh token, private key, or credential. Enforce documented server-side validation and safe failure behavior; do not leak account/session existence.
+Create focused `token_revocations` table only; do not duplicate existing session/refresh tables.
 
-## 12. Test Requirements
+| Column       | Contract                                                                     |
+| ------------ | ---------------------------------------------------------------------------- |
+| `id`         | UUID primary key                                                             |
+| `jti`        | Required UUID, unique                                                        |
+| `token_type` | Required, baseline constrained to `access`                                   |
+| `user_id`    | Required FK to `users.id`                                                    |
+| `session_id` | Required FK to `auth_sessions.id` for this task                              |
+| `revoked_at` | Required timestamp                                                           |
+| `expires_at` | Required timestamp, no later than original access-token expiry               |
+| `reason`     | Required machine-readable `LOGOUT` or `LOGOUT_ALL`; no free-form secret data |
 
-### Happy Path
+- Index `expires_at` for cleanup and `session_id` for revocation checks; unique `jti` covers direct JTI lookup.
+- Use hard-delete-safe foreign keys consistent with current auth tables. No cascade occurs from soft deletion.
+- Migration unit: focused `create-token-revocations-table` UP/DOWN migration. Separate audit-check vocabulary migration only if current audit constraints require it; never edit applied migrations.
 
-Prove the documented outcome at focused module/integration boundary.
+### UI Contract
 
-### Validation / Business Rules
+Not applicable — no CMS UI change.
 
-Prove each relevant scenario in section 10.
+## 10. File Impact
 
-### Negative / Recovery
+Expected create:
 
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
+- Focused logout route/service/repository and access-authentication middleware under existing `apps/api/src/auth/` boundary.
+- One token-revocation migration and matching `.down.sql`; separate focused audit-vocabulary migration only if needed.
+- Focused tests under `apps/api/tests/`.
 
-### Isolation / Security
+Expected modify:
 
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
+- `apps/api/src/app.ts`, `apps/api/src/server.ts`, `apps/api/src/database/schema.ts`, existing auth audit constraints, and API documentation only when OpenAPI infrastructure exists.
 
-### Regression
+Expected not modified:
 
-Existing API shell/Jest behavior remains passing.
+- Login/refresh protocol semantics, JWT key configuration, Redis lifecycle contract, CMS code, secrets, and successor-task modules.
 
-### 12.1 Required Verification Scenarios
+Expected paths are guidance; implementation must inspect repository before edits.
 
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
+## 11. Runtime Behavior
 
-## 13. Validation Requirements
+### `POST /auth/logout`
+
+1. Security middleware supplies body limit, request ID, rate limiting, and safe errors.
+2. Logout authentication verifies bearer access JWT and principal/session/JTI state.
+3. Service resolves only caller's `sid` for caller's `sub`.
+4. Transaction revokes session, usable refresh records, and current JTI; writes one audit event.
+5. Commit succeeds before `204`; persistence/audit error rolls back and returns sanitized `500`.
+6. Later access with this JTI or session fails authentication. Repeated logout is state-safe/idempotent through route-scoped verification only.
+
+### `POST /auth/logout-all`
+
+1. Same authentication boundary validates caller access token.
+2. Service selects only sessions belonging to caller `sub` and revokes active/non-expired ones plus usable refresh records.
+3. Transaction stores current JTI revocation and one action-level audit event.
+4. Commit succeeds before `204`. Caller and other sessions for same user become unusable; other users remain untouched.
+
+## 12. Error And Edge Cases
+
+| Scenario                                                     | Expected Result                                                                     | Security / Recovery                                |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Missing/malformed/refresh bearer token                       | Generic `401`                                                                       | No state change or token detail                    |
+| Invalid signature, issuer, audience, expiry, type, or claims | Generic `401`                                                                       | JWT foundation rejects; no leak                    |
+| Session/user invalid or revoked JTI                          | Generic `401` outside logout idempotency scope                                      | Normal protected access remains blocked            |
+| Current session already revoked                              | `204` when route-scoped verifier safely resolves same principal/session             | No duplicate JTI row/audit semantic event required |
+| No active sessions for logout-all                            | `204`                                                                               | No cross-user state change                         |
+| Session ownership mismatch                                   | Generic `401`                                                                       | Never revoke arbitrary session                     |
+| DB/audit failure                                             | Sanitized `500`; transaction rolls back                                             | No partially revoked state                         |
+| Redis unavailable                                            | Baseline unaffected because PostgreSQL is source of truth and Redis is not required | Do not bypass persistent revocation                |
+
+## 13. Security Requirements
+
+- RS256 and typed access JWT verification remain mandatory.
+- Session revocation and access JTI revocation must both be enforced by authentication middleware.
+- Current logout never implies all-device logout; all-device behavior requires explicit endpoint.
+- Raw JWTs, refresh tokens, password material, authorization headers, private keys, and credential hashes never persist or log.
+- Zod validates any introduced request body/query input; bearer parsing is strict.
+- Atomic transactions prevent a revoked session from leaving usable refresh credentials.
+- Request IDs correlate audit and application events without exposing credentials.
+
+## 14. Test Requirements
+
+| Scenario                | Expected Result                                                                           | Test Type                       |
+| ----------------------- | ----------------------------------------------------------------------------------------- | ------------------------------- |
+| Current-session logout  | Only current session and usable refresh records revoke; `204`                             | Isolated PostgreSQL integration |
+| Logout-all              | Only caller user's sessions/refresh records revoke; `204`                                 | Isolated PostgreSQL integration |
+| Revocation enforcement  | Revoked session/JTI fails protected access                                                | Integration                     |
+| Idempotency             | Repeated state transition creates no duplicate JTI/revocation corruption                  | Integration                     |
+| Authentication failures | Missing, refresh, malformed, expired, invalid issuer/audience tokens return generic `401` | Route/integration               |
+| Isolation               | Other user and caller's unrelated session stay unchanged for current logout               | Integration                     |
+| Atomic failure          | Insert/audit failure rolls back session/refresh/JTI changes                               | Integration                     |
+| Audit safety            | Required events persist without credential material                                       | Integration/security            |
+| Migration               | UP, DOWN, then UP succeeds; JTI uniqueness/FKs/indexes work                               | Isolated PostgreSQL             |
+| Redis                   | Not applicable — no cache integration in baseline                                         | N/A                             |
+
+- Tests use synthetic keys/tokens and deterministic controlled expiry. Do not use real credentials or assert raw token contents in logs.
+- Regression covers login, JWT, password, security, refresh, and existing migration tests.
+
+## 15. Task-Level Expected Results
+
+- Two authenticated logout operations exist with explicit current-session/all-session distinction.
+- PostgreSQL holds active access JTI revocations only through token expiry.
+- Revoked session/JTI credentials cannot authenticate ordinary protected routes.
+- Refresh records become unusable after associated session revocation without erasing reuse history.
+- Logout audits are durable and redacted.
+
+## 16. Acceptance Criteria
+
+- [x] `POST /auth/logout` requires valid access authentication and revokes only caller's current session.
+- [x] `POST /auth/logout-all` requires valid access authentication and revokes only caller user's sessions.
+- [x] Both endpoints return `204` without credential or revocation details on success.
+- [x] Current/all-session state transitions are idempotent and never expose already-revoked state.
+- [x] Session revocation invalidates usable refresh credentials while retaining replay history.
+- [x] Current access JTI revocation persists through original token expiry; raw JWT is never stored.
+- [x] Authentication middleware enforces both session and JTI revocation for ordinary protected access.
+- [x] Generic `401`, `429`, and sanitized `500` behavior prevents account/session/token-state disclosure.
+- [x] Logout audit records use approved names and omit sensitive credential material.
+- [x] Token-revocation migration uses focused reviewed UP/DOWN files; existing migrations remain immutable.
+- [x] No cross-user or implicit all-device revocation occurs.
+- [ ] Focused tests, isolated PostgreSQL migration/transaction evidence, lint, typecheck, full tests, Code Anti-Slop, and `git diff --check` pass.
+
+## 17. Anti-Slop Requirements
+
+Code Anti-Slop: required. Reject duplicated session/refresh models, raw-token storage, access-token enumeration tables, Redis-only correctness, process-local locks, redundant lifecycle booleans, hidden TODO/FIXME/HACK, unchecked `any`/assertions, endpoint-specific auth bypasses outside logout idempotency, fake transactionality, and successor-task behavior. UI Anti-Slop and visual verification: not applicable — no UI change.
+
+## 18. Validation Requirements
 
 ### Static
 
+- `bun run --cwd apps/api format:check`
 - `bun run --cwd apps/api lint`
 - `bun run --cwd apps/api typecheck`
-- `bun run --cwd apps/api test`
 - `git diff --check`
 
 ### Automated Tests
 
-- Focused and full existing Jest tests applicable to changed boundary.
-
-### Build
-
-Not applicable — API package has no build script; TypeScript typecheck is applicable.
+- Focused logout/authentication/repository tests.
+- `bun run --cwd apps/api test -- --detectOpenHandles`.
 
 ### Database
 
-Validate Drizzle migration/schema if this task creates one.
+- `drizzle-kit generate` confirms focused schema output.
+- Isolated PostgreSQL migration UP, DOWN, re-apply, transaction rollback, and cross-session isolation tests.
 
-### UI
+### Build / UI
 
-Not applicable — no meaningful rendered UI change.
+Not applicable — API package has no build script and no UI changes.
 
 ### Anti-Slop
 
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop and visual verification: not applicable — no CMS UI change.
+- Code Anti-Slop runs during implementation and after fixes.
 
-## 14. Acceptance Criteria
+## 19. Completion Evidence
 
-- [ ] Implement session/JTI revocation and idempotent logout only after endpoint, storage, and all-device policy approval.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
+| Acceptance criterion         | Evidence                                                    |
+| ---------------------------- | ----------------------------------------------------------- |
+| Routes/status/authentication | `logout-revocation.test.ts` route and middleware checks     |
+| Session/refresh/JTI state    | Isolated PostgreSQL repository transaction evidence         |
+| Atomicity/idempotency        | Repeat-operation and forced-audit-failure rollback evidence |
+| Audit/redaction              | Repository/diff inspection; synthetic test credentials only |
+| Schema/rollback              | Isolated migration UP, DOWN, and re-UP output               |
+| Static/regression            | Prettier, ESLint, TypeScript, and 79-test Jest output       |
+| Scope/security               | Code Anti-Slop, `git diff --check`, diff, and secret review |
 
-### 14.1 Task-Level Expected Results
+## 20. Traceability
 
-- [ ] Logout And Revocation capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
+| Trace Type      | References                                                                  |
+| --------------- | --------------------------------------------------------------------------- |
+| API             | `POST /auth/logout`, `POST /auth/logout-all`                                |
+| Database        | `auth_sessions`, `refresh_tokens`, `token_revocations`, `auth_audit_events` |
+| Security        | `docs/SECURITY.md`, JWT/password/security/refresh foundation tasks          |
+| Dependency task | `be/05-redis-foundation`, `be/11-refresh-token`                             |
+| Test IDs        | Not applicable — project has no test-ID system                              |
 
-## 15. Anti-Slop Requirements
+## 21. Open Points
 
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop and visual verification: not applicable — no CMS UI change.
+None.
 
-## 16. Definition of Done
+## 22. Definition Of Done
 
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/api/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/api lint`; `bun run --cwd apps/api typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Logout And Revocation boundary |
-| `docs/SECURITY.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `be/12-logout-revocation` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-TODO: REQUIREMENT NEEDED — logout path/transport, all-device behavior, storage owner, error contract.
+- [x] Dependency evidence passed before implementation began.
+- [x] All in-scope behavior passes with no intentional out-of-scope changes.
+- [x] Access authentication enforces session/JTI revocation; logout idempotency remains route-scoped.
+- [x] Isolated PostgreSQL migration, transaction, and isolation evidence passes.
+- [x] Code Anti-Slop, format, lint, typecheck, focused/full tests, and `git diff --check` pass.
+- [x] Changed-file, audit/redaction, secret, and human review complete.

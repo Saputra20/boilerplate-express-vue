@@ -1,6 +1,10 @@
 import { createApp } from './app.js';
 import { createLoginRepository } from './auth/login-repository.js';
 import { createLoginService } from './auth/login-service.js';
+import { createAccessAuthRepository } from './auth/access-auth-repository.js';
+import { createAccessAuthService } from './auth/access-auth-service.js';
+import { createLogoutRepository } from './auth/logout-repository.js';
+import { createLogoutService } from './auth/logout-service.js';
 import { createRefreshRepository } from './auth/refresh-repository.js';
 import { createRefreshService } from './auth/refresh-service.js';
 import { loadEnv } from './config/env.js';
@@ -43,6 +47,8 @@ async function startServer(): Promise<void> {
     { corsOrigins: env.CORS_ORIGINS },
     createLoginService(createLoginRepository(database.db), jwt),
     createRefreshService(createRefreshRepository(database.db), jwt),
+    createAccessAuthService(createAccessAuthRepository(database.db), jwt),
+    createLogoutService(createLogoutRepository(database.db)),
   );
 
   const server = app.listen(env.PORT, () => {

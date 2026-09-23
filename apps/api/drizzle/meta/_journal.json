@@ -71,6 +71,13 @@
       "when": 1790133385491,
       "tag": "0009_extend-auth-audit-event-vocabulary",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790137364580,
+      "tag": "0010_create-token-revocations-table",
+      "breakpoints": true
     }
   ]
 }

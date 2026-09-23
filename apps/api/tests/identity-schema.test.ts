@@ -86,6 +86,7 @@ describe('identity schema', () => {
     const migrations = await readRollbackMigrations(migrationsDirectory);
 
     expect(migrations.map((migration) => migration.tag)).toEqual([
+      '0010_create-token-revocations-table',
       '0009_extend-auth-audit-event-vocabulary',
       '0008_add-refresh-token-rotation-lineage',
       '0007_create-auth-audit-events-table',
@@ -98,6 +99,11 @@ describe('identity schema', () => {
       '0000_create-users-table',
     ]);
     expect(migrations.flatMap((migration) => migration.statements)).toEqual([
+      'ALTER TABLE "auth_audit_events" DROP CONSTRAINT "auth_audit_events_event_type_check";',
+      'ALTER TABLE "auth_audit_events" DROP CONSTRAINT "auth_audit_events_reason_check";',
+      "ALTER TABLE \"auth_audit_events\" ADD CONSTRAINT \"auth_audit_events_event_type_check\" CHECK (\"auth_audit_events\".\"event_type\" IN ('auth.login.succeeded', 'auth.login.failed', 'auth.refresh.succeeded', 'auth.refresh.failed', 'auth.refresh.reuse_detected', 'auth.session.revoked_due_to_refresh_reuse'));",
+      "ALTER TABLE \"auth_audit_events\" ADD CONSTRAINT \"auth_audit_events_reason_check\" CHECK (\"auth_audit_events\".\"reason\" IS NULL OR \"auth_audit_events\".\"reason\" IN ('INVALID_CREDENTIALS', 'ACCOUNT_DISABLED', 'ACCOUNT_DELETED', 'RATE_LIMITED', 'INTERNAL_ERROR', 'INVALID_REFRESH_TOKEN', 'TOKEN_EXPIRED', 'TOKEN_REVOKED', 'TOKEN_REUSED', 'SESSION_EXPIRED', 'SESSION_REVOKED'));",
+      'DROP TABLE "token_revocations";',
       'ALTER TABLE "auth_audit_events" DROP CONSTRAINT "auth_audit_events_event_type_check";',
       'ALTER TABLE "auth_audit_events" DROP CONSTRAINT "auth_audit_events_reason_check";',
       'ALTER TABLE "auth_audit_events" ADD CONSTRAINT "auth_audit_events_event_type_check" CHECK ("auth_audit_events"."event_type" IN (\'auth.login.succeeded\', \'auth.login.failed\'));',

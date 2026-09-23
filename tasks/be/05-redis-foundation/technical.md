@@ -12,7 +12,7 @@
 | Category | redis foundation |
 | Repository | `apps/api` |
 | Platform | Bun / Express API |
-| Status | Planned — not executed |
+| Status | Implemented — validation passed September 23, 2026 |
 | Priority | Foundation execution order 5 |
 | Suggested Size | Small — one reviewable change set |
 | Depends On | be/02-environment-validation |
@@ -188,6 +188,13 @@ Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unu
 | Static correctness | `bun run --cwd apps/api lint`; `bun run --cwd apps/api typecheck` |
 | Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
 | Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
+
+### 16.2 Recorded Validation — September 23, 2026
+
+- `apps/api/src/redis/config.ts`, `apps/api/src/redis/client.ts`, and server lifecycle integration already satisfy the approved foundation scope; no cache or session policy was added.
+- Focused `bun run --cwd apps/api test -- redis.test.ts --detectOpenHandles` passed: 3 tests.
+- A disposable password-protected Redis instance proved `createRedis(...).initialize()` plus `PING` succeeds with separated configuration.
+- API lint, typecheck, format check, and full API Jest suite passed. Code Anti-Slop and `git diff --check` passed.
 
 ## 17. Traceability
 

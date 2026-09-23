@@ -1,6 +1,9 @@
 import express from 'express';
 import { installLoginRoute } from './auth/login-route.js';
 import type { LoginService } from './auth/login-service.js';
+import { installLogoutRoutes } from './auth/logout-route.js';
+import type { AccessAuthService } from './auth/access-auth-service.js';
+import type { LogoutService } from './auth/logout-service.js';
 import { installRefreshRoute } from './auth/refresh-route.js';
 import type { RefreshService } from './auth/refresh-service.js';
 import type { Logging } from './logging/index.js';
@@ -15,6 +18,8 @@ export function createApp(
   securityOptions: SecurityOptions,
   loginService?: LoginService,
   refreshService?: RefreshService,
+  accessAuthService?: AccessAuthService,
+  logoutService?: LogoutService,
 ) {
   const app = express();
 
@@ -25,6 +30,9 @@ export function createApp(
 
   if (loginService) installLoginRoute(app, loginService);
   if (refreshService) installRefreshRoute(app, refreshService);
+  if (accessAuthService && logoutService) {
+    installLogoutRoutes(app, accessAuthService, logoutService);
+  }
 
   app.use((_request, response) => {
     response.status(404).json({ message: 'Not found' });

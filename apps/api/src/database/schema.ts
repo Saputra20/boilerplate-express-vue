@@ -81,6 +81,33 @@ export const refreshTokens = pgTable(
   ],
 );
 
+export const tokenRevocations = pgTable(
+  'token_revocations',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    jti: uuid('jti').notNull().unique(),
+    tokenType: text('token_type').notNull(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    sessionId: uuid('session_id')
+      .notNull()
+      .references(() => authSessions.id, { onDelete: 'cascade' }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    reason: text('reason').notNull(),
+  },
+  (table) => [
+    index('token_revocations_expires_at_index').on(table.expiresAt),
+    index('token_revocations_session_id_index').on(table.sessionId),
+    check('token_revocations_token_type_check', sql`${table.tokenType} = 'access'`),
+    check(
+      'token_revocations_reason_check',
+      sql`${table.reason} IN ('LOGOUT', 'LOGOUT_ALL', 'REFRESH_REUSE', 'SESSION_REVOKED')`,
+    ),
+  ],
+);
+
 export const authAuditEvents = pgTable(
   'auth_audit_events',
   {
@@ -98,11 +125,11 @@ export const authAuditEvents = pgTable(
     index('auth_audit_events_created_at_index').on(table.createdAt),
     check(
       'auth_audit_events_event_type_check',
-      sql`${table.eventType} IN ('auth.login.succeeded', 'auth.login.failed', 'auth.refresh.succeeded', 'auth.refresh.failed', 'auth.refresh.reuse_detected', 'auth.session.revoked_due_to_refresh_reuse')`,
+      sql`${table.eventType} IN ('auth.login.succeeded', 'auth.login.failed', 'auth.refresh.succeeded', 'auth.refresh.failed', 'auth.refresh.reuse_detected', 'auth.session.revoked_due_to_refresh_reuse', 'auth.logout.succeeded', 'auth.logout_all.succeeded', 'auth.logout.failed', 'auth.logout_all.failed')`,
     ),
     check(
       'auth_audit_events_reason_check',
-      sql`${table.reason} IS NULL OR ${table.reason} IN ('INVALID_CREDENTIALS', 'ACCOUNT_DISABLED', 'ACCOUNT_DELETED', 'RATE_LIMITED', 'INTERNAL_ERROR', 'INVALID_REFRESH_TOKEN', 'TOKEN_EXPIRED', 'TOKEN_REVOKED', 'TOKEN_REUSED', 'SESSION_EXPIRED', 'SESSION_REVOKED')`,
+      sql`${table.reason} IS NULL OR ${table.reason} IN ('INVALID_CREDENTIALS', 'ACCOUNT_DISABLED', 'ACCOUNT_DELETED', 'RATE_LIMITED', 'INTERNAL_ERROR', 'INVALID_REFRESH_TOKEN', 'TOKEN_EXPIRED', 'TOKEN_REVOKED', 'TOKEN_REUSED', 'SESSION_EXPIRED', 'SESSION_REVOKED', 'LOGOUT', 'LOGOUT_ALL')`,
     ),
   ],
 );

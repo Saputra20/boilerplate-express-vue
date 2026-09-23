@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Refresh-token rotation |
 | Repository/App | `apps/api` |
-| Status | Ready: approved for implementation |
+| Status | Implemented — validation passed September 23, 2026 |
 | Priority | Foundation execution order 11 |
 | Suggested Size | Small - refresh endpoint, atomic rotation, reuse response, focused migrations, and tests |
 | Depends On | `be/08-jwt-foundation`, `be/10-login-session` |
@@ -267,6 +267,14 @@ Not applicable - API package has no build script and no UI change is expected.
 | Schema discipline | Generated `0008`/`0009` UP/DOWN, journal/snapshot review, isolated UP/DOWN/re-apply output |
 | Static/regression | format, lint, typecheck, Jest, `git diff --check` output |
 | Anti-Slop | Code Anti-Slop output or exact unavailable reason |
+
+### Recorded Validation — September 23, 2026
+
+- A disposable PostgreSQL cluster ran complete migration UP, verified `auth_sessions`, `refresh_tokens`, and `auth_audit_events` plus `refresh_tokens.replaced_by_token_id` and both audit constraints, ran full DOWN, confirmed the prior empty schema, then ran UP again successfully.
+- PostgreSQL-backed concurrent rotation used a forced overlapping row lock: exactly one refresh response succeeded, exactly one child remained usable, the original was consumed once, and the winning session remained active.
+- PostgreSQL-backed reuse evidence revoked only the reused token session, retained the consumed record, wrote `auth.refresh.reuse_detected`, and issued no replacement pair.
+- PostgreSQL-backed signing and insert-failure checks left the original refresh record unconsumed and returned no usable replacement credentials.
+- Focused refresh tests, full API Jest suite, lint, typecheck, format check, Drizzle generation, Code Anti-Slop, and `git diff --check` passed.
 
 ## 20. Traceability
 

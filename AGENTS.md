@@ -40,20 +40,20 @@ Every future `technical.md` uses below sections in order. A genuinely irrelevant
 
 Use this table. Use `N/A` for project fields without a defined value.
 
-| Field | Value |
-| --- | --- |
-| Task ID | |
-| Batch | |
-| Owning Feature | |
-| Workstream | |
-| Task Category | |
-| Repository/App | |
-| Status | |
-| Priority | |
-| Suggested Size | |
-| Depends On | |
-| Blocks | |
-| Execution Order | |
+| Field           | Value |
+| --------------- | ----- |
+| Task ID         |       |
+| Batch           |       |
+| Owning Feature  |       |
+| Workstream      |       |
+| Task Category   |       |
+| Repository/App  |       |
+| Status          |       |
+| Priority        |       |
+| Suggested Size  |       |
+| Depends On      |       |
+| Blocks          |       |
+| Execution Order |       |
 
 #### 2. Outcome
 
@@ -90,7 +90,7 @@ State which contracts apply; include only relevant tables/fields.
 **Configuration Contract**
 
 | Variable | Required | Type | Validation | Default | Secret |
-| --- | --- | --- | --- | --- | --- |
+| -------- | -------- | ---- | ---------- | ------- | ------ |
 
 No implicit default: write `None — startup must fail if missing.`
 
@@ -113,7 +113,7 @@ Describe actual execution sequence, including valid and invalid flows. For start
 For meaningful failures, define trigger, expected behavior, error type/code or HTTP status, security concern, and recovery. Use a table where useful:
 
 | Scenario | Expected Result | Security / Recovery |
-| --- | --- | --- |
+| -------- | --------------- | ------------------- |
 
 Never expose sensitive values in errors.
 
@@ -128,7 +128,7 @@ Define required proof under `Happy Path`, `Validation`, `Negative / Failure`, `S
 Use a test matrix when it improves clarity:
 
 | Scenario | Expected Result | Test Type |
-| --- | --- | --- |
+| -------- | --------------- | --------- |
 
 Only real scenarios belong in matrix.
 
@@ -156,16 +156,16 @@ State evidence that proves completion: command/test output, screenshot or browse
 
 Use table below when project sources have IDs. Otherwise write: `Not applicable — project has no traceability ID system.`
 
-| Trace Type | References |
-| --- | --- |
-| PRD | |
-| Feature | |
-| Requirement | |
-| Acceptance Criteria | |
-| API Operation | |
-| Database | |
-| Test IDs | |
-| Design/Figma | |
+| Trace Type          | References |
+| ------------------- | ---------- |
+| PRD                 |            |
+| Feature             |            |
+| Requirement         |            |
+| Acceptance Criteria |            |
+| API Operation       |            |
+| Database            |            |
+| Test IDs            |            |
+| Design/Figma        |            |
 
 #### 21. Open Points
 
@@ -258,6 +258,7 @@ Inspect schema and data impact first. Schema changes require appropriate Drizzle
 - JWT uses RS256 with issuer, audience, expiry, `nbf` where applicable, JTI, and session/token revocation. JWT `sub` is the stable `users.id` UUID, never a session or mutable identity. Token classes use an explicit `access`/`refresh` claim; reserve UUID `sid` for approved session work. Keep claims minimal and typed. Do not embed roles, permissions, or other mutable authorization state without explicit approval. Passwords use Argon2id, favor sufficient approved length over arbitrary composition rules, and are never trimmed or otherwise mutated. Plaintext passwords are never logged or persisted. Breach checks and forced password expiration require separate explicit approval.
 - Public authentication failures must not reveal account existence or disabled/deleted state. Only active non-deleted users authenticate. Sessions are explicit lifecycle records; login writes session, refresh metadata, and required security audit event atomically. Store only a deterministic hash of a raw refresh token, never access tokens; audit records remain separate from ordinary logs. Follow entity-scoped FK-safe UP/DOWN migrations for auth tables.
 - When refresh rotation is approved, refresh tokens are single-use credentials. Rotate atomically, retain consumed metadata for replay detection, revoke only the compromised session on confirmed reuse, and never let concurrent requests mint multiple children. Session expiry remains a hard upper bound unless sliding sessions are explicitly approved; public refresh failures stay generic.
+- Current-session logout never silently revokes all devices; all-session revocation requires an explicit operation. Session revocation is a primary authentication check, access-JTI revocations retain only through token expiry, raw JWTs never persist, and revocation storage must be enforced by authentication middleware. Successor tasks never bypass missing dependency validation.
 - Never log, commit, return, or bundle passwords, JWTs, refresh tokens, private keys, secrets, or raw credentials. Private keys never enter CMS bundles.
 
 ## RBAC And Authorization
@@ -311,13 +312,13 @@ Persisted logs must have bounded growth through project-compatible rotation and 
 
 Determine and execute applicable Anti-Slop checks before completion:
 
-| Task type | Minimum required gate |
-| --- | --- |
-| Backend, database, refactor | Code Anti-Slop |
-| Frontend, configuration | Code Anti-Slop |
-| UI / slicing | Code Anti-Slop + UI Anti-Slop |
-| Fullstack | Code Anti-Slop + UI Anti-Slop where UI changes |
-| Bug fix | Relevant Code and/or UI Anti-Slop |
+| Task type                   | Minimum required gate                          |
+| --------------------------- | ---------------------------------------------- |
+| Backend, database, refactor | Code Anti-Slop                                 |
+| Frontend, configuration     | Code Anti-Slop                                 |
+| UI / slicing                | Code Anti-Slop + UI Anti-Slop                  |
+| Fullstack                   | Code Anti-Slop + UI Anti-Slop where UI changes |
+| Bug fix                     | Relevant Code and/or UI Anti-Slop              |
 
 Code Anti-Slop checks changed code for unnecessary/speculative abstractions, duplication, dead or unused code/dependencies, fake or incomplete implementation, hidden `TODO`/`FIXME`/`HACK`, empty wrappers, unjustified `any` or assertions, misleading/excessive comments, unreachable code, and unnecessary files/configuration.
 
@@ -388,13 +389,17 @@ Intentionally omitted out-of-scope work.
 Never hide failures or turn NOT RUN into PASS.
 
 <!-- antislop:start -->
+
 ## antislop
+
 For UI, copy, people, mobile layout, or code comments work, load the antislop skill for the task:
+
 - Core filter, always on: `antislop`
 - UI / visual: `antislop-ui`
 - Copy & text: `antislop-copywriting`
 - People: `antislop-human`
 - Mobile / responsive: `antislop-layoutmobile`
 - Code comments: `antislop-code`
-Before starting, ask the user when antislop applies: during the work, or after it is done.
+  Before starting, ask the user when antislop applies: during the work, or after it is done.
+
 <!-- antislop:end -->

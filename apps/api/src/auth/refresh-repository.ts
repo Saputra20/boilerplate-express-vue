@@ -11,19 +11,9 @@ export function createRefreshRepository(database: Database): RefreshRotationRepo
     async rotate(input, issue) {
       return database.transaction(async (transaction) => {
         const now = new Date();
-        const [token] = await transaction
-          .select({
-            id: refreshTokens.id,
-            sessionId: refreshTokens.sessionId,
-            tokenHash: refreshTokens.tokenHash,
-            expiresAt: refreshTokens.expiresAt,
-            revokedAt: refreshTokens.revokedAt,
-            replacedByTokenId: refreshTokens.replacedByTokenId,
-          })
-          .from(refreshTokens)
-          .where(eq(refreshTokens.jti, input.jti))
-          .for('update')
-          .limit(1);
+        const lockedToken = await lockRefreshToken(transaction, input.jti);
+        if (lockedToken === null) return { status: 'invalid' } as const;
+        const [token] = lockedToken;
 
         if (
           token === undefined ||
@@ -246,4 +236,29 @@ async function writeFailureAudit(
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
+}
+
+async function lockRefreshToken(transaction: Database, jti: string) {
+  try {
+    return await transaction
+      .select({
+        id: refreshTokens.id,
+        sessionId: refreshTokens.sessionId,
+        tokenHash: refreshTokens.tokenHash,
+        expiresAt: refreshTokens.expiresAt,
+        revokedAt: refreshTokens.revokedAt,
+        replacedByTokenId: refreshTokens.replacedByTokenId,
+      })
+      .from(refreshTokens)
+      .where(eq(refreshTokens.jti, jti))
+      .for('update', { noWait: true })
+      .limit(1);
+  } catch (error) {
+    if (isLockNotAvailable(error)) return null;
+    throw error;
+  }
+}
+
+function isLockNotAvailable(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === '55P03';
 }

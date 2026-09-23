@@ -1,44 +1,43 @@
 # be/12-logout-revocation — Logout And Revocation
 
-## Tujuan
+## Apa yang Dibuat
 
-Implement session/JTI revocation and idempotent logout only after endpoint, storage, and all-device policy approval.
+Task ini sekarang memiliki kontrak untuk dua aksi logout backend: `POST /auth/logout` untuk session saat ini, dan `POST /auth/logout-all` untuk seluruh session/device milik user yang sedang login.
 
-## Kenapa Task Ini Dibutuhkan
+## Kenapa Dibutuhkan
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+Logout tidak cukup hanya menghapus token di client. Session perlu dicabut di server agar refresh token terkait tidak dapat dipakai lagi dan access token yang masih hidup dapat ditolak.
 
-## Apa yang Akan Dikerjakan
+## Apa yang Berubah
 
-- Implement session/JTI revocation and idempotent logout only after endpoint, storage, and all-device policy approval.
-- Validasi dan evidence sesuai technical.md.
+- Kedua endpoint membutuhkan access token yang valid.
+- Logout biasa hanya mencabut session saat ini. Logout semua device harus memakai endpoint terpisah.
+- `auth_sessions.revoked_at` menjadi sumber utama status pencabutan session.
+- Refresh token pada session yang dicabut ikut tidak valid, tetapi riwayatnya tidak dihapus karena masih dibutuhkan untuk deteksi reuse.
+- JTI access token saat ini dapat dicatat sampai token tersebut kedaluwarsa. Raw JWT tidak pernah disimpan.
+- Middleware autentikasi harus mengecek session dan JTI yang sudah dicabut.
+- Event audit logout dicatat tanpa password, token, header Authorization, atau secret.
 
-## Apa yang Tidak Dikerjakan
+## Apa yang Tidak Berubah
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
+Task ini tidak membuat login, refresh rotation, RBAC, UI session, logout user lain, admin revoke, cookie transport, OAuth, atau MFA.
 
 ## Dependency
 
-be/11-refresh-token, be/05-redis-foundation
+Implementasi tetap menunggu bukti validasi nyata dari `be/05-redis-foundation` dan `be/11-refresh-token`. Khusus `be/11`, validasi PostgreSQL terisolasi untuk migration dan refresh concurrency masih harus lulus.
 
-## Risiko / Hal yang Perlu Diperhatikan
+## Risiko Utama
 
-TODO: REQUIREMENT NEEDED — logout path/transport, all-device behavior, storage owner, error contract.
+Jika tabel revocation hanya disimpan tetapi tidak diperiksa middleware, logout menjadi palsu. Jika logout biasa mencabut semua session, perilaku device user menjadi salah. Jika raw token disimpan, credential bocor.
 
-## Cara Verifikasi
+## Cara Mengecek Hasil
 
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
+Saat implementasi diizinkan: jalankan focused test logout, test PostgreSQL terisolasi untuk migration/transaction, lint, typecheck, full test, Code Anti-Slop, dan `git diff --check`.
 
 ## Yang Perlu Direview Human
 
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
+Pastikan logout biasa tetap hanya session saat ini, logout-all hanya user saat ini, error publik tidak membocorkan status session/token, dan dependency evidence benar-benar sudah lulus sebelum kode dibuat.
 
-## Output yang Diharapkan
+## Yang Belum Dikerjakan
 
-Implement session/JTI revocation and idempotent logout only after endpoint, storage, and all-device policy approval.
-
-## Task Berikutnya
-
-be/13-rbac-permissions
-
-Task ini tidak boleh dieksekusi sebelum Open Points diselesaikan.
+Kode logout/revocation belum dibuat. Kontrak sudah siap, tetapi eksekusi diblokir sampai evidence dependency selesai.

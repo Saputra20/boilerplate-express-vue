@@ -2,6 +2,7 @@
 name: security-review
 description: Review project-specific authentication, authorization, input, secret, and endpoint risks.
 ---
+
 # Security Review
 
 Activate for auth, JWT, permissions, user input, uploads, sensitive data, API endpoints, secrets, payments, or third-party integration.
@@ -11,6 +12,7 @@ Activate for auth, JWT, permissions, user input, uploads, sensitive data, API en
 - Passwords: Argon2id; enforce approved length without arbitrary composition rules and never trim/mutate credential input. Never log/store plaintext or encoded hashes. Breach checks and forced password expiration need separate approval.
 - Login/session: use identical public failure for unknown, wrong-password, disabled, and soft-deleted accounts. Only active non-deleted users authenticate. Persist sessions, hashed refresh-token metadata, and mandatory redacted security audit events atomically; do not persist access tokens or raw refresh tokens.
 - Refresh rotation: require typed refresh JWT/session/fingerprint linkage, atomically consume each token, and preserve consumed metadata for replay detection. Confirmed reuse revokes only compromised session and active refresh records; concurrent refresh cannot mint multiple children; session expiry is hard cap; public failures remain generic.
+- Logout/revocation: distinguish current-session logout from explicit all-session logout. Enforce persistent session/JTI revocation through access authentication, retain JTI records only through token expiry, preserve refresh replay history, keep state transitions idempotent, and never let a dependency-validation failure be bypassed by a successor task.
 - Authorization: explicit user → role → permission → action; server decides; deny by default; no isAdmin design.
 - Review SQL injection, XSS, CSRF where cookies apply, SSRF, file handling, data exposure, audit behavior, and sensitive logging as relevant.
 - Never expose tokens, passwords, private keys, secrets, raw credentials, or internal production stacks.
