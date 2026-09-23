@@ -16,6 +16,10 @@ Authority order:
 
 On conflict, follow higher authority and report conflict when relevant. Never invent business, domain, pricing, permission, UX, API, or database behavior. Use `TODO: REQUIREMENT NEEDED` when non-blocking; STOP and request clarification when blocked.
 
+Implementation claims require current source, active configuration, tests, or recorded validation evidence. Task metadata and planned documentation describe scope or target only; `Planned`, `Ready`, and `Blocked` never prove implementation. When durable docs, skills, and source disagree, record `CONSISTENT` or `CONFLICT`, name the winning authority, and stop when resolution would change product, security, permission, compliance, destructive data, public API, or irreversible architecture behavior.
+
+Documentation ownership: `AGENTS.md` owns governance and approval; `docs/` owns durable project and runtime guidance; `.codex/skills/` owns reusable methods and activation; `tasks/` owns scoped contracts and evidence requirements; source, tests, manifests, and active configuration own implementation truth.
+
 ## Task Execution Rules
 
 Work only on one human-approved task. Before edits, read its `technical.md`, `explanation.md`, relevant docs, dependencies, and affected implementation. Verify task has objective, scope, non-goals, acceptance criteria, and validation requirements; STOP if missing information blocks safe work.
@@ -55,6 +59,10 @@ For example, instruction to allow empty `REDIS_USERNAME` and `REDIS_PASSWORD` fo
 ## Skill Activation
 
 Load project skills from `.codex/skills/REGISTRY.md` by task type. `document-planning` owns task generation; architecture, coding, security, testing, review, and verification skills apply only when relevant. External Anti-Slop skills remain mandatory additive filters, not replacements for project skills. Skills never override this file, approved task scope, validation, or human approval.
+
+### Documentation Consistency Gate
+
+Before claiming completion or updating durable guidance, compare applicable `AGENTS.md`, `docs/`, `.codex/skills/`, task contracts, source, tests, manifests, and active configuration. Check paths, route names, status labels, dependency order, security claims, and ownership. Report `CONSISTENT` only when claims agree with current evidence; otherwise report `CONFLICT — <claim>; authority winner: <source>; safe continuation: <action>`. Do not turn a target into current behavior by editing only documentation.
 
 ## Future Task Planning Standard
 
@@ -323,7 +331,7 @@ For relevant UI work, explicitly consider loading, success, empty, error, disabl
 
 For meaningful UI changes, code checks alone are insufficient. When capability exists, inspect rendered UI and verify applicable desktop/mobile layout, responsive behavior, hierarchy, spacing, typography, overflow, interactions, states, and accessibility basics.
 
-If unavailable, report `Visual verification: NOT RUN — <reason>`. Do not claim visual verification without inspecting rendered UI. A required visual gate remains incomplete unless human explicitly waives it.
+If unavailable, report `Visual verification: NOT RUN — <reason>`. Do not claim visual verification without inspecting rendered UI. When an approved contract provides an automated fallback for missing browser capability, run and report that fallback; browser absence alone does not override the contract's completion rule.
 
 ## Performance Rules
 
@@ -369,7 +377,7 @@ Request flow remains `middleware → router → controller → service/use case 
 
 Module ownership and filesystem organization are mandatory architecture rules.
 
-HTTP API versioning belongs at module transport boundaries. Application composition owns `/api/vN/<module>` prefixes; versioned routers use module-relative paths. Do not duplicate services, repositories, database access, or business logic for a URL version without an approved incompatible business requirement. Operational routes such as `/health`, `/ready`, `/docs`, `/openapi.json`, and `/ops/queues` remain outside business API version prefixes.
+HTTP API versioning belongs at module transport boundaries. Application composition owns `/api/vN/<module>` prefixes; versioned routers use module-relative paths. Do not duplicate services, repositories, database access, or business logic for a URL version without an approved incompatible business requirement. Operational routes such as `/health`, `/ready`, `/docs`, `/docs/v1`, `/openapi/v1.json`, and `/ops/queues` remain outside business API version prefixes.
 
 OpenAPI module contracts live beside owning modules as YAML. Global OpenAPI infrastructure loads, validates, aggregates, and serves those contracts. v1 and future v2 documentation remain separate; do not add v2 routes, schemas, or UI without approved scope.
 

@@ -2,6 +2,8 @@
 
 Project skills live here. External Anti-Slop skills remain upstream/plugin-provided and are referenced, never copied.
 
+Skill files describe reusable methods, not current implementation state. Verify paths, capabilities, and security claims against source, tests, manifests, active configuration, and validation output. External Anti-Slop files under `.codex/skills/antislop*` are available project inputs; execution still requires reporting the actual audit result rather than inferring PASS from their presence.
+
 | Skill | Source | Purpose | Activation |
 | --- | --- | --- | --- |
 | document-planning | Project | Documentation to execution contracts | Planning or task migration |
@@ -36,5 +38,6 @@ Project skills live here. External Anti-Slop skills remain upstream/plugin-provi
 | Review | code-review, security-review when applicable, relevant Anti-Slop, verification-loop |
 | Refactor | refactoring, coding-standards, relevant patterns, antislop, verification-loop |
 | Release | verification-loop, code-review, security-review when applicable |
+| Governance audit | document-planning, architecture, verification-loop, antislop |
 
 Load only applicable skills. AGENTS.md and approved task remain higher authority.

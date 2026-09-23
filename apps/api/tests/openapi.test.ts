@@ -28,8 +28,8 @@ describe('OpenAPI infrastructure', () => {
 
       expect(redirect.status).toBe(302);
       expect(redirect.headers.location).toBe(OPENAPI_UI_PATH);
-      expect(ui.status).toBe(200);
-      expect(ui.headers['content-type']).toContain('text/html');
+      expect(ui.status).toBe(302);
+      expect(ui.headers.location).toBe(`${OPENAPI_UI_PATH}/`);
       expect(asset.status).toBe(200);
       expect(asset.headers['content-type']).toContain('text/css');
       expect(init.status).toBe(200);
@@ -37,6 +37,10 @@ describe('OpenAPI infrastructure', () => {
       expect(init.text).toContain('"tryItOutEnabled": true');
       expect(document.status).toBe(200);
       expect(document.headers['content-type']).toContain('application/json');
+
+      const slashUi = await request(app).get(`${OPENAPI_UI_PATH}/`);
+      expect(slashUi.status).toBe(200);
+      expect(slashUi.headers['content-type']).toContain('text/html');
     } finally {
       logging.close();
       rmSync(directory, { recursive: true, force: true });

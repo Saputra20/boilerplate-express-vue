@@ -40,8 +40,16 @@ export function installOpenApiRoutes(app: Express): void {
   app.get(OPENAPI_DOCUMENT_PATH, (_request, response) => {
     response.type('application/json').send(OPENAPI_V1_DOCUMENT);
   });
+  app.get(OPENAPI_UI_PATH, (request, response, next) => {
+    const requestPath = request.originalUrl.split('?')[0];
+    if (requestPath === OPENAPI_UI_PATH) {
+      response.redirect(302, `${OPENAPI_UI_PATH}/`);
+      return;
+    }
+    next();
+  });
   app.get(
-    OPENAPI_UI_PATH,
+    `${OPENAPI_UI_PATH}/`,
     swaggerUi.setup(OPENAPI_V1_DOCUMENT, {
       swaggerOptions: {
         persistAuthorization: false,

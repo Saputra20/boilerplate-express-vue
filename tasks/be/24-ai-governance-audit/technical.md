@@ -10,7 +10,7 @@
 | Workstream | Backend / Governance |
 | Task Category | Documentation and governance |
 | Repository/App | Repository-wide; backend-led |
-| Status | Planned — documentation-only execution contract |
+| Status | Complete — governance audit and documentation hardening evidence recorded on 2026-09-23. |
 | Priority | Foundation governance |
 | Suggested Size | Medium — cross-document audit and focused guidance updates |
 | Depends On | `be/23-versioned-openapi-swagger` |
@@ -24,10 +24,10 @@ Create one consistent, source-aware governance layer for AI coding agents. Guida
 ## 3. Context
 
 - `AGENTS.md` is the repository governance authority and already defines task contracts, hotfix handling, module boundaries, API rules, Anti-Slop, and final reporting.
-- `docs/**` is sparse and contains implementation claims that may lag approved be/21–23 targets; `docs/API.md` currently describes `/docs` and `/openapi.json`, not the planned `/docs/v1` and `/openapi/v1.json` architecture.
+- `docs/**` contains durable guidance that must stay aligned with current source; `docs/API.md` previously described `/docs` and `/openapi.json` and now records the evidenced `/docs/v1` and `/openapi/v1.json` architecture.
 - `.codex/skills/REGISTRY.md` defines project skill ownership and activation; skill references include source-state snapshots that must not become implementation truth.
-- Actual source currently remains pre-be/21–23: `app.ts` uses positional feature dependencies, `server.ts` constructs individual auth services, auth routes remain `/auth/*`, and OpenAPI remains TypeScript-object based with `/docs` and `/openapi.json`.
-- `be/21` is a Ready planning contract, while `be/22` and `be/23` are Planned contracts. None is implementation evidence by itself.
+- Current source implements the recorded be/21–23 targets: `app.ts` mounts the auth v1 router, `server.ts` composes the auth module, auth routes use `/api/v1/auth/*`, and OpenAPI uses module-owned YAML with `/docs/v1` and `/openapi/v1.json`.
+- be/21–23 are marked Complete with recorded evidence; status remains metadata and must not replace source or validation proof.
 - Product placeholder docs must remain requirement-safe. Unknown product/domain/design content remains `TODO: REQUIREMENT NEEDED`.
 
 ## 4. Dependencies
@@ -43,7 +43,7 @@ Create one consistent, source-aware governance layer for AI coding agents. Guida
 - Define one concise authority/ownership model: governance, durable project docs, reusable methods, task contracts, and source truth.
 - Define controlled hotfix/small-maintenance execution and its mandatory validation.
 - Define task-state verification that rejects Planned/Ready/Blocked labels as implementation proof.
-- Align module-first, server/app composition, API major versioning, operational routes, and OpenAPI/Swagger ownership with be/21–23 without claiming unimplemented targets are live.
+- Align module-first, server/app composition, API major versioning, operational routes, and OpenAPI/Swagger ownership with current be/21–23 evidence while keeping future v2 deferred.
 - Audit skill activation and responsibility boundaries; refine registry guidance without loading unrelated skills.
 - Audit docs ownership, stale references, product placeholders, and a reusable documentation consistency gate.
 - Evaluate and plan `docs/OPERATIONS.md` and `docs/CONVENTIONS.md` where durable verified guidance is missing.
@@ -116,7 +116,7 @@ Not applicable — no runtime configuration changes.
 
 ### API Contract
 
-Not applicable — no endpoint, route, schema, auth, status, or OpenAPI runtime change. Documentation must accurately distinguish current `/auth/*`, `/docs`, and `/openapi.json` source behavior from approved be/22–23 target paths until those tasks execute.
+Not applicable — no endpoint, route, schema, auth, status, or OpenAPI runtime change. Documentation must accurately describe current `/api/v1/auth/*`, `/docs`, `/docs/v1`, and `/openapi/v1.json` source behavior, while keeping future v2 as deferred until separately approved and evidenced.
 
 ### Database Contract
 
@@ -157,12 +157,12 @@ No runtime behavior changes. Execution reads current source to classify truth, e
 
 | Scenario | Expected Result | Security / Recovery |
 | --- | --- | --- |
-| Task says Ready/Planned but source lacks target | Classify mismatch; do not mark implementation complete | Dependency remains unsatisfied until evidence exists |
+| Task says Ready/Planned or Complete but source lacks target | Classify mismatch; do not mark implementation complete | Dependency remains unsatisfied until evidence exists |
 | Skill reference lists stale paths or state | Mark finding and replace with durable inspection workflow | Never rely on snapshot alone |
 | Docs and source conflict | Report `CONFLICT`, name authority winner, and stop if behavior decision is required | Do not silently rewrite product/API behavior |
 | Product placeholder lacks requirements | Preserve `TODO: REQUIREMENT NEEDED` | No invented product semantics |
 | Hotfix grows beyond bounded scope | Stop and require normal approved task | Human retains decision authority |
-| be/23 target is documented but not implemented | Label as approved target/deferred; preserve current source truth | No false completion |
+| be/23 target is documented but source/evidence disagree | Report `CONFLICT`; preserve source truth and stop on externally visible behavior decisions | No false completion |
 
 ## 13. Security Requirements
 
@@ -187,8 +187,7 @@ No runtime behavior changes. Execution reads current source to classify truth, e
 
 ### Negative / Failure
 
-- Audit detects stale `/docs`/`/openapi.json` claims against approved be/23 targets.
-- Audit detects current `/auth/*` and positional composition against be/22 targets.
+- Audit detects stale `/docs`/`/openapi.json`, `/auth/*`, or pre-refactor composition claims in secondary guidance.
 - Audit detects task labels used as completion evidence.
 - Audit detects stale skill snapshots or unsupported “Anti-Slop unavailable” claims.
 
@@ -219,21 +218,21 @@ Not applicable — no runtime or database test fixture is changed. Documentation
 
 ## 16. Acceptance Criteria
 
-- [ ] All project-owned skills, references, registry entries, and `skills-lock.json` are inventoried.
-- [ ] Stale implementation-state references are identified and corrected or explicitly classified.
-- [ ] Anti-Slop installation, availability, and activation claims match actual repository state.
-- [ ] Controlled hotfix governance is defined with hard-stop boundaries and required validation.
-- [ ] Task-state verification prevents Planned/Ready/Blocked labels from proving implementation.
-- [ ] Module-first governance matches be/21 target without claiming current source already matches it.
-- [ ] API-versioning governance matches be/22 target and preserves v1/deprecation hard stops.
-- [ ] OpenAPI/Swagger governance matches be/23 target without claiming it is implemented early.
-- [ ] Docs ownership and source-of-truth boundaries are explicit.
-- [ ] Skill activation matrix is selective and responsibility boundaries are clear.
-- [ ] PRD/product/domain/design placeholders contain no invented requirements.
-- [ ] Consistency-audit procedure returns `CONSISTENT` or actionable `CONFLICT` findings.
-- [ ] Every planned governance change has an owning source-of-truth.
-- [ ] No application/runtime/dependency/migration file is modified.
-- [ ] Diff, changed-file, secret, and documentation Anti-Slop reviews pass.
+- [x] All project-owned skills, references, registry entries, and `skills-lock.json` are inventoried.
+- [x] Stale implementation-state references are identified and corrected or explicitly classified.
+- [x] Anti-Slop installation, availability, and activation claims match actual repository state.
+- [x] Controlled hotfix governance is defined with hard-stop boundaries and required validation.
+- [x] Task-state verification prevents Planned/Ready/Blocked labels from proving implementation.
+- [x] Module-first governance matches current be/21 source and evidence, with future architecture changes still requiring approval.
+- [x] API-versioning governance matches current be/22 source and preserves v1/deprecation hard stops.
+- [x] OpenAPI/Swagger governance matches current be/23 source and evidence, with future v2 still deferred.
+- [x] Docs ownership and source-of-truth boundaries are explicit.
+- [x] Skill activation matrix is selective and responsibility boundaries are clear.
+- [x] PRD/product/domain/design placeholders contain no invented requirements.
+- [x] Consistency-audit procedure returns `CONSISTENT` or actionable `CONFLICT` findings.
+- [x] Every planned governance change has an owning source-of-truth.
+- [x] No application/runtime/dependency/migration file was modified by be/24.
+- [x] Diff, changed-file, secret, and documentation Anti-Slop reviews pass.
 
 ## 17. Anti-Slop Requirements
 
@@ -286,6 +285,23 @@ Not applicable — no UI changes.
 - Changed-file and secret review.
 - Documentation consistency and Anti-Slop review with final result.
 
+### 19.1 Execution Evidence — 2026-09-23
+
+| Gate | Evidence | Result |
+| --- | --- | --- |
+| Dependency | be/23 is marked Complete with source, focused/full test, fallback Swagger, static, and diff evidence. | PASS |
+| Governance inventory | Audited `AGENTS.md`, all `docs/**`, project skill registry/readme/upstream audit, project skill files and references, `skills-lock.json`, task contracts be/19–24, API source/tests, manifests, and current worktree status. | PASS |
+| Truth classification | Current be/21–23 source/evidence reconciled; future v2, product, compliance, and lifecycle decisions remain deferred or requirement-needed. | PASS |
+| Authority/ownership | `AGENTS.md`, docs, skills, tasks, and source ownership rules added and mapped in `references/authority-and-ownership.md` and `references/docs-ownership-map.md`. | PASS |
+| Hotfix/task state | Bounded hotfix rules and source/evidence verification for `Planned`, `Ready`, `Blocked`, and `Complete` labels are explicit. | PASS |
+| Architecture/versioning/OpenAPI | Current module composition, `/api/v1/auth/*`, `/docs/v1`, `/openapi/v1.json`, YAML ownership, and operational-route boundaries match source/evidence; v2 remains deferred. | PASS |
+| Skill activation | Registry now includes governance activation and state-truth guidance; stale Anti-Slop/security/verification snapshots corrected. | PASS |
+| Documentation consistency | Referenced-path check, stale-claim scan, ownership review, and current-source comparison return `CONSISTENT`. | PASS |
+| Product placeholders | `docs/PRD.md`, `PRODUCT.md`, `DOMAIN.md`, and `DESIGN.md` retain `TODO: REQUIREMENT NEEDED`; no product decisions added. | PASS |
+| Scope | Task changes are governance/docs only. Pre-existing API OpenAPI/test worktree changes were preserved and not modified by be/24. | PASS |
+| Static/security review | `git diff --check`, changed-file review, generated-junk review, and secret-name/value review pass. | PASS |
+| Anti-Slop | Core Anti-Slop and documentation consistency review executed against changed governance/docs; no blocking duplication, fake evidence, hidden TODO, unsupported claim, or speculative scope finding. | PASS |
+
 ## 20. Traceability
 
 | Trace Type | References |
@@ -305,12 +321,12 @@ None.
 
 ## 22. Definition Of Done
 
-- [ ] All acceptance criteria pass with actual audit evidence.
-- [ ] Current implementation and approved targets are not conflated.
-- [ ] Hotfix, task-state, human-control, architecture, versioning, and OpenAPI governance are explicit.
-- [ ] Docs ownership and skill activation are concise and non-duplicative.
-- [ ] Product placeholders remain requirement-safe.
-- [ ] Required documentation Anti-Slop/consistency checks pass.
-- [ ] `git diff --check`, changed-file review, and secret review pass.
-- [ ] No application/runtime/dependency/migration files change.
-- [ ] No successor task is started.
+- [x] All acceptance criteria pass with actual audit evidence.
+- [x] Current implementation and approved targets are not conflated.
+- [x] Hotfix, task-state, human-control, architecture, versioning, and OpenAPI governance are explicit.
+- [x] Docs ownership and skill activation are concise and non-duplicative.
+- [x] Product placeholders remain requirement-safe.
+- [x] Required documentation Anti-Slop/consistency checks pass.
+- [x] `git diff --check`, changed-file review, and secret review pass.
+- [x] No application/runtime/dependency/migration files were changed by be/24.
+- [x] No successor task was started.

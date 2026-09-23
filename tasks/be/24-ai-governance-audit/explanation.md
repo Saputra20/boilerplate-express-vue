@@ -10,11 +10,11 @@ Setelah module-first, API versioning, dan OpenAPI/Swagger memiliki kontrak baru,
 
 ## Apa yang berubah?
 
-Task implementasi nantinya akan memperjelas authority, ownership dokumentasi, jalur hotfix terbatas, verifikasi status task melalui source dan evidence, aktivasi skill yang lebih selektif, serta aturan konsistensi untuk module-first, `/api/v1`, dan OpenAPI/Swagger.
+`AGENTS.md`, docs durable, registry skill, dan skill references kini menegaskan authority, ownership dokumentasi, jalur hotfix terbatas, verifikasi status task melalui source dan evidence, aktivasi skill selektif, serta consistency gate untuk module-first, `/api/v1`, dan OpenAPI/Swagger. `docs/OPERATIONS.md` dan `docs/CONVENTIONS.md` menampung panduan durable yang terverifikasi.
 
 ## Apa yang tidak berubah?
 
-Task ini tidak mengubah source aplikasi, test runtime, dependency, database, route, auth, Redis, BullMQ, Swagger runtime, atau perilaku API. Target be/21–23 tetap diklasifikasikan sebagai target sampai source dan evidence membuktikan implementasinya.
+Task ini tidak mengubah source aplikasi, test runtime, dependency, database, route, auth, Redis, BullMQ, Swagger runtime, atau perilaku API. Future v2 dan keputusan product, permission, compliance, serta API lifecycle tetap memerlukan approval terpisah.
 
 ## Dependency task apa?
 
@@ -34,4 +34,4 @@ Reviewer harus memastikan perubahan tidak mengambil keputusan produk, permission
 
 ## Apa yang belum dikerjakan?
 
-Implementasi governance belum dijalankan. be/21, be/22, dan be/23 juga belum boleh dianggap selesai hanya dari task metadata; source dan evidence aktual tetap menentukan status.
+Future v2, API lifecycle, product requirements, dan policy yang belum disetujui belum dikerjakan. Status be/21–23 tetap harus diverifikasi lewat source dan evidence, bukan metadata saja.

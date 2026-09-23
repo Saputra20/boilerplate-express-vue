@@ -2,11 +2,11 @@
 
 ## Current implementation classification
 
-Before be/22 and be/23 execute, source currently remains unversioned for business auth routes and TypeScript-object based for OpenAPI. Current operational routes include `/health`, `/ready`, `/docs`, `/openapi.json`, and `/ops/queues`.
+Current source uses `/api/v1/auth/*`, module-owned YAML OpenAPI contracts, `/docs` → `/docs/v1`, `/openapi/v1.json`, and operational routes `/health`, `/ready`, and `/ops/queues` outside the business version namespace.
 
 ## Approved target classification
 
-be/22 targets `/api/v1/auth/*` while keeping health/readiness, docs, OpenAPI, and queue monitor operational. be/23 targets `/docs/v1`, `/openapi/v1.json`, module/version-owned YAML, and Swagger as browser testing surface. These targets are not implementation facts until source and evidence confirm them.
+be/22 and be/23 targets are implemented and supported by recorded source/test evidence. Future v2 remains an approved extension point only and is not implemented.
 
 ## Audit checks
 
