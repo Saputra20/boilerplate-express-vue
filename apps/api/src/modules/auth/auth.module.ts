@@ -9,6 +9,11 @@ import { createAccessAuthService } from './services/access-auth.service.js';
 import { createLoginService } from './services/login.service.js';
 import { createLogoutService } from './services/logout.service.js';
 import { createRefreshService } from './services/refresh-token.service.js';
+import { createAuthenticatedUserRepository } from './repositories/context.repository.js';
+import { createAuthenticatedContextService } from './services/context.service.js';
+import { createPermissionRepository } from '../rbac/repositories/permission.repository.js';
+import { createPermissionService } from '../rbac/services/permission.service.js';
+import { createMeRouter } from './v1/me.router.js';
 
 export type AuthModuleDependencies = {
   db: Database;
@@ -20,6 +25,11 @@ export function createAuthModule({ db, jwt }: AuthModuleDependencies) {
   const refreshService = createRefreshService(createRefreshRepository(db), jwt);
   const accessAuthService = createAccessAuthService(createAccessAuthRepository(db), jwt);
   const logoutService = createLogoutService(createLogoutRepository(db));
+  const permissionService = createPermissionService(createPermissionRepository(db));
+  const contextService = createAuthenticatedContextService(
+    createAuthenticatedUserRepository(db),
+    permissionService,
+  );
 
   return {
     v1: {
@@ -29,6 +39,7 @@ export function createAuthModule({ db, jwt }: AuthModuleDependencies) {
         accessAuthService,
         logoutService,
       }),
+      meRouter: createMeRouter({ accessAuthService, contextService }),
     },
   };
 }

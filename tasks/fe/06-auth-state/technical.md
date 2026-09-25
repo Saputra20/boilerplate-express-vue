@@ -1,203 +1,99 @@
-# fe/06-auth-state — Authentication State
+# fe/06-auth-state — Authentication And Session State
 
 ## 1. Metadata
-
 | Field | Value |
 | --- | --- |
 | Task ID | `fe/06-auth-state` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | CMS authentication/session |
 | Workstream | Frontend |
-| Category | authstate foundation |
-| Repository | `apps/cms` |
-| Platform | Vue 3 / Vite CMS |
-| Status | Blocked — requirement needed |
-| Priority | Foundation execution order 6 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | fe/05-api-client |
-| Blocks | fe/07-login-page |
+| Task Category | Authentication |
+| Repository/App | `apps/cms` |
+| Status | Implemented — verified |
+| Priority | Security-sensitive |
+| Suggested Size | Medium |
+| Depends On | `fe/05-api-client` |
+| Blocks | `fe/07-login-page`, `fe/08-route-guard`, `fe/09-permission-guard` |
 | Execution Order | 6 |
 
-## 2. Outcome
+**Contract Status:** Ready.
 
-Create Pinia auth state and session restoration behavior only after token transport/storage and backend contract are approved.
+**Execution Status:** Implemented and verified; browser auth-flow verification remains pending until rendered auth UI exists.
+
+## 2. Outcome
+Create Pinia auth/session state for login, one-time restoration, single-flight refresh, current/logout-all, safe cleanup, and RBAC-ready user/role/permission shape without fabricating values.
 
 ## 3. Context
+Backend returns access/refresh tokens in JSON and accepts refresh JSON. Backend exposes login, refresh, logout, and logout-all only; no current-user/effective-permission endpoint exists.
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+## 4. Dependencies
+Depends on API client. Uses Pinia and browser `sessionStorage`; no new dependency.
 
-## 4. In Scope
+## 5. In Scope
+- In-memory access token only.
+- `sessionStorage` refresh token for current session, explicitly not equivalent to Secure HttpOnly cookies.
+- Initial restoration: no refresh token unauthenticated; token triggers one refresh; success rotates stored token; failure clears session.
+- Single-flight refresh; waiters share one operation; refresh endpoint never recursively refreshes.
+- Current logout and logout-all; always clear local state safely.
+- Structurally typed current user, roles, effective permissions without fabricated values.
 
-- Create Pinia auth state and session restoration behavior only after token transport/storage and backend contract are approved.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+## 6. Out of Scope
+LocalStorage/IndexedDB access-token persistence, invented profile endpoint, JWT claim authorization, role names, permission keys, backend changes, and opaque auth/permission guard combination.
 
-## 5. Out of Scope
+## 7. Existing Implementation
+`apps/cms/src/stores/auth.ts` provides Pinia auth/session state, one-time restoration, single-flight refresh, login, current logout, logout-all, memory-only access-token state, and `sessionStorage` refresh-token rotation. `apps/cms/src/main.ts` starts restoration before app mount. `apps/cms/tests/auth-store.test.ts` covers lifecycle and failure behavior. No profile or permission endpoint is fabricated.
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+## 8. Implementation Requirements
+Use actual token response and endpoints. Never persist access token. `sessionStorage` refresh persistence follows current JSON backend contract and must document weaker security than Secure HttpOnly cookie transport. Do not render protected content authenticated before restoration resolves.
 
-## 6. Implementation Requirements
+## 9. Applicable Contracts
+**API:** login/refresh token response; refresh request; logout/logout-all bearer `204`; 401 invalid auth/refresh.
 
-- Create Pinia auth state and session restoration behavior only after token transport/storage and backend contract are approved.
-- CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+**Session Contract:** access token memory; refresh token `sessionStorage`; single-flight refresh; clear on failure/logout.
 
-### 6.1 Resolved Business Requirements
+**RBAC Contract:** state may expose user/roles/effective permissions only when approved backend source exists; current source is absent.
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+## 10. File Impact
+Expected Create/Modify: Pinia auth store/service, API integration, tests. Expected Not Modified: backend, manifests, permission endpoint, and route guards.
 
-## 7. Contract and Data Impact
+## 11. Runtime Behavior
+App starts → restoration pending → one refresh if stored token exists → authenticated or unauthenticated → requests use memory access token → eligible 401s share refresh → failure clears state → logout clears state.
 
-### 7.1 Configuration Contract
+## 12. Error And Edge Cases
+Missing/expired/replayed refresh, concurrent 401s, refresh endpoint 401, network failure, logout failure, reload, and multiple tabs require deterministic cleanup tests. Multi-tab uses native browser sync only if needed.
 
-Not applicable — this task does not change documented configuration.
+## 13. Security Requirements
+No access token in storage. No raw token logging. SessionStorage limitation documented. API remains auth/RBAC authority; JWT snapshots do not grant permissions.
 
-### 7.2 API Contract
+## 14. Test Requirements
+Login state, restoration no-token/token/success/failure, rotation, single-flight refresh, recursion prevention, logout current/all cleanup, failure cleanup, and secret non-disclosure.
 
-Not applicable — required path, auth, request/response, status/error, or permission contract is not specified; task remains blocked.
+## 15. Task-Level Expected Results
+- Auth lifecycle is typed and centralized in Pinia.
+- Refresh storms are prevented.
+- RBAC-ready shape exists without invented identity/roles/permissions.
 
-### 7.3 Database Contract
+## 16. Acceptance Criteria
+- [x] Access token is memory-only.
+- [x] Refresh token uses current JSON transport and `sessionStorage`.
+- [x] Restoration and refresh are single-flight and failure-safe.
+- [x] Logout current/all clear local state.
+- [x] No fabricated profile/permission values or JWT authorization workaround.
 
-Not applicable — this task does not change a database contract.
+## 17. Anti-Slop Requirements
+Primary `frontend-patterns`; `security-review` required; final `tdd-workflow`, `code-review`, `antislop`, `verification-loop`. Browser verification applies to rendered auth flows.
 
-### 7.4 UI Contract
+## 18. Validation Requirements
+Focused/full tests, lint, typecheck, build, security review, Anti-Slop, browser auth-flow verification when UI exists, and `git diff --check`.
 
-Not applicable — consuming UI contract is unresolved; task is blocked.
+## 19. Completion Evidence
+`apps/cms/src/stores/auth.ts` consumes the existing API client, keeps access tokens in memory, stores only the refresh token under `sessionStorage`, performs one-time restoration, shares concurrent refreshes, prevents refresh recursion, rotates refresh tokens, and clears state on refresh/logout failure. `apps/cms/tests/auth-store.test.ts` passes 9 focused tests; full CMS tests pass 27 tests; lint, typecheck, and build pass. RBAC data remains absent and owned by `fe/09`.
 
-## 8. File Impact
+## 20. Traceability
+Not applicable — project has no traceability ID system.
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
+## 21. Open Points
+None for approved auth policy. Backend current-user/effective-permission source is not an auth-state implementation blocker; it is localized to `fe/09`.
 
-Test: `apps/cms/tests/`.
-
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
-
-## 9. Runtime Behavior
-
-CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing CMS shell/Vitest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
-
-## 13. Validation Requirements
-
-### Static
-
-- `bun run --cwd apps/cms lint`
-- `bun run --cwd apps/cms typecheck`
-- `bun run --cwd apps/cms test`
-- `bun run --cwd apps/cms build`
-- `git diff --check`
-
-### Automated Tests
-
-- Focused and full existing Vitest tests applicable to changed boundary.
-
-### Build
-
-- `bun run --cwd apps/cms build`
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Not applicable — no meaningful rendered UI change.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 14. Acceptance Criteria
-
-- [ ] Create Pinia auth state and session restoration behavior only after token transport/storage and backend contract are approved.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Authentication State capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/cms/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/cms lint`; `bun run --cwd apps/cms typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Authentication State boundary |
-| `docs/DESIGN.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `fe/06-auth-state` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-TODO: REQUIREMENT NEEDED — token transport/storage, refresh contract, profile shape, logout behavior.
+## 22. Definition Of Done
+Pinia lifecycle, tests, security review, static checks, Anti-Slop, applicable browser evidence, diff/secret review, and human review complete.

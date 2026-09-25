@@ -14,7 +14,8 @@
     "test:watch": "NODE_ENV=test jest --watch",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:rollback": "bun scripts/db-rollback.ts"
+    "db:rollback": "bun scripts/db-rollback.ts",
+    "db:seed": "bun scripts/db-seed.ts"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "12.1.0",

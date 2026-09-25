@@ -42,4 +42,28 @@ describe('application shell', () => {
       cleanup();
     }
   });
+
+  it('mounts the authenticated context router below the versioned API prefix', async () => {
+    const { logging, cleanup } = createTestApp();
+    const router = Router();
+    router.get('/me', (_request, response) => {
+      response.status(200).json({ status: 'ok' });
+    });
+    const app = createApp({
+      logging,
+      security: { corsOrigins: ['http://localhost:5173'] },
+      routers: { meV1: router },
+    });
+
+    try {
+      const mounted = await request(app).get('/api/v1/me');
+      const wrongPrefix = await request(app).get('/api/v1/auth/me');
+
+      expect(mounted.status).toBe(200);
+      expect(mounted.body).toEqual({ status: 'ok' });
+      expect(wrongPrefix.status).toBe(404);
+    } finally {
+      cleanup();
+    }
+  });
 });

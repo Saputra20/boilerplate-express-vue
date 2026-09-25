@@ -44,10 +44,14 @@ export async function startServer(): Promise<void> {
     startupPhase = 'BullMQ initialization';
     queues = createQueueInfrastructure(redisConfig, logging.logger);
     await queues.initialize();
+    const authModule = createAuthModule({ db: database.db, jwt });
     app = createApp({
       logging,
       security: { corsOrigins: env.CORS_ORIGINS },
-      routers: { authV1: createAuthModule({ db: database.db, jwt }).v1.router },
+      routers: {
+        authV1: authModule.v1.router,
+        meV1: authModule.v1.meRouter,
+      },
       queueMonitor: {
         queue: queues.queue,
         credentials: {

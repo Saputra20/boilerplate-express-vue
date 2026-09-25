@@ -1,203 +1,96 @@
-# fe/10-ux-states — Errors Loading And Empty States
+# fe/10-ux-states — Minimal Shared UX States
 
 ## 1. Metadata
-
 | Field | Value |
 | --- | --- |
 | Task ID | `fe/10-ux-states` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | CMS Auth + RBAC-ready UX |
 | Workstream | Frontend |
-| Category | ux foundation |
-| Repository | `apps/cms` |
-| Platform | Vue 3 / Vite CMS |
-| Status | Blocked — requirement needed |
-| Priority | Foundation execution order 10 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | fe/04-theme-design-system, fe/05-api-client |
-| Blocks | fe/11-frontend-testing |
+| Task Category | UI states |
+| Repository/App | `apps/cms` |
+| Status | Implemented — verification incomplete |
+| Priority | Foundation |
+| Suggested Size | Small |
+| Depends On | `fe/04-theme-design-system`, `fe/09-permission-guard` |
+| Blocks | `fe/11-frontend-testing` |
 | Execution Order | 10 |
 
-## 2. Outcome
+**Contract Status:** Ready.
 
-Create accessible reusable loading/error/empty primitives only after approved copy, design, and API-error policy.
+**Execution Status:** Implemented and verified; browser rendered-state verification and human review remain pending. Permission hydration remains owned by `fe/09`.
+
+## 2. Outcome
+Provide only reusable states required by shell, auth, login, routing, and RBAC: loading, error, Not Found, permission denied, and unavailable.
 
 ## 3. Context
+Current CMS has a Not Found view, contextual login errors, and submit loading state. `apps/cms/src/components/FeedbackState.vue` now provides the repeated persistent feedback primitive for error, unavailable, and denied states while Not Found remains shell-owned.
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+## 4. Dependencies
+Depends on minimal UI foundation and RBAC denied-state contract. Uses existing Vue/Tailwind only.
 
-## 4. In Scope
+## 5. In Scope
+- Reuse actual repeated loading/error/unavailable/denied patterns.
+- Keep Not Found state aligned with shell.
+- Show retry only for safe-to-repeat operations.
+- Prefer inline/contextual persistent errors; transient feedback only when justified.
+- Use neutral reusable copy; feature-specific copy remains feature-owned.
 
-- Create accessible reusable loading/error/empty primitives only after approved copy, design, and API-error policy.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+## 6. Out of Scope
+Giant state framework, toast dependency, mutation retry, fake content, speculative variants, and business-feature copy.
 
-## 5. Out of Scope
+## 7. Existing Implementation
+`FeedbackState` is consumed by Login for safe error/unavailable feedback and supports denied feedback for the later RBAC UX boundary without resolving permissions. Login keeps loading/disabled state contextual to the submit operation. `NotFoundView` remains a dedicated route state. No toast framework or generic state registry exists.
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+## 8. Implementation Requirements
+Create abstractions only where actual repetition exists. Never hide API errors or expose raw backend internals. Do not auto-retry mutations.
 
-## 6. Implementation Requirements
+## 9. Applicable Contracts
+**States:** loading, error, Not Found, permission denied, unavailable. Safe backend error envelope `{ message }`; permission denial is distinct from 401/login.
 
-- Create accessible reusable loading/error/empty primitives only after approved copy, design, and API-error policy.
-- CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+**UI:** neutral copy, accessible status, contextual feedback.
 
-### 6.1 Resolved Business Requirements
+## 10. File Impact
+Expected Create/Modify: minimal state components/composables and tests. Expected Not Modified: backend, dependencies, speculative notification framework, business modules.
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+## 11. Runtime Behavior
+Consumer supplies actual state → shared state renders accessible feedback → safe retry only when approved → success/empty transitions remain truthful.
 
-## 7. Contract and Data Impact
+## 12. Error And Edge Cases
+Network failure, timeout, safe server error, unavailable dependency, permission denial, restoration pending, and unknown route.
 
-### 7.1 Configuration Contract
+## 13. Security Requirements
+Never render tokens, credentials, stack traces, or internal response details. Permission denied never becomes login.
 
-Not applicable — this task does not change documented configuration.
+## 14. Test Requirements
+Test each implemented state and transitions, safe retry eligibility, accessible status, and denied-vs-unauthenticated distinction. Browser verify meaningful rendered states.
 
-### 7.2 API Contract
+## 15. Task-Level Expected Results
+- Initial auth/CMS/RBAC flows share only justified state primitives.
+- Persistent failures are contextual and safe.
+- No hypothetical framework is created.
 
-Not applicable — this task does not modify an API contract.
+## 16. Acceptance Criteria
+- [x] States are limited to actual initial consumers and the explicitly scoped RBAC denied boundary.
+- [x] Retry appears only when a consumer explicitly opts into the `retryable` prop.
+- [x] Permission denied is distinct from login/auth failure.
+- [x] No toast dependency or generic state framework is added.
+- [ ] Accessibility and rendered evidence pass.
 
-### 7.3 Database Contract
+## 17. Anti-Slop Requirements
+Primary `frontend-patterns`; optional `design-system`, `ui-styling`, `ui-ux-pro-max`; final `antislop`, `antislop-ui`, `antislop-human`, `antislop-layoutmobile`, `browser-verification`, `verification-loop`.
 
-Not applicable — this task does not change a database contract.
+## 18. Validation Requirements
+Focused/full tests, lint, typecheck, build, UI audits, browser verification, `git diff --check`, and scope review.
 
-### 7.4 UI Contract
+## 19. Completion Evidence
+`FeedbackState.vue` provides safe accessible error, unavailable, and denied states with opt-in retry; Login consumes error/unavailable states; loading remains a disabled submit state; Not Found remains route-specific. `bun run test` passes 51 tests; lint, typecheck, build, and diff checks pass. Browser rendered-state verification and human review remain NOT RUN/PENDING. No profile/permission data is fabricated.
 
-Not applicable — page/component/design/state contract is unresolved in PRODUCT/DESIGN docs; task is blocked.
+## 20. Traceability
+Not applicable — project has no traceability ID system.
 
-## 8. File Impact
+## 21. Open Points
+None for scope. `fe/09` backend contract remains an external dependency for real permission hydration.
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
-
-Test: `apps/cms/tests/`.
-
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
-
-## 9. Runtime Behavior
-
-CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing CMS shell/Vitest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
-
-## 13. Validation Requirements
-
-### Static
-
-- `bun run --cwd apps/cms lint`
-- `bun run --cwd apps/cms typecheck`
-- `bun run --cwd apps/cms test`
-- `bun run --cwd apps/cms build`
-- `git diff --check`
-
-### Automated Tests
-
-- Focused and full existing Vitest tests applicable to changed boundary.
-
-### Build
-
-- `bun run --cwd apps/cms build`
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Browser/visual verification required if task becomes unblocked and rendered UI changes.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: required; reject generic AI layout, fake content, excessive containers, visual inconsistency, missing responsive/accessibility states. Visual verification: required when unblocked rendered UI changes.
-
-## 14. Acceptance Criteria
-
-- [ ] Create accessible reusable loading/error/empty primitives only after approved copy, design, and API-error policy.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Errors Loading And Empty States capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: required; reject generic AI layout, fake content, excessive containers, visual inconsistency, missing responsive/accessibility states. Visual verification: required when unblocked rendered UI changes.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/cms/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/cms lint`; `bun run --cwd apps/cms typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Errors Loading And Empty States boundary |
-| `docs/DESIGN.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `fe/10-ux-states` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-TODO: REQUIREMENT NEEDED — copy, retry policy, design reference, notification/error-boundary policy.
+## 22. Definition Of Done
+Minimal states implemented for actual consumers, tests/static/UI/browser checks pass, and human review complete.

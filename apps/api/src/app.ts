@@ -13,6 +13,7 @@ export type AppDependencies = {
   security: SecurityOptions;
   routers?: {
     authV1?: Router;
+    meV1?: Router;
   };
   health?: HealthRouteOptions;
   queueMonitor?: QueueMonitorOptions;
@@ -28,6 +29,7 @@ export function createApp({ logging, security, routers, health, queueMonitor }: 
   if (health) installHealthRoutes(app, health, logging.logger);
   installOpenApiRoutes(app);
   if (routers?.authV1) app.use('/api/v1/auth', routers.authV1);
+  if (routers?.meV1) app.use('/api/v1', routers.meV1);
   if (queueMonitor) installQueueMonitor(app, queueMonitor, logging.logger);
 
   app.use((_request, response) => {

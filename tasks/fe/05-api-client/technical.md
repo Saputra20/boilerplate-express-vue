@@ -1,203 +1,99 @@
 # fe/05-api-client — API Client
 
 ## 1. Metadata
-
 | Field | Value |
 | --- | --- |
 | Task ID | `fe/05-api-client` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | CMS API transport |
 | Workstream | Frontend |
-| Category | client foundation |
-| Repository | `apps/cms` |
-| Platform | Vue 3 / Vite CMS |
-| Status | Blocked — requirement needed |
-| Priority | Foundation execution order 5 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | fe/02-environment-validation |
-| Blocks | fe/06-auth-state |
+| Task Category | API client |
+| Repository/App | `apps/cms` |
+| Status | Implemented — verified |
+| Priority | Foundation |
+| Suggested Size | Medium |
+| Depends On | `fe/02-environment-validation` |
+| Blocks | `fe/06-auth-state`, `fe/10-ux-states` |
 | Execution Order | 5 |
 
-## 2. Outcome
+**Contract Status:** Ready.
 
-Create typed Axios client and safe error normalization only after backend endpoint/error/auth contracts are approved.
+**Execution Status:** Implemented and verified; `fe/02` is complete.
+
+## 2. Outcome
+Create one typed Axios client boundary using `VITE_API_BASE_URL`, 10-second timeout, safe error normalization, optional bearer injection, and no generic automatic retries.
 
 ## 3. Context
+Axios exists but no client implementation. Backend OpenAPI defines auth v1 routes and token schemas. No frontend-consumable profile/permission endpoint exists.
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+## 4. Dependencies
+Use existing Axios and Zod. Auth/session orchestration belongs to `fe/06`; permission data remains blocked in `fe/09`.
 
-## 4. In Scope
+## 5. In Scope
+- Public and protected JSON requests.
+- `Authorization: Bearer <accessToken>` support through explicit request/client boundary.
+- 10-second timeout.
+- Normalize validation, 401, 403, 429, 5xx, timeout, and network failures.
+- Preserve safe backend message/status and documented diagnostic metadata only.
+- Focused tests with mocked transport.
 
-- Create typed Axios client and safe error normalization only after backend endpoint/error/auth contracts are approved.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+## 6. Out of Scope
+Persistent auth storage, 401 refresh orchestration, generic retries, mutation retries, invented endpoints, profile/permission endpoint, and API authorization decisions.
 
-## 5. Out of Scope
+## 7. Existing Implementation
+`apps/cms/src/api/client.ts` provides the typed Axios boundary, `apps/cms/src/api/types.ts` provides Zod-backed request/response contracts, and `apps/cms/tests/api-client.test.ts` covers transport and failure behavior. The client uses the validated `VITE_API_BASE_URL` supplied by callers; auth/session orchestration remains out of scope.
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+## 8. Implementation Requirements
+Use camelCase JSON and current `/api/v1/auth/*` paths. Do not log tokens, credentials, stack traces, or raw response internals. No automatic application-level retry; future safe opt-in requires endpoint contract.
 
-## 6. Implementation Requirements
+## 9. Applicable Contracts
+**Configuration:** `VITE_API_BASE_URL`; timeout `10s`; no new env.
 
-- Create typed Axios client and safe error normalization only after backend endpoint/error/auth contracts are approved.
-- CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+**API:** login body `{ email, password }`; refresh body `{ refreshToken }`; token response `{ accessToken, refreshToken, tokenType: "Bearer", expiresIn }`; logout/logout-all bearer and `204`; errors `400`, `401`, `413`, `429`, `500`. Backend permission failures are `403` from permission middleware, though no current CMS endpoint exposes permission data.
 
-### 6.1 Resolved Business Requirements
+**Database/UI:** Not applicable.
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+## 10. File Impact
+Expected Create/Modify: API client module, types/schemas, tests. Expected Not Modified: backend, dependencies, manifests, lockfiles, and auth store.
 
-## 7. Contract and Data Impact
+## 11. Runtime Behavior
+Validated base URL → request config → optional bearer header → JSON response or normalized safe error → 401 returned to auth/session layer without refresh recursion.
 
-### 7.1 Configuration Contract
+## 12. Error And Edge Cases
+Distinguish 401 from 403; normalize 429, 5xx, timeout, and network failure; preserve safe status/message; never expose sensitive internals.
 
-Use existing validated VITE_API_BASE_URL only; no new variable specified.
+## 13. Security Requirements
+Bearer headers and tokens are credentials. Client does not persist them, log them, or claim authorization from response/UI state.
 
-### 7.2 API Contract
+## 14. Test Requirements
+Test base URL, timeout, JSON, bearer/public requests, each error class, timeout/network failures, safe normalization, and no secret leakage.
 
-Not applicable — required path, auth, request/response, status/error, or permission contract is not specified; task remains blocked.
+## 15. Task-Level Expected Results
+- Single typed transport boundary exists.
+- Auth API contracts are consumed exactly.
+- 401 remains auth-state responsibility; 403 remains authorization failure.
 
-### 7.3 Database Contract
+## 16. Acceptance Criteria
+- [x] Current auth paths/schemas match OpenAPI.
+- [x] Timeout is 10 seconds.
+- [x] No generic automatic retry exists.
+- [x] Error classes normalize safely and distinctly.
+- [x] Focused tests prove protected/public transport and failures.
 
-Not applicable — this task does not change a database contract.
+## 17. Anti-Slop Requirements
+Primary `frontend-patterns`; optional `api-design`; final `tdd-workflow`, `antislop`, `verification-loop`. No UI specialist.
 
-### 7.4 UI Contract
+## 18. Validation Requirements
+Focused/full tests, lint, typecheck, build, Anti-Slop, `git diff --check`, and API contract review against OpenAPI.
 
-Not applicable — consuming UI contract is unresolved; task is blocked.
+## 19. Completion Evidence
+`apps/cms/src/api/client.ts` uses `/api/v1/auth/login`, `/api/v1/auth/refresh`, `/api/v1/auth/logout`, and `/api/v1/auth/logout-all`; validates token responses with Zod; applies a 10-second timeout; injects bearer tokens only through explicit request/client boundaries; and performs no automatic retry. `apps/cms/tests/api-client.test.ts` passes 12 focused tests. Full CMS tests, lint, typecheck, and build pass.
 
-## 8. File Impact
+## 20. Traceability
+Not applicable — project has no traceability ID system.
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
+## 21. Open Points
+No request-ID frontend protocol is required; backend request IDs are internal/logging diagnostics and are not exposed as documented response headers. Permission/profile endpoint remains localized to `fe/09`.
 
-Test: `apps/cms/tests/`.
-
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
-
-## 9. Runtime Behavior
-
-CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing CMS shell/Vitest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
-
-## 13. Validation Requirements
-
-### Static
-
-- `bun run --cwd apps/cms lint`
-- `bun run --cwd apps/cms typecheck`
-- `bun run --cwd apps/cms test`
-- `bun run --cwd apps/cms build`
-- `git diff --check`
-
-### Automated Tests
-
-- Focused and full existing Vitest tests applicable to changed boundary.
-
-### Build
-
-- `bun run --cwd apps/cms build`
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Not applicable — no meaningful rendered UI change.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 14. Acceptance Criteria
-
-- [ ] Create typed Axios client and safe error normalization only after backend endpoint/error/auth contracts are approved.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] API Client capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/cms/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/cms lint`; `bun run --cwd apps/cms typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | API Client boundary |
-| `docs/DESIGN.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `fe/05-api-client` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-TODO: REQUIREMENT NEEDED — endpoint/error schemas, auth transport, request-ID behavior, retry policy.
+## 22. Definition Of Done
+Typed client, focused tests, safe errors, static checks, Anti-Slop, contract review, diff/secret review, and human review complete.

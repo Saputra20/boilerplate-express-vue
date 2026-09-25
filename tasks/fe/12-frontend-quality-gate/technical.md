@@ -1,203 +1,108 @@
 # fe/12-frontend-quality-gate — Frontend Quality Gate
 
 ## 1. Metadata
-
 | Field | Value |
 | --- | --- |
 | Task ID | `fe/12-frontend-quality-gate` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | CMS Auth + RBAC-ready delivery quality |
 | Workstream | Frontend |
-| Category | quality foundation |
-| Repository | `apps/cms` |
-| Platform | Vue 3 / Vite CMS |
-| Status | Blocked — requirement needed |
-| Priority | Foundation execution order 12 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | fe/11-frontend-testing |
-| Blocks | None — final task in this workstream. |
+| Task Category | Quality gate |
+| Repository/App | `apps/cms` |
+| Status | Implemented — verification incomplete |
+| Priority | Quality |
+| Suggested Size | Small |
+| Depends On | `fe/11-frontend-testing` |
+| Blocks | None |
 | Execution Order | 12 |
 
-## 2. Outcome
+**Contract Status:** Ready.
 
-Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
+**Execution Status:** Automated quality checks pass for the available CMS scope. Browser verification and human handoff review remain pending. The missing backend permission context remains localized to `fe/09` through `be/25-authenticated-rbac-context` and is not reported as a whole-pipeline failure.
+
+## 2. Outcome
+Validate the initial CMS authentication + RBAC-ready scope: shell, API client, auth/session, login, route guard, RBAC UX, states, and tests.
 
 ## 3. Context
+Current scripts and registry define lint, typecheck, tests, build, Anti-Slop, browser verification, diff, and review gates. Browser checks remain distinct from code checks.
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+## 4. Dependencies
+Depends on focused test capability. No app/dependency change.
 
-## 4. In Scope
+## 5. In Scope
+- Focused tests, lint, typecheck, full tests, build.
+- Anti-Slop core and applicable UI/human/layout audits.
+- Browser verification for rendered shell/login/auth/RBAC states.
+- Diff, changed-file, scope, secrets, and generated-junk review.
+- Truthful PASS/FAIL/NOT RUN reporting.
 
-- Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+## 6. Out of Scope
+Business modules, backend RBAC contract creation, arbitrary coverage thresholds, and treating unavailable checks as PASS.
 
-## 5. Out of Scope
+## 7. Existing Implementation
+CMS scripts include lint, typecheck, test, build; registry provides current routing and conditional specialists.
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+## 8. Implementation Requirements
+Run checks in applicable order. Core `antislop` always applies; UI specialists/browser apply to rendered changes. Localized `fe/09` backend blocker must not be reported as whole-pipeline failure.
 
-## 6. Implementation Requirements
+## 9. Applicable Contracts
+**Validation:** initial CMS auth/RBAC-ready scope and all applicable quality checks.
 
-- Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
-- Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+**API/Database/Configuration/UI:** no contract changes.
 
-### 6.1 Resolved Business Requirements
+## 10. File Impact
+Expected Modify: task evidence only. Expected Not Modified: application source during quality-gate execution, backend, dependencies, manifests, lockfiles, and skills.
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+## 11. Runtime Behavior
+Run relevant checks → stop on failure → report unavailable checks as NOT RUN → review diff/status/secrets/generated files → human review.
 
-## 7. Contract and Data Impact
+## 12. Error And Edge Cases
+Failed command is FAIL; unavailable browser is NOT RUN; dependency-blocked task is reported locally; build warnings are reported separately.
 
-### 7.1 Configuration Contract
+## 13. Security Requirements
+Review tokens, credentials, private keys, authorization headers, generated bundles, and client-only authorization claims.
 
-Not applicable — this task does not change documented configuration.
+## 14. Test Requirements
+Initial scope tests must cover shell, API, auth/session, login, route guard, RBAC UX, and minimal states as applicable.
 
-### 7.2 API Contract
+## 15. Task-Level Expected Results
+- Final gate matches initial CMS scope, not future modules.
+- Browser and Anti-Slop evidence remain distinct.
+- Live CMS-to-API RBAC integration remains unverified; backend authorization remains authoritative.
 
-Not applicable — this task does not modify an API contract.
+## 16. Acceptance Criteria
+- [x] Focused/full tests, lint, typecheck, and build are run.
+- [x] Applicable Anti-Slop scope review is recorded.
+- [x] Rendered UI has explicit browser `NOT RUN` evidence.
+- [x] Diff, scope, secret, and generated-junk review is recorded.
+- [x] No business module or backend contract is invented.
 
-### 7.3 Database Contract
+## 17. Anti-Slop Requirements
+Primary `verification-loop`; `code-review` for handoff; `antislop` always; `antislop-ui`, `antislop-human`, `antislop-layoutmobile`, and `browser-verification` only when applicable.
 
-Not applicable — this task does not change a database contract.
+## 18. Validation Requirements
+Focused/full tests, lint, typecheck, build, Anti-Slop, browser verification, `git diff --check`, `git status --short`, `git diff`, secret review, generated-junk review, and scope review.
 
-### 7.4 UI Contract
-
-Not applicable — this task does not change a CMS UI contract.
-
-## 8. File Impact
-
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
-
-Test: `apps/cms/tests/`.
-
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
-
-## 9. Runtime Behavior
-
-Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
-
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing CMS shell/Vitest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
+## 19. Completion Evidence
+| Gate | Result | Evidence |
 | --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
+| Focused/full tests | PASS | `bun run --cwd apps/cms test` — 8 files, 51 tests |
+| Lint | PASS | `bun run --cwd apps/cms lint` |
+| Typecheck | PASS | `bun run --cwd apps/cms typecheck` |
+| Build | PASS | `bun run --cwd apps/cms build` |
+| Anti-Slop scope review | PASS | Existing CMS changes reviewed against `AGENTS.md`; no speculative business module or dependency added by this gate |
+| Browser verification | NOT RUN | No browser renderer available in this execution; source tests do not substitute for rendered evidence |
+| RBAC integration | NOT RUN | Frontend RBAC tests use fixtures; live CMS-to-API integration was not executed. `be/25-authenticated-rbac-context` and `fe/09` contracts are implemented. |
+| Diff check | PASS | `git diff --check` |
+| Secret review | PASS | No committed secret, private key, raw credential, or token fixture found; synthetic token values test redaction behavior |
+| Generated-junk review | PASS | `apps/cms/dist` exists from the build but is ignored and untracked; no generated output entered the tracked diff |
+| Scope review | PASS | This gate changed task evidence only; existing unrelated working-tree changes preserved |
 
-## 13. Validation Requirements
+## 20. Traceability
+Not applicable — project has no traceability ID system.
 
-### Static
+## 21. Open Points
+Browser-rendered evidence and human handoff review remain pending. Live CMS-to-API RBAC integration remains unverified; backend authorization remains authoritative.
 
-- `bun run --cwd apps/cms lint`
-- `bun run --cwd apps/cms typecheck`
-- `bun run --cwd apps/cms test`
-- `bun run --cwd apps/cms build`
-- `git diff --check`
-
-### Automated Tests
-
-- Focused and full existing Vitest tests applicable to changed boundary.
-
-### Build
-
-- `bun run --cwd apps/cms build`
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Not applicable — no meaningful rendered UI change.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 14. Acceptance Criteria
-
-- [ ] Document executable quality-gate selection, Anti-Slop evidence, validation order, diff/secrets review, and truthful status reporting without app behavior change.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Frontend Quality Gate capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/cms/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/cms lint`; `bun run --cwd apps/cms typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Frontend Quality Gate boundary |
-| `docs/DESIGN.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `fe/12-frontend-quality-gate` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-Anti-Slop installation and browser evidence storage are not specified in repository.
+## 22. Definition Of Done
+Initial scope evidence mapped to checks, automated gates pass, unavailable browser/RBAC gates are truthfully reported, diff/security/scope review complete, and human review remains pending.

@@ -1,203 +1,97 @@
 # fe/07-login-page — Login Page
 
 ## 1. Metadata
-
 | Field | Value |
 | --- | --- |
 | Task ID | `fe/07-login-page` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | CMS login |
 | Workstream | Frontend |
-| Category | page foundation |
-| Repository | `apps/cms` |
-| Platform | Vue 3 / Vite CMS |
-| Status | Blocked — requirement needed |
-| Priority | Foundation execution order 7 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | fe/03-cms-layout, fe/06-auth-state |
-| Blocks | fe/08-route-guard |
+| Task Category | Auth UI/form |
+| Repository/App | `apps/cms` |
+| Status | Implemented — verification incomplete |
+| Priority | Security-sensitive |
+| Suggested Size | Medium |
+| Depends On | `fe/04-theme-design-system`, `fe/06-auth-state` |
+| Blocks | `fe/08-route-guard` |
 | Execution Order | 7 |
 
-## 2. Outcome
+**Contract Status:** Ready.
 
-Create accessible feature-specific login page with Zod validation, loading/error/success states, and typed API integration only after contract approval.
+**Execution Status:** Implemented and verified; browser verification and human visual review remain pending.
+
+## 2. Outcome
+Implement `/login` with email/password form, Zod validation, auth-state submission, safe errors, sanitized return navigation, and accessible responsive states.
 
 ## 3. Context
+Backend OpenAPI defines exact login request/response. Current Login view is placeholder only. No username, social login, remember-me, or forgot-password contract exists.
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+## 4. Dependencies
+Needs minimal UI foundation and Pinia auth state. Uses existing Zod/Vue/Tailwind.
 
-## 4. In Scope
+## 5. In Scope
+- Fields `email`, `password`.
+- Idle, invalid, submitting, auth failure, rate limited, network failure, safe unexpected error, success states.
+- Duplicate-submit prevention, labels, autocomplete, keyboard submit, focus/error association, responsive layout.
+- Success updates auth state and navigates to sanitized return target or `/`; authenticated `/login` goes `/`.
 
-- Create accessible feature-specific login page with Zod validation, loading/error/success states, and typed API integration only after contract approval.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+## 6. Out of Scope
+Username, social login, remember-me, forgot password, marketing layout, invented copy, account enumeration, and backend changes.
 
-## 5. Out of Scope
+## 7. Existing Implementation
+`apps/cms/src/views/LoginView.vue` now provides the email/password form, Zod validation, auth-store submission, safe error states, sanitized return navigation, authenticated redirect, and responsive accessible states. `apps/cms/tests/login-page.test.ts` covers validation, submission, duplicate prevention, failure messaging, safe redirects, and authenticated redirects.
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+## 8. Implementation Requirements
+Use email/password exact schema. Password is never trimmed or logged. Backend remains authoritative. Use concise neutral functional copy and do not reveal account existence.
 
-## 6. Implementation Requirements
+## 9. Applicable Contracts
+**API:** `POST /api/v1/auth/login`; body `{ email, password }`; token response; `400`, `401`, `413`, `429`, `500` safe errors.
 
-- Create accessible feature-specific login page with Zod validation, loading/error/success states, and typed API integration only after contract approval.
-- CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+**Route:** `/login` public; authenticated access redirects `/`.
 
-### 6.1 Resolved Business Requirements
+**UI:** consume `fe/04`; no marketing treatment.
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+## 10. File Impact
+Expected Modify: Login view/form, auth integration, tests, styles. Expected Not Modified: backend, dependencies, and future auth features.
 
-## 7. Contract and Data Impact
+## 11. Runtime Behavior
+Open `/login` → validate fields → submit once → auth state updates → safe return target or `/`; failure shows contextual safe state.
 
-### 7.1 Configuration Contract
+## 12. Error And Edge Cases
+Invalid input, duplicate submission, 401, 429, network/timeout, unexpected safe error, authenticated visit, unsafe return target, keyboard-only use, and narrow viewport.
 
-Not applicable — this task does not change documented configuration.
+## 13. Security Requirements
+No password/token leakage, account enumeration, unsafe redirect, or client authorization claim.
 
-### 7.2 API Contract
+## 14. Test Requirements
+Validation/submission/loading/disabled/error/success/authenticated redirect/returnTo sanitization/accessibility tests. Browser verify responsive form and keyboard/focus/error states.
 
-Not applicable — required path, auth, request/response, status/error, or permission contract is not specified; task remains blocked.
+## 15. Task-Level Expected Results
+- Exact backend login request is used.
+- Login UI is usable and safe.
+- Return navigation is same-origin/application-relative.
 
-### 7.3 Database Contract
+## 16. Acceptance Criteria
+- [x] Only email/password fields exist.
+- [x] Zod and backend validation states are distinct and safe.
+- [x] Duplicate submission is prevented.
+- [x] Success updates auth state and navigates safely.
+- [ ] Required UI/accessibility states pass.
 
-Not applicable — this task does not change a database contract.
+## 17. Anti-Slop Requirements
+Primary `frontend-patterns`; optional `ui-styling`; final `antislop`, `antislop-ui`, `antislop-human`, `antislop-layoutmobile`, `browser-verification`, `verification-loop`. Copy audit only if copy changes materially.
 
-### 7.4 UI Contract
+## 18. Validation Requirements
+Focused/full tests, lint, typecheck, build, UI audits, browser verification, `git diff --check`, and secret review.
 
-Not applicable — page/component/design/state contract is unresolved in PRODUCT/DESIGN docs; task is blocked.
+## 19. Completion Evidence
+`LoginView.vue` sends `{ email, password }` through the Pinia auth store, preserves password input without trimming, prevents duplicate submits, maps safe `401`/`429`/network/timeout errors, focuses invalid fields, and restricts return navigation to application-relative paths. `bun run test` passes 32 tests; lint, typecheck, build, and diff checks pass. Browser verification and human visual review remain NOT RUN/PENDING.
 
-## 8. File Impact
+## 20. Traceability
+Not applicable — project has no traceability ID system.
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
+## 21. Open Points
+None. Product decisions previously open are explicitly resolved by this contract.
 
-Test: `apps/cms/tests/`.
-
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
-
-## 9. Runtime Behavior
-
-CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing CMS shell/Vitest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
-
-## 13. Validation Requirements
-
-### Static
-
-- `bun run --cwd apps/cms lint`
-- `bun run --cwd apps/cms typecheck`
-- `bun run --cwd apps/cms test`
-- `bun run --cwd apps/cms build`
-- `git diff --check`
-
-### Automated Tests
-
-- Focused and full existing Vitest tests applicable to changed boundary.
-
-### Build
-
-- `bun run --cwd apps/cms build`
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Browser/visual verification required if task becomes unblocked and rendered UI changes.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: required; reject generic AI layout, fake content, excessive containers, visual inconsistency, missing responsive/accessibility states. Visual verification: required when unblocked rendered UI changes.
-
-## 14. Acceptance Criteria
-
-- [ ] Create accessible feature-specific login page with Zod validation, loading/error/success states, and typed API integration only after contract approval.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Login Page capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: required; reject generic AI layout, fake content, excessive containers, visual inconsistency, missing responsive/accessibility states. Visual verification: required when unblocked rendered UI changes.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/cms/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/cms lint`; `bun run --cwd apps/cms typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Login Page boundary |
-| `docs/DESIGN.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `fe/07-login-page` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-TODO: REQUIREMENT NEEDED — login route/copy/fields/API contract/redirect/design reference.
+## 22. Definition Of Done
+Login implementation, tests, browser evidence, Anti-Slop, static checks, safe redirect proof, diff/secret review, and human review complete.

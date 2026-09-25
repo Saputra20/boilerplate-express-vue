@@ -6,7 +6,7 @@ OpenAPI `3.0.3` foundation serves public human-readable Swagger UI through `/doc
 
 `info.version` is documentation metadata. Business auth routes use the `/api/v1` transport prefix; operational routes remain unversioned. The foundation uses relative server URL `/`, not a deployment hostname.
 
-Auth routes are `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, and `POST /api/v1/auth/logout-all`. Services and repositories remain shared across future transport versions by default.
+Auth routes are `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, and `POST /api/v1/auth/logout-all`. Authenticated context is available at `GET /api/v1/me`, returning frontend-safe user identity, role codes, and effective permission codes. Services and repositories remain shared across future transport versions by default.
 
 Auth v1 and health OpenAPI contracts live beside their owning modules as YAML. Global infrastructure serves v1 at `/openapi/v1.json` and `/docs/v1`; `/docs` redirects to `/docs/v1`. Swagger authorization is not persisted.
 

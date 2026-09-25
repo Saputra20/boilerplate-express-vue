@@ -1,208 +1,91 @@
 # fe/02-environment-validation — Environment Validation
 
 ## 1. Metadata
-
 | Field | Value |
 | --- | --- |
 | Task ID | `fe/02-environment-validation` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | CMS runtime configuration |
 | Workstream | Frontend |
-| Category | env foundation |
-| Repository | `apps/cms` |
-| Platform | Vue 3 / Vite CMS |
-| Status | Planned — not executed |
-| Priority | Foundation execution order 2 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | fe/01-initial-project |
-| Blocks | fe/03-cms-layout |
+| Task Category | Configuration |
+| Repository/App | `apps/cms` |
+| Status | Completed — verified |
+| Priority | Foundation |
+| Suggested Size | Small |
+| Depends On | `fe/01-initial-project` |
+| Blocks | `fe/03-cms-layout`, `fe/05-api-client` |
 | Execution Order | 2 |
 
 ## 2. Outcome
-
-Validate documented environment values with Zod before application startup or CMS mount; reject missing, empty, malformed, and unsupported values without exposing secrets.
+CMS validates `VITE_API_BASE_URL` with Zod before Vue mount and fails with sanitized deterministic error when invalid.
 
 ## 3. Context
+Current sources: `apps/cms/src/env.ts`, `src/main.ts`, `.env.example`, `docs/SECURITY.md`, and `docs/DEVELOPMENT.md`.
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+## 4. Dependencies
+CMS foundation and existing Zod package. No backend or database dependency.
 
-## 4. In Scope
+## 5. In Scope
+- Verify schema, startup order, example value, and failure behavior.
+- Add focused validation tests only when task executes.
 
-- Validate documented environment values with Zod before application startup or CMS mount; reject missing, empty, malformed, and unsupported values without exposing secrets.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+## 6. Out of Scope
+- API client, retry/timeout policy, auth storage, router, and UI behavior.
 
-## 5. Out of Scope
+## 7. Existing Implementation
+`src/env.ts` uses `z.object({ VITE_API_BASE_URL: z.url() })`; `main.ts` calls `loadEnv()` before `createApp().mount`; `.env.example` defines the variable. No env test currently exists.
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+## 8. Implementation Requirements
+Reject missing or invalid URL before mount. Error may identify invalid key and reason, never secret values. Preserve Vite env loading.
 
-## 6. Implementation Requirements
-
-- Validate documented environment values with Zod before application startup or CMS mount; reject missing, empty, malformed, and unsupported values without exposing secrets.
-- CMS bootstrap → read Vite environment → Zod validation → invalid: sanitized error before mount → valid: mount app.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
-
-### 6.1 Resolved Business Requirements
-
-No business-domain rule is introduced; task is constrained by documented foundation requirements.
-
-## 7. Contract and Data Impact
-
-### 7.1 Configuration Contract
-
+## 9. Applicable Contracts
+**Configuration Contract**
 | Variable | Required | Type | Validation | Default | Secret |
 | --- | --- | --- | --- | --- | --- |
-| `VITE_API_BASE_URL` | Yes | URL | Non-empty absolute URL | None — CMS mount fails | No — public variable |
+| `VITE_API_BASE_URL` | Yes | URL string | Zod `z.url()` | None — startup must fail if missing | No |
 
-### 7.2 API Contract
+**API, Database, UI Contracts:** Not applicable.
 
-Not applicable — this task does not modify an API contract.
+## 10. File Impact
+Expected Modify: `apps/cms/src/env.ts`, `src/main.ts`, `.env.example`, focused tests when executed. Expected Not Modified: backend, dependencies, and successor implementation.
 
-### 7.3 Database Contract
+## 11. Runtime Behavior
+Vite exposes env → `loadEnv()` parses it → invalid input throws before mount → valid input permits mount. Current shell makes no API request.
 
-Not applicable — this task does not change a database contract.
+## 12. Error And Edge Cases
+Missing, malformed, or non-URL value: startup failure before mount; error excludes raw credentials and tokens. Valid absolute URL: parse succeeds.
 
-### 7.4 UI Contract
+## 13. Security Requirements
+Do not log environment values or treat Vite-exposed values as secrets.
 
-Not applicable — this task does not change a CMS UI contract.
+## 14. Test Requirements
+Happy path: valid URL parses. Validation: missing/malformed URL rejects. Regression: validation precedes mount. Isolation: tests require no network.
 
-## 8. File Impact
+## 15. Task-Level Expected Results
+- Validation exists and is wired before mount.
+- `.env.example` documents required variable.
+- Focused invalid-input evidence exists before Completed status.
 
-Create/Modify: Modify `apps/cms/src/env.ts`, `apps/cms/src/main.ts`, `apps/cms/.env.example`; test under `apps/cms/tests/`.
+## 16. Acceptance Criteria
+- [x] Valid URL returns typed config.
+- [x] Invalid or missing URL rejects before Vue mount.
+- [x] Error does not expose sensitive values.
+- [x] Focused tests prove valid and invalid paths.
 
-Test: `apps/cms/tests/`.
+## 17. Anti-Slop Requirements
+Primary `frontend-patterns`; final `antislop`, `verification-loop`. Code Anti-Slop only. No UI specialist.
 
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
+## 18. Validation Requirements
+Static: lint, typecheck, `git diff --check`. Tests: focused env tests plus full CMS test. Build: CMS build. Anti-Slop: `antislop` review.
 
-## 9. Runtime Behavior
+## 19. Completion Evidence
+Evidence on September 25, 2026: human `bun dev` smoke test PASS with no startup error; `tests/env.test.ts` covers valid URL, missing URL, malformed URL, and sanitized failure; full suite PASS (2 files, 4 tests); lint PASS; typecheck PASS; build PASS with existing Zod/Rollup annotation warnings. Source inspection confirms `loadEnv()` runs before Vue mount. Human review PASS.
 
-CMS bootstrap → read Vite environment → Zod validation → invalid: sanitized error before mount → valid: mount app.
+## 20. Traceability
+Not applicable — project has no traceability ID system.
 
-## 10. Error and Edge Cases
+## 21. Open Points
+None. Retry, timeout, and request-ID policy belong to `fe/05` only if required by approved contract.
 
-| Scenario | Expected Result |
-| --- | --- |
-| Missing required value | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Empty required string | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Invalid numeric value | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Unsupported boolean | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Malformed URL | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Secret-bearing value invalid | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Errors name invalid keys but never print secret values; client environment remains public-only.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing CMS shell/Vitest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
-
-## 13. Validation Requirements
-
-### Static
-
-- `bun run --cwd apps/cms lint`
-- `bun run --cwd apps/cms typecheck`
-- `bun run --cwd apps/cms test`
-- `bun run --cwd apps/cms build`
-- `git diff --check`
-
-### Automated Tests
-
-- Focused and full existing Vitest tests applicable to changed boundary.
-
-### Build
-
-- `bun run --cwd apps/cms build`
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Not applicable — no meaningful rendered UI change.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 14. Acceptance Criteria
-
-- [ ] Validate documented environment values with Zod before application startup or CMS mount; reject missing, empty, malformed, and unsupported values without exposing secrets.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Environment Validation capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/cms/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/cms lint`; `bun run --cwd apps/cms typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Environment Validation boundary |
-| `docs/DESIGN.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `fe/02-environment-validation` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-None.
+## 22. Definition Of Done
+Focused env tests, static checks, build, Anti-Slop, diff review, secret review, and human review complete.

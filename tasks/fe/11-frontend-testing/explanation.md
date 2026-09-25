@@ -1,42 +1,24 @@
-# fe/11-frontend-testing — Frontend Testing Foundation
+# fe/11-frontend-testing — Frontend Testing
 
-## Tujuan
+Task ini sekarang merepresentasikan bukti terfokus untuk fondasi CMS yang sudah ada, bukan pembuatan testing dari nol. Vitest, jsdom, Vue Test Utils, dan konfigurasi test sudah tersedia.
 
-Create repeatable isolated test setup/helpers and representative infrastructure tests; do not create coverage theater.
+## Yang Sudah Ada
+Test mencakup environment validation, shell dan mobile navigation, API client, auth/session, login, route guard, sanitasi `returnTo`, serta state error/unavailable/denied. Suite saat ini lulus 47 test dalam 7 file.
 
-## Kenapa Task Ini Dibutuhkan
+## Yang Berubah
+Test yang sudah ada direkonsiliasi sebagai evidence untuk capability yang benar-benar tersedia. Auth restoration, refresh rotation, single-flight refresh, logout cleanup, safe redirect, transport error, dan state feedback memiliki proof terfokus.
 
-Task ini menyiapkan fondasi kecil untuk urutan kerja berikutnya tanpa menebak aturan produk yang belum tersedia.
+## Yang Belum Dikerjakan
+Test `can()`, permission-aware navigation, route denial, hydration, dan logout cleanup belum dibuat karena contract backend `be/25-authenticated-rbac-context` belum diimplementasikan dan `fe/09` belum memiliki boundary frontend yang disetujui. Fixture permission tidak boleh dipresentasikan sebagai integrasi backend. Browser-rendered verification juga belum dijalankan.
 
-## Apa yang Akan Dikerjakan
+## Status
+Status `Implemented — verification incomplete`: capability yang tersedia sudah memiliki test dan human review sudah lulus, tetapi dependency `be/25` → `fe/09` dan browser verification masih tersisa.
 
-- Create repeatable isolated test setup/helpers and representative infrastructure tests; do not create coverage theater.
-- Validasi dan evidence sesuai technical.md.
+## Yang Tidak Berubah
+Tidak ada perubahan pada aplikasi backend, API, dependency, permission authority, token policy, atau product navigation. Tidak ada credential nyata dalam fixture.
 
-## Apa yang Tidak Dikerjakan
+## Cara Mengecek
+Jalankan `bun run --cwd apps/cms test`, `bun run --cwd apps/cms lint`, `bun run --cwd apps/cms typecheck`, `bun run --cwd apps/cms build`, lalu `git diff --check`. Browser verification harus dilaporkan `NOT RUN` bila renderer tidak tersedia.
 
-- Pekerjaan task berikutnya, fitur bisnis lain, generic CRUD, dan keputusan yang ada di Open Points.
-
-## Dependency
-
-fe/10-ux-states
-
-## Risiko / Hal yang Perlu Diperhatikan
-
-None.
-
-## Cara Verifikasi
-
-Jalankan perintah lint, typecheck, test, build bila berlaku, git diff --check, dan Anti-Slop yang tercantum di technical.md.
-
-## Yang Perlu Direview Human
-
-Pastikan kontrak tidak ditebak, scope tidak melebar, keamanan tidak melemah, dan evidence acceptance criteria cukup.
-
-## Output yang Diharapkan
-
-Create repeatable isolated test setup/helpers and representative infrastructure tests; do not create coverage theater.
-
-## Task Berikutnya
-
-fe/12-frontend-quality-gate
+## Review Manusia
+Human review lulus untuk behavior test, bukan coverage theater, dan frontend tidak dianggap sebagai authorization authority. `fe/09` tetap harus menentukan contract permission sebelum test RBAC ditambahkan.

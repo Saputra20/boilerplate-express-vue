@@ -1,204 +1,99 @@
 # fe/01-initial-project — Initial CMS Project
 
 ## 1. Metadata
-
 | Field | Value |
 | --- | --- |
 | Task ID | `fe/01-initial-project` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | CMS foundation |
 | Workstream | Frontend |
-| Category | init foundation |
-| Repository | `apps/cms` |
-| Platform | Vue 3 / Vite CMS |
-| Status | Planned — not executed |
-| Priority | Foundation execution order 1 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | None. |
-| Blocks | fe/02-environment-validation |
+| Task Category | Foundation |
+| Repository/App | `apps/cms` |
+| Status | Completed — verified |
+| Priority | Foundation |
+| Suggested Size | Small |
+| Depends On | None |
+| Blocks | `fe/02-environment-validation` |
 | Execution Order | 1 |
 
 ## 2. Outcome
-
-Establish workspace configuration, executable shell, environment examples, linting, formatting, tests, and local-development foundations without business behavior.
+CMS has executable Vue/Vite/TypeScript foundation, environment example, lint/format/test/build scripts, and minimal mounted shell without business behavior.
 
 ## 3. Context
+Current sources: `apps/cms/package.json`, Vite/Vitest config, `src/`, `tests/`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`, and `tasks/README.md`. Existing code is evidence, not automatic task completion.
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+## 4. Dependencies
+No runtime dependency beyond existing repository packages and Bun.
 
-## 4. In Scope
+## 5. In Scope
+- Verify existing CMS foundation against this contract.
+- Preserve minimal shell and current scripts.
+- Record command evidence before changing status to Completed.
 
-- Establish workspace configuration, executable shell, environment examples, linting, formatting, tests, and local-development foundations without business behavior.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+## 6. Out of Scope
+- Router, layout, auth, API client, permissions, product navigation, branding, and feature modules.
+- Dependency changes or source implementation during reconciliation.
 
-## 5. Out of Scope
+## 7. Existing Implementation
+`apps/cms/package.json`, Vite/Vitest config, `.env.example`, CMS source, router/shell files, and tests exist. Foundation verification is complete. Router, auth state, API client, login behavior, and permission behavior remain owned by later tasks; `fe/03` owns current shell implementation.
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+## 8. Implementation Requirements
+Keep Vue mount executable, scripts truthful, and foundation free of invented product behavior. Environment validation is owned by `fe/02`.
 
-## 6. Implementation Requirements
+## 9. Applicable Contracts
+**Configuration Contract:** `VITE_API_BASE_URL` is documented; validation belongs to `fe/02`.
 
-- Establish workspace configuration, executable shell, environment examples, linting, formatting, tests, and local-development foundations without business behavior.
-- Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+**API Contract:** Not applicable.
 
-### 6.1 Resolved Business Requirements
+**Database Contract:** Not applicable.
 
-No business-domain rule is introduced; task is constrained by documented foundation requirements.
+**UI Contract:** Foundation bootstrap only. CMS shell/navigation contract belongs to `fe/03`.
 
-## 7. Contract and Data Impact
+## 10. File Impact
+Expected Modify: CMS foundation files only when task executes. Expected Not Modified: `apps/api`, dependencies, lockfiles, and successor tasks.
 
-### 7.1 Configuration Contract
+## 11. Runtime Behavior
+Vite serves Vue entrypoint; `main.ts` loads environment validation then mounts `App.vue`. No business route or API request starts.
 
-Not applicable — this task does not change documented configuration.
+## 12. Error And Edge Cases
+Invalid environment fails before mount under `fe/02`; no secrets in errors. Missing business requirements remain out of scope.
 
-### 7.2 API Contract
+## 13. Security Requirements
+No credentials, tokens, or secrets in source, tests, logs, or bundles.
 
-Not applicable — this task does not modify an API contract.
+## 14. Test Requirements
+Happy path: shell test passes. Regression: current Vitest test remains passing. Isolation: jsdom test is deterministic. Environment negative paths belong to `fe/02`.
 
-### 7.3 Database Contract
+## 15. Task-Level Expected Results
+- Foundation files and scripts exist and run.
+- Minimal shell renders without invented application behavior.
+- Evidence distinguishes implementation from verified completion.
 
-Not applicable — this task does not change a database contract.
+## 16. Acceptance Criteria
+- [x] Foundation matches listed existing files.
+- [x] Lint, typecheck, test, and build evidence is recorded.
+- [x] No router, auth, navigation, or feature behavior is claimed.
 
-### 7.4 UI Contract
+## 17. Anti-Slop Requirements
+Primary `frontend-patterns`; final `antislop`, `verification-loop`. Code Anti-Slop only. Reject speculative abstractions, fake product behavior, dead dependencies, and hidden TODOs.
 
-Not applicable — this task does not change a CMS UI contract.
+## 18. Validation Requirements
+Static: `bun run --cwd apps/cms lint`, `bun run --cwd apps/cms typecheck`, `git diff --check`.
 
-## 8. File Impact
+Automated Tests: `bun run --cwd apps/cms test`.
 
-Create/Modify: Inspect/modify `apps/cms/package.json`, Vite/TypeScript config, `apps/cms/src/`, `apps/cms/tests/`.
+Build: `bun run --cwd apps/cms build`.
 
-Test: `apps/cms/tests/`.
+Anti-Slop: `antislop` review; report actual result.
 
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
+## 19. Completion Evidence
+Evidence on September 25, 2026: `bun dev` human smoke test PASS; lint PASS; typecheck PASS; test PASS; build PASS with existing Zod/Rollup annotation warnings. Foundation scope remains complete; later shell implementation is tracked by `fe/03`. Anti-Slop review PASS.
 
-## 9. Runtime Behavior
+## 20. Traceability
+Not applicable — project has no traceability ID system.
 
-Validated configuration → focused infrastructure/module initialization → safe success or sanitized failure; no successor capability is started automatically.
+## 21. Open Points
+None for foundation. Environment behavior is tracked in `fe/02`.
 
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Dependency unavailable | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Invalid input/configuration | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Initialization failure | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Shutdown/failure recovery | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing CMS shell/Vitest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
-
-## 13. Validation Requirements
-
-### Static
-
-- `bun run --cwd apps/cms lint`
-- `bun run --cwd apps/cms typecheck`
-- `bun run --cwd apps/cms test`
-- `bun run --cwd apps/cms build`
-- `git diff --check`
-
-### Automated Tests
-
-- Focused and full existing Vitest tests applicable to changed boundary.
-
-### Build
-
-- `bun run --cwd apps/cms build`
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Not applicable — no meaningful rendered UI change.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 14. Acceptance Criteria
-
-- [ ] Establish workspace configuration, executable shell, environment examples, linting, formatting, tests, and local-development foundations without business behavior.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Initial CMS Project capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/cms/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/cms lint`; `bun run --cwd apps/cms typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Initial CMS Project boundary |
-| `docs/DESIGN.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `fe/01-initial-project` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-None.
+## 22. Definition Of Done
+Acceptance criteria, scope, tests, lint, typecheck, build, Anti-Slop, diff check, changed-file review, secret review, and human review complete. Browser verification is NOT APPLICABLE: task contains no meaningful rendered UI change beyond existing foundation shell.

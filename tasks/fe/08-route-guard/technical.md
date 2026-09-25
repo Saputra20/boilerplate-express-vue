@@ -1,203 +1,99 @@
-# fe/08-route-guard — Route Guard
+# fe/08-route-guard — Authentication Route Guard
 
 ## 1. Metadata
-
 | Field | Value |
 | --- | --- |
 | Task ID | `fe/08-route-guard` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | CMS authentication routing |
 | Workstream | Frontend |
-| Category | guard foundation |
-| Repository | `apps/cms` |
-| Platform | Vue 3 / Vite CMS |
-| Status | Blocked — requirement needed |
-| Priority | Foundation execution order 8 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | fe/06-auth-state |
-| Blocks | fe/09-permission-guard |
+| Task Category | Routing/security |
+| Repository/App | `apps/cms` |
+| Status | Implemented — verification incomplete |
+| Priority | Security-sensitive |
+| Suggested Size | Small |
+| Depends On | `fe/06-auth-state`, `fe/07-login-page` |
+| Blocks | `fe/09-permission-guard` |
 | Execution Order | 8 |
 
-## 2. Outcome
+**Contract Status:** Ready.
 
-Create authenticated-route guard with approved redirect/return-location policy only after route/auth contract approval.
+**Execution Status:** Implemented and verified; browser critical-flow verification and human review remain pending.
+
+## 2. Outcome
+Enforce authentication routing for `/login`, `/`, and future CMS descendants without combining authentication and permission authorization.
 
 ## 3. Context
+Router and minimal route metadata exist; no guard exists. Backend auth validates bearer tokens; API remains security authority.
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+## 4. Dependencies
+Needs auth restoration/state and login route. Uses Vue Router; no new dependency.
 
-## 4. In Scope
+## 5. In Scope
+- Public `/login`.
+- Protected `/` and future CMS descendants by default unless explicitly public.
+- Wait for initial restoration before redirect.
+- Unauthenticated protected access to `/login?returnTo=<safe-relative-location>`.
+- Authenticated `/login` to `/`.
+- Same-origin/application-relative returnTo validation.
 
-- Create authenticated-route guard with approved redirect/return-location policy only after route/auth contract approval.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+## 6. Out of Scope
+Permission checks, 403 behavior, role logic, business routes, token storage, auth API implementation, and login form.
 
-## 5. Out of Scope
+## 7. Existing Implementation
+`apps/cms/src/router/index.ts` installs an authentication-only `beforeEach` guard. `apps/cms/src/router/return-to.ts` rejects external, protocol-relative, malformed, control-character, and backslash return targets. `apps/cms/src/main.ts` installs the guard with the Pinia auth store before mounting the app. `apps/cms/tests/router-guard.test.ts` covers restoration, protected/public access, authenticated login, permission separation, and sanitization.
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+## 8. Implementation Requirements
+Do not redirect while restoration is unresolved. Reject absolute, protocol-relative, external, malformed, or unsafe return targets. Authenticated permission denial goes to `fe/09`, not login.
 
-## 6. Implementation Requirements
+## 9. Applicable Contracts
+**Route:** `/login` public; `/` and future CMS descendants protected by default.
 
-- Create authenticated-route guard with approved redirect/return-location policy only after route/auth contract approval.
-- CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+**Auth:** restoration state from `fe/06`; bearer/API authority remains backend.
 
-### 6.1 Resolved Business Requirements
+**UI:** loading/redirect state uses `fe/10` only where actual repetition exists.
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+## 10. File Impact
+Expected Modify: router guard/meta, returnTo helper, tests. Expected Not Modified: backend, permission guard, dependencies, and business routes.
 
-## 7. Contract and Data Impact
+## 11. Runtime Behavior
+Navigation starts → wait restoration → authenticated protected route proceeds → unauthenticated protected route redirects safe returnTo → authenticated `/login` redirects `/` → permission denial remains separate.
 
-### 7.1 Configuration Contract
+## 12. Error And Edge Cases
+Initial restoration pending, refresh failure, direct protected URL, authenticated login, unsafe returnTo, unknown route, and concurrent navigation.
 
-Not applicable — this task does not change documented configuration.
+## 13. Security Requirements
+Guard is UX routing plus backend enforcement, not sole security boundary. No open redirects, role bypass, or JWT permission inference.
 
-### 7.2 API Contract
+## 14. Test Requirements
+Route access, restoration pending, unauthenticated redirect, safe/unsafe returnTo, authenticated login, refresh failure, unknown route, and distinction from permission denial.
 
-Not applicable — required path, auth, request/response, status/error, or permission contract is not specified; task remains blocked.
+## 15. Task-Level Expected Results
+- Authentication routing is explicit and separate from RBAC.
+- Unsafe redirects are rejected.
+- Initial restoration is respected.
 
-### 7.3 Database Contract
+## 16. Acceptance Criteria
+- [x] Public/protected routes follow contract.
+- [x] Restoration blocks premature redirect.
+- [x] ReturnTo is safe-relative only.
+- [x] Authenticated `/login` redirects `/`.
+- [x] Permission denial is not converted to login.
 
-Not applicable — this task does not change a database contract.
+## 17. Anti-Slop Requirements
+Primary `frontend-patterns`; `security-review` applicable; final `tdd-workflow`, `antislop`, `verification-loop`, and browser verification when rendered.
 
-### 7.4 UI Contract
+## 18. Validation Requirements
+Focused/full tests, lint, typecheck, build, security review, Anti-Slop, browser critical-flow verification, and `git diff --check`.
 
-Not applicable — consuming UI contract is unresolved; task is blocked.
+## 19. Completion Evidence
+The router guard awaits auth restoration, protects routes marked `requiresAuth`, redirects unauthenticated users to `/login` with sanitized `returnTo`, redirects authenticated `/login` visits to `/`, and ignores permission metadata. `bun run test` passes 43 tests; lint, typecheck, build, and diff checks pass. Browser critical-flow verification and human review remain NOT RUN/PENDING.
 
-## 8. File Impact
+## 20. Traceability
+Not applicable — project has no traceability ID system.
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
+## 21. Open Points
+None. Auth vs permission boundary is resolved.
 
-Test: `apps/cms/tests/`.
-
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
-
-## 9. Runtime Behavior
-
-CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing CMS shell/Vitest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
-
-## 13. Validation Requirements
-
-### Static
-
-- `bun run --cwd apps/cms lint`
-- `bun run --cwd apps/cms typecheck`
-- `bun run --cwd apps/cms test`
-- `bun run --cwd apps/cms build`
-- `git diff --check`
-
-### Automated Tests
-
-- Focused and full existing Vitest tests applicable to changed boundary.
-
-### Build
-
-- `bun run --cwd apps/cms build`
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Not applicable — no meaningful rendered UI change.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 14. Acceptance Criteria
-
-- [ ] Create authenticated-route guard with approved redirect/return-location policy only after route/auth contract approval.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Route Guard capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: not applicable unless rendered UI changes.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/cms/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/cms lint`; `bun run --cwd apps/cms typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Route Guard boundary |
-| `docs/DESIGN.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `fe/08-route-guard` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-TODO: REQUIREMENT NEEDED — protected routes, login route, return URL policy, unauthorized behavior.
+## 22. Definition Of Done
+Guard, safe redirect tests, auth/permission separation proof, static checks, security review, applicable browser evidence, and human review complete.

@@ -1,17 +1,102 @@
 @import 'tailwindcss';
 
 :root {
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  color: #172033;
-  background: #f8fafc;
+  --cms-color-background: #f8fafc;
+  --cms-color-surface: #ffffff;
+  --cms-color-foreground: #172033;
+  --cms-color-muted: #475569;
+  --cms-color-muted-surface: #f1f5f9;
+  --cms-color-border: #cbd5e1;
+  --cms-color-primary: #0f172a;
+  --cms-color-primary-contrast: #ffffff;
+  --cms-color-destructive: #b91c1c;
+  --cms-color-focus: #1d4ed8;
+  --cms-color-success: #166534;
+  --cms-color-warning: #92400e;
+  --cms-shadow-lg: 0 18px 40px rgb(15 23 42 / 0.12);
+  --cms-space-1: 0.25rem;
+  --cms-space-2: 0.5rem;
+  --cms-space-3: 0.75rem;
+  --cms-space-4: 1rem;
+  --cms-space-5: 1.25rem;
+  --cms-space-6: 1.5rem;
+  --cms-space-8: 2rem;
+  --cms-radius-sm: 0.375rem;
+  --cms-radius-md: 0.5rem;
+  --cms-font-sans: ui-sans-serif, system-ui, sans-serif;
+  --cms-font-size-body: 1rem;
+  --cms-font-size-small: 0.875rem;
+  --cms-font-size-caption: 0.75rem;
+  --cms-line-height-body: 1.5;
+}
+
+:root[data-theme='dark'] {
+  --cms-color-background: #0f172a;
+  --cms-color-surface: #111c31;
+  --cms-color-foreground: #e2e8f0;
+  --cms-color-muted: #94a3b8;
+  --cms-color-muted-surface: #1e293b;
+  --cms-color-border: #293750;
+  --cms-color-primary: #4f8cff;
+  --cms-color-primary-contrast: #f8fafc;
+  --cms-color-destructive: #f87171;
+  --cms-color-focus: #7dd3fc;
+  --cms-color-success: #86efac;
+  --cms-color-warning: #fbbf24;
+  --cms-shadow-lg: 0 18px 40px rgb(2 6 23 / 0.42);
+}
+
+@theme inline {
+  --color-cms-background: var(--cms-color-background);
+  --color-cms-surface: var(--cms-color-surface);
+  --color-cms-foreground: var(--cms-color-foreground);
+  --color-cms-muted: var(--cms-color-muted);
+  --color-cms-muted-surface: var(--cms-color-muted-surface);
+  --color-cms-border: var(--cms-color-border);
+  --color-cms-primary: var(--cms-color-primary);
+  --color-cms-primary-contrast: var(--cms-color-primary-contrast);
+  --color-cms-destructive: var(--cms-color-destructive);
+  --color-cms-focus: var(--cms-color-focus);
+  --color-cms-success: var(--cms-color-success);
+  --color-cms-warning: var(--cms-color-warning);
+  --spacing-cms-1: var(--cms-space-1);
+  --spacing-cms-2: var(--cms-space-2);
+  --spacing-cms-3: var(--cms-space-3);
+  --spacing-cms-4: var(--cms-space-4);
+  --spacing-cms-5: var(--cms-space-5);
+  --spacing-cms-6: var(--cms-space-6);
+  --spacing-cms-8: var(--cms-space-8);
+  --radius-cms-sm: var(--cms-radius-sm);
+  --radius-cms-md: var(--cms-radius-md);
+  --font-cms-sans: var(--cms-font-sans);
+  --shadow-cms-lg: var(--cms-shadow-lg);
+}
+
+:root {
+  font-family: var(--cms-font-sans);
+  color: var(--cms-color-foreground);
+  background: var(--cms-color-background);
 }
 
 body {
   margin: 0;
+  font-size: var(--cms-font-size-body);
+  line-height: var(--cms-line-height-body);
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
-main {
-  max-width: 64rem;
-  margin: 0 auto;
-  padding: 4rem 1.5rem;
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

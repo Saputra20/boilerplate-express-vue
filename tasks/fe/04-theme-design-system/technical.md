@@ -1,203 +1,94 @@
-# fe/04-theme-design-system — Theme And Design System
+# fe/04-theme-design-system — Minimal CMS UI Foundation
 
 ## 1. Metadata
-
 | Field | Value |
 | --- | --- |
 | Task ID | `fe/04-theme-design-system` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | CMS Auth + RBAC-ready UI foundation |
 | Workstream | Frontend |
-| Category | theme foundation |
-| Repository | `apps/cms` |
-| Platform | Vue 3 / Vite CMS |
-| Status | Blocked — requirement needed |
-| Priority | Foundation execution order 4 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | fe/03-cms-layout |
-| Blocks | fe/05-api-client |
+| Task Category | Minimal UI foundation |
+| Repository/App | `apps/cms` |
+| Status | Implemented — verification incomplete |
+| Priority | Foundation |
+| Suggested Size | Small |
+| Depends On | `fe/03-cms-layout` |
+| Blocks | `fe/07-login-page`, `fe/10-ux-states` |
 | Execution Order | 4 |
 
-## 2. Outcome
+**Contract Status:** Ready.
 
-Create minimal approved CMS tokens/primitives only after design source and external-library license/compatibility review.
+**Execution Status:** Implemented; browser verification and human visual review remain pending.
+
+## 2. Outcome
+Provide minimum neutral UI foundation required by shell, login, auth states, denied, and Not Found flows. This is not a corporate design system.
 
 ## 3. Context
+Tailwind and current styles exist. `docs/DESIGN.md` permits clean accessible primitives and does not define brand. `fe/04` stays narrow and reversible. The implemented foundation is in `apps/cms/src/styles.css` and is consumed by the current shell, Home, Login, and Not Found views.
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+## 4. Dependencies
+Depends on `fe/03` shell evidence. Use `design-system` only for minimal tokens/specs, `ui-styling` for implementation, and `frontend-patterns` for Vue usage.
 
-## 4. In Scope
+## 5. In Scope
+- Define only needed background, foreground, surface, muted, border, primary, destructive, focus, feedback, spacing, radius, and typography tokens.
+- Apply system/project typography and Tailwind defaults.
+- Define states needed by shell, login, auth, denied, unavailable, and Not Found.
+- Verify WCAG 2.2 AA, focus, contrast, responsive behavior, and reduced motion.
 
-- Create minimal approved CMS tokens/primitives only after design source and external-library license/compatibility review.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+## 6. Out of Scope
+Corporate branding, external fonts, dark mode, full enterprise token catalog, speculative components, external component library, business pages, fake visuals, and ornamental animation.
 
-## 5. Out of Scope
+## 7. Existing Implementation
+Tailwind is installed. `apps/cms/src/styles.css` now defines minimal semantic color, spacing, radius, and typography tokens, maps them into Tailwind utilities, and the shell/auth-intent/Not Found views consume those utilities. No brand, dark mode, external font, or component library was added.
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+## 8. Implementation Requirements
+Keep tokens minimal, semantic, and consumed by actual initial flows. Do not introduce competing CSS systems or dependencies. Use Tailwind default breakpoints.
 
-## 6. Implementation Requirements
+## 9. Applicable Contracts
+**UI Contract:** neutral, restrained, content-first, accessible admin interface; WCAG 2.2 AA; system typography; no dark mode.
 
-- Create minimal approved CMS tokens/primitives only after design source and external-library license/compatibility review.
-- CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+**API/Database/Configuration Contracts:** Not applicable.
 
-### 6.1 Resolved Business Requirements
+## 10. File Impact
+Expected Modify/Create: CMS style/token files, relevant primitives, and focused tests. Expected Not Modified: backend, dependencies, manifests, and business modules.
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+## 11. Runtime Behavior
+Styles load → shell/login/auth/RBAC states consume shared minimal tokens → focus/feedback states remain visible and accessible.
 
-## 7. Contract and Data Impact
+## 12. Error And Edge Cases
+Insufficient contrast, invisible focus, overflow, unsupported arbitrary breakpoint, or token unused by initial flow fails review.
 
-### 7.1 Configuration Contract
+## 13. Security Requirements
+No external unreviewed assets, secret values, or misleading security state styling.
 
-Not applicable — this task does not change documented configuration.
+## 14. Test Requirements
+Component/state tests where applicable; browser verification for shell/login/denied/not-found visuals and responsive behavior.
 
-### 7.2 API Contract
+## 15. Task-Level Expected Results
+- Minimal shared UI foundation exists.
+- No brand or speculative enterprise system is invented.
+- Initial auth/RBAC flows can consume consistent states.
 
-Not applicable — this task does not modify an API contract.
+## 16. Acceptance Criteria
+- [x] Minimal tokens cover actual initial flows.
+- [x] System typography and Tailwind breakpoints remain in use.
+- [ ] WCAG 2.2 AA visual/accessibility evidence passes.
+- [x] No library, font, dark mode, or branding dependency is added.
 
-### 7.3 Database Contract
+## 17. Anti-Slop Requirements
+Primary `design-system`; optional `ui-ux-pro-max`, `frontend-patterns`, `ui-styling`; final `antislop`, `antislop-ui`, `antislop-human`, `antislop-layoutmobile`, `browser-verification`, `verification-loop`.
 
-Not applicable — this task does not change a database contract.
+## 18. Validation Requirements
+Lint, typecheck, tests, build, Anti-Slop, browser verification, `git diff --check`, and changed-file review.
 
-### 7.4 UI Contract
+## 19. Completion Evidence
+`apps/cms/src/styles.css` defines the minimal token layer; current shell, Login, Home, and Not Found views consume token-backed Tailwind utilities. `bun run test`, `bun run lint`, `bun run typecheck`, and `bun run build` pass. Browser verification and human visual review remain NOT RUN/PENDING.
 
-Not applicable — page/component/design/state contract is unresolved in PRODUCT/DESIGN docs; task is blocked.
+## 20. Traceability
+Not applicable — project has no traceability ID system.
 
-## 8. File Impact
+## 21. Open Points
+`docs/DESIGN.md` unresolved branding is explicitly out of scope. Browser verification at required viewports and human visual review remain open completion gates.
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
-
-Test: `apps/cms/tests/`.
-
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
-
-## 9. Runtime Behavior
-
-CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing CMS shell/Vitest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
-
-## 13. Validation Requirements
-
-### Static
-
-- `bun run --cwd apps/cms lint`
-- `bun run --cwd apps/cms typecheck`
-- `bun run --cwd apps/cms test`
-- `bun run --cwd apps/cms build`
-- `git diff --check`
-
-### Automated Tests
-
-- Focused and full existing Vitest tests applicable to changed boundary.
-
-### Build
-
-- `bun run --cwd apps/cms build`
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Browser/visual verification required if task becomes unblocked and rendered UI changes.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: required; reject generic AI layout, fake content, excessive containers, visual inconsistency, missing responsive/accessibility states. Visual verification: required when unblocked rendered UI changes.
-
-## 14. Acceptance Criteria
-
-- [ ] Create minimal approved CMS tokens/primitives only after design source and external-library license/compatibility review.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] Theme And Design System capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: required; reject generic AI layout, fake content, excessive containers, visual inconsistency, missing responsive/accessibility states. Visual verification: required when unblocked rendered UI changes.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/cms/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/cms lint`; `bun run --cwd apps/cms typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | Theme And Design System boundary |
-| `docs/DESIGN.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `fe/04-theme-design-system` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-TODO: REQUIREMENT NEEDED — brand, design reference, typography, breakpoints, external-library approval.
+## 22. Definition Of Done
+Minimal foundation implemented, initial flows consume it, tests/static/UI audits/browser evidence pass, and human review complete.

@@ -1,203 +1,102 @@
-# fe/03-cms-layout — CMS Layout
+# fe/03-cms-layout — CMS Application Shell
 
 ## 1. Metadata
-
 | Field | Value |
 | --- | --- |
 | Task ID | `fe/03-cms-layout` |
-| Batch | Not specified in source documentation. |
-| Owning Feature | Not specified in source documentation. |
-| Affected Feature IDs | Not specified in source documentation. |
+| Batch | N/A |
+| Owning Feature | CMS Auth + RBAC-ready shell |
 | Workstream | Frontend |
-| Category | layout foundation |
-| Repository | `apps/cms` |
-| Platform | Vue 3 / Vite CMS |
-| Status | Blocked — requirement needed |
-| Priority | Foundation execution order 3 |
-| Suggested Size | Small — one reviewable change set |
-| Depends On | fe/01-initial-project |
-| Blocks | fe/04-theme-design-system |
+| Task Category | UI architecture |
+| Repository/App | `apps/cms` |
+| Status | Implemented — verification incomplete |
+| Priority | Foundation |
+| Suggested Size | Medium |
+| Depends On | `fe/02-environment-validation` |
+| Blocks | `fe/04-theme-design-system`, `fe/07-login-page`, `fe/08-route-guard` |
 | Execution Order | 3 |
 
-## 2. Outcome
+**Contract Status:** Ready.
 
-Create accessible responsive CMS shell/navigation only after product route/map/design requirements are approved.
+**Execution Status:** Implemented; browser verification and human visual review remain pending.
+
+## 2. Outcome
+Provide neutral CMS shell/template with `/login`, `/`, catch-all Not Found, configuration-driven navigation, and responsive sidebar/drawer. No future business modules.
 
 ## 3. Context
+Current CMS already contains router, shell components, Home/Login/NotFound views, and Home navigation from approved implementation. Backend remains authorization authority; `fe/08` owns authentication enforcement and `fe/09` owns permission UX.
 
-`docs/ARCHITECTURE.md`, `docs/DATABASE.md`, `docs/API.md`, `docs/SECURITY.md`, `docs/DESIGN.md`, and `docs/DEVELOPMENT.md` are relevant as applicable. PRD/PRODUCT/DOMAIN contain TODO requirements; no product semantics are inferred. Existing task identity/order is preserved.
+## 4. Dependencies
+`fe/02` is complete. Use `frontend-patterns`, `ui-styling`, and conditional UI audits. No API or permission endpoint is required by this task.
 
-## 4. In Scope
+## 5. In Scope
+- Public `/login`, authenticated-intent `/`, and catch-all Not Found.
+- `AppShell` with Sidebar, Header, Main, and `RouterView`.
+- Persistent sidebar at Tailwind `md+`; temporary mobile drawer below `md`.
+- Accessible trigger, Escape close, destination close, focus behavior, no overflow, and background inertness.
+- Configuration-driven navigation containing only existing `Home → /`.
+- Minimal neutral root content and Not Found state.
+- Minimal route metadata for later auth/permission tasks; no enforcement or permission resolution.
 
-- Create accessible responsive CMS shell/navigation only after product route/map/design requirements are approved.
-- Inspect dependencies and existing implementation before finalizing paths.
-- Produce only this task capability and its focused tests/evidence.
+## 6. Out of Scope
+Future modules/routes, login form, auth/session state, auth guard, permission resolution, permission policy, business permissions, profile/search/notifications, branding, dark mode, custom typography, metrics, fake data, API integration, and UI library additions.
 
-## 5. Out of Scope
+## 7. Existing Implementation
+`src/router/index.ts`, `src/components/AppShell.vue`, `AppHeader.vue`, `AppNavigation.vue`, `src/navigation.ts`, neutral views, styles, and shell tests exist. Current navigation has only Home. No auth or RBAC behavior exists.
 
-- Successor tasks and unrelated business modules.
-- Generic CRUD, architecture redesign, unrelated refactor, dependency upgrade, or invented requirements.
-- Any unresolved item listed in Open Points.
+## 8. Implementation Requirements
+Use semantic landmarks, visible focus, logical tab order, active indication beyond color, practical mobile touch targets, reduced-motion consideration, and WCAG 2.2 AA target. Use Tailwind defaults and verify 375px, 768px, 1024px, 1440px. Do not invent product routes or permission keys.
 
-## 6. Implementation Requirements
+## 9. Applicable Contracts
+**Route Contract:** `/login` public; `/` authenticated-intent; catch-all Not Found; future CMS descendants protected by `fe/08`.
 
-- Create accessible responsive CMS shell/navigation only after product route/map/design requirements are approved.
-- CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-- Validate trust-boundary inputs with Zod where applicable.
-- Preserve existing behavior outside task boundary.
+**UI Contract:** neutral professional shell; Home-only navigation; responsive sidebar/drawer; minimal header; no future modules.
 
-### 6.1 Resolved Business Requirements
+**API/Database/Configuration Contracts:** No API/database change; existing `VITE_API_BASE_URL` only.
 
-No product behavior is resolved beyond technical foundation. STOP at Open Points; do not infer missing semantics.
+## 10. File Impact
+Expected Modify/Create: CMS router, shell/views/navigation/styles/tests only. Expected Not Modified: `apps/api`, database, dependencies, manifests, and future modules.
 
-## 7. Contract and Data Impact
+## 11. Runtime Behavior
+Bootstrap installs router → `/login` renders public placeholder → `/` renders shell and neutral Home → unknown URL renders Not Found → auth enforcement waits for `fe/08` → permission filtering waits for `fe/09`.
 
-### 7.1 Configuration Contract
+## 12. Error And Edge Cases
+Unknown route never silently redirects to `/`; drawer closes on Escape and destination selection; background main is inert while drawer is open; no internal route/debug details are exposed.
 
-Not applicable — this task does not change documented configuration.
+## 13. Security Requirements
+Shell visibility is UX only. Do not use navigation visibility as authorization. Do not add admin bypass, role checks, permission keys, or JWT authorization logic.
 
-### 7.2 API Contract
+## 14. Test Requirements
+Test routes, shell landmarks, Home navigation, neutral content, Not Found, drawer open/close, Escape, focus, selection close, and inert main. Browser verify responsive layout, keyboard behavior, overflow, and Not Found.
 
-Not applicable — this task does not modify an API contract.
+## 15. Task-Level Expected Results
+- Neutral shell exists and accepts future modules.
+- Navigation is configuration-driven and RBAC-ready without implementing RBAC.
+- Auth and permission ownership remains separated.
 
-### 7.3 Database Contract
+## 16. Acceptance Criteria
+- [x] `/login`, `/`, and catch-all Not Found exist without business routes.
+- [x] Shell has Sidebar, Header, Main, and RouterView.
+- [x] Navigation contains only Home and is configuration-driven.
+- [x] Mobile drawer behavior and keyboard safeguards exist.
+- [x] Root content is neutral; no fake business content exists.
+- [x] Auth and permission enforcement remain delegated.
+- [ ] Browser verification at required viewports is complete.
 
-Not applicable — this task does not change a database contract.
+## 17. Anti-Slop Requirements
+Primary `frontend-patterns`; `ui-styling` for Tailwind; final `antislop`, `antislop-ui`, `antislop-human`, `antislop-layoutmobile`, `browser-verification`, `verification-loop`. No `design-system` activation unless `fe/04` changes tokens.
 
-### 7.4 UI Contract
+## 18. Validation Requirements
+Lint, typecheck, focused/full tests, build, Anti-Slop, `git diff --check`, and browser verification. Browser status must be PASS/NOT RUN truthfully.
 
-Not applicable — page/component/design/state contract is unresolved in PRODUCT/DESIGN docs; task is blocked.
+## 19. Completion Evidence
+Current source and tests satisfy implementation criteria; lint/typecheck/tests/build pass. Browser verification is NOT RUN because browser tooling is unavailable. Human visual review remains pending.
 
-## 8. File Impact
+## 20. Traceability
+Not applicable — project has no traceability ID system.
 
-Create/Modify: Expected location: focused module determined from existing architecture after inspection.
+## 21. Open Points
+None. Browser verification is the only remaining execution gate.
 
-Test: `apps/cms/tests/`.
-
-Do not modify: unrelated app, successor-task modules, secrets, source-of-truth docs, or task IDs.
-
-## 9. Runtime Behavior
-
-CMS interaction/state transition follows approved UI/API contract; unresolved contract blocks implementation before rendered behavior is invented.
-
-## 10. Error and Edge Cases
-
-| Scenario | Expected Result |
-| --- | --- |
-| Required contract missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Dependency missing | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-| Attempt to infer product/API/database/UI behavior | Sanitized deterministic failure; no unsafe continuation or secret exposure. |
-
-## 11. Security Requirements
-
-Apply Zod at trust boundaries where applicable; preserve safe errors, no secret logging, and existing authorization boundaries.
-
-## 12. Test Requirements
-
-### Happy Path
-
-Prove the documented outcome at focused module/integration boundary.
-
-### Validation / Business Rules
-
-Prove each relevant scenario in section 10.
-
-### Negative / Recovery
-
-Prove failure does not start unsafe work, leak secrets, or leave uncontrolled partial state.
-
-### Isolation / Security
-
-Tests are repeatable, order-independent, use isolated data/environment/mocks, clean up deterministically, and never contain real key material, passwords, or tokens.
-
-### Regression
-
-Existing CMS shell/Vitest behavior remains passing.
-
-### 12.1 Required Verification Scenarios
-
-| Scenario | Expected Result | Test Type |
-| --- | --- | --- |
-| Valid documented flow | Outcome occurs | Unit/integration as boundary requires |
-| Invalid/failure flow | Safe rejection/failure | Unit/integration |
-| Sensitive-data path | No secret output/logging | Focused test |
-| Existing shell | No regression | Regression |
-
-## 13. Validation Requirements
-
-### Static
-
-- `bun run --cwd apps/cms lint`
-- `bun run --cwd apps/cms typecheck`
-- `bun run --cwd apps/cms test`
-- `bun run --cwd apps/cms build`
-- `git diff --check`
-
-### Automated Tests
-
-- Focused and full existing Vitest tests applicable to changed boundary.
-
-### Build
-
-- `bun run --cwd apps/cms build`
-
-### Database
-
-Not applicable — no migration expected.
-
-### UI
-
-Browser/visual verification required if task becomes unblocked and rendered UI changes.
-
-### Anti-Slop
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: required; reject generic AI layout, fake content, excessive containers, visual inconsistency, missing responsive/accessibility states. Visual verification: required when unblocked rendered UI changes.
-
-## 14. Acceptance Criteria
-
-- [ ] Create accessible responsive CMS shell/navigation only after product route/map/design requirements are approved.
-- [ ] In Scope work completed without Out of Scope changes.
-- [ ] Valid and failure behavior has evidence.
-- [ ] No sensitive data is exposed.
-- [ ] Required validation and Anti-Slop evidence uses actual status.
-
-### 14.1 Task-Level Expected Results
-
-- [ ] CMS Layout capability exists at documented boundary.
-- [ ] Runtime follows section 9 and errors follow section 10.
-- [ ] Unrelated behavior remains unchanged.
-
-## 15. Anti-Slop Requirements
-
-Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unused code or dependency, fake/placeholder implementation, hidden TODO/FIXME/HACK, unjustified any/assertion, and unrelated refactor. UI Anti-Slop: required; reject generic AI layout, fake content, excessive containers, visual inconsistency, missing responsive/accessibility states. Visual verification: required when unblocked rendered UI changes.
-
-## 16. Definition of Done
-
-- [ ] Implementation Requirements and Acceptance Criteria satisfied.
-- [ ] Scope respected; no unrelated files/architecture change.
-- [ ] Required tests and validation pass.
-- [ ] Required Anti-Slop checks pass; unavailable check is never reported PASS.
-- [ ] Applicable migration/API/OpenAPI/browser evidence exists.
-- [ ] `git diff --check`, changed-file review, secret review, and human review completed.
-
-### 16.1 Required Completion Evidence
-
-| Acceptance Criterion | Evidence |
-| --- | --- |
-| Outcome behavior | Focused test(s) under `apps/cms/tests/` or explicit blocked reason |
-| Static correctness | `bun run --cwd apps/cms lint`; `bun run --cwd apps/cms typecheck` |
-| Scope hygiene | `git diff --check`, `git diff`, and `git status` review |
-| Anti-Slop | Applicable command/tool output or exact NOT RUN reason |
-
-## 17. Traceability
-
-| Source | Requirement / Section | Task Coverage |
-| --- | --- | --- |
-| `docs/ARCHITECTURE.md` | repository and layer boundaries | CMS Layout boundary |
-| `docs/DESIGN.md` | relevant baseline | security/UI constraints |
-| Existing task directory | `fe/03-cms-layout` | task identity/order |
-| PRD / PRODUCT / DOMAIN | TODO: REQUIREMENT NEEDED | no IDs or rules invented |
-
-## 18. Open Points
-
-TODO: REQUIREMENT NEEDED — navigation, page/route map, labels, breakpoints, access model, design source.
+## 22. Definition Of Done
+Browser evidence at required viewports, Anti-Slop audits, static checks, tests, build, diff/secret/scope review, and human review complete.

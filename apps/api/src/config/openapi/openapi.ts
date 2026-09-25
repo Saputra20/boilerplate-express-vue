@@ -29,6 +29,7 @@ export type OpenApiDocument = Record<string, unknown> & {
 };
 
 const authSpecUrl = new URL('../../modules/auth/v1/auth.openapi.yaml', import.meta.url);
+const meSpecUrl = new URL('../../modules/me/v1/me.openapi.yaml', import.meta.url);
 const healthSpecUrl = new URL('../../modules/health/health.openapi.yaml', import.meta.url);
 
 export const OPENAPI_V1_DOCUMENT = await loadOpenApiDocument();
@@ -66,6 +67,7 @@ export function createOpenApiDocument(): OpenApiDocument {
 
 async function loadOpenApiDocument(): Promise<OpenApiDocument> {
   const auth = loadModuleDocument(authSpecUrl);
+  const me = loadModuleDocument(meSpecUrl);
   const health = loadModuleDocument(healthSpecUrl);
   const document = {
     openapi: OPENAPI_VERSION,
@@ -74,7 +76,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
       version: OPENAPI_INFO_VERSION,
     },
     servers: [{ url: '/' }],
-    tags: [{ name: 'Documentation' }, ...auth.tags, ...health.tags],
+    tags: [{ name: 'Documentation' }, ...auth.tags, ...me.tags, ...health.tags],
     paths: {
       [OPENAPI_REDIRECT_PATH]: {
         get: {
@@ -111,6 +113,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
         },
       },
       ...auth.paths,
+      ...me.paths,
       ...health.paths,
     },
     components: {
@@ -130,6 +133,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
           },
         },
         ...auth.schemas,
+        ...me.schemas,
         ...health.schemas,
       },
       responses: {
@@ -198,6 +202,7 @@ function validateOpenApiDocument(document: OpenApiDocument): void {
     '/api/v1/auth/refresh',
     '/api/v1/auth/logout',
     '/api/v1/auth/logout-all',
+    '/api/v1/me',
     '/health',
     '/ready',
   ];

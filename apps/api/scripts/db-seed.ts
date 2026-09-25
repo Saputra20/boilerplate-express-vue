@@ -1,0 +1,116 @@
+import { eq } from 'drizzle-orm';
+import { createDatabase } from '../src/config/database/client.js';
+import { loadDatabaseConfig } from '../src/config/database/config.js';
+import {
+  permissions,
+  rolePermissions,
+  roles,
+  userRoles,
+  users,
+} from '../src/config/drizzle/schema.js';
+import { hashPassword } from '../src/helpers/password.helper.js';
+
+const seedEmail = 'developer@dispostable.com';
+const seedRoleCode = 'admin';
+const seedPermissionCode = 'system.access';
+
+function loadSeedPassword(): string {
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!password) {
+    throw new Error('SEED_ADMIN_PASSWORD is required; pass it at runtime and never commit it');
+  }
+  return password;
+}
+
+async function seed(): Promise<void> {
+  const passwordHash = await hashPassword(loadSeedPassword());
+  const database = createDatabase(loadDatabaseConfig());
+  await database.initialize();
+
+  try {
+    await database.db.transaction(async (transaction) => {
+      const [role] = await transaction
+        .insert(roles)
+        .values({
+          code: seedRoleCode,
+          name: 'Admin',
+          description: 'Foundation administrator role',
+        })
+        .onConflictDoNothing({ target: roles.code })
+        .returning({ id: roles.id });
+
+      const roleRecord =
+        role ??
+        (
+          await transaction
+            .select({ id: roles.id })
+            .from(roles)
+            .where(eq(roles.code, seedRoleCode))
+            .limit(1)
+        )[0];
+
+      if (!roleRecord) throw new Error('Admin role could not be created or loaded');
+
+      const [permission] = await transaction
+        .insert(permissions)
+        .values({
+          code: seedPermissionCode,
+          description: 'Foundation access permission',
+        })
+        .onConflictDoNothing({ target: permissions.code })
+        .returning({ id: permissions.id });
+
+      const permissionRecord =
+        permission ??
+        (
+          await transaction
+            .select({ id: permissions.id })
+            .from(permissions)
+            .where(eq(permissions.code, seedPermissionCode))
+            .limit(1)
+        )[0];
+
+      if (!permissionRecord) throw new Error('Access permission could not be created or loaded');
+
+      await transaction
+        .insert(rolePermissions)
+        .values({ roleId: roleRecord.id, permissionId: permissionRecord.id })
+        .onConflictDoNothing();
+
+      const [existingUser] = await transaction
+        .select({ id: users.id, status: users.status, deletedAt: users.deletedAt })
+        .from(users)
+        .where(eq(users.email, seedEmail))
+        .limit(1);
+
+      let userId = existingUser?.id;
+      if (existingUser && (existingUser.status !== 'active' || existingUser.deletedAt !== null)) {
+        throw new Error('Seed account exists but is disabled or deleted');
+      }
+
+      if (!userId) {
+        const [createdUser] = await transaction
+          .insert(users)
+          .values({ email: seedEmail, passwordHash, status: 'active' })
+          .returning({ id: users.id });
+        userId = createdUser?.id;
+      }
+
+      if (!userId) throw new Error('Seed account could not be created or loaded');
+
+      await transaction
+        .insert(userRoles)
+        .values({ userId, roleId: roleRecord.id })
+        .onConflictDoNothing();
+    });
+
+    console.log(`Seeded ${seedEmail} with role ${seedRoleCode}`);
+  } finally {
+    await database.close();
+  }
+}
+
+seed().catch((error: unknown) => {
+  console.error(error instanceof Error ? error.message : 'Database seed failed');
+  process.exitCode = 1;
+});

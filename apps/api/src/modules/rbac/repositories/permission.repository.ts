@@ -21,5 +21,17 @@ export function createPermissionRepository(database: Database): PermissionReposi
       if (rows.length === 0) return 'unknown';
       return rows.some((row) => row.assignedRoleId !== null) ? 'granted' : 'denied';
     },
+    async listEffectivePermissions({ userId }) {
+      const rows = await database
+        .select({ code: permissions.code })
+        .from(permissions)
+        .innerJoin(rolePermissions, eq(rolePermissions.permissionId, permissions.id))
+        .innerJoin(
+          userRoles,
+          and(eq(userRoles.roleId, rolePermissions.roleId), eq(userRoles.userId, userId)),
+        );
+
+      return [...new Set(rows.map((row) => row.code))].sort();
+    },
   };
 }

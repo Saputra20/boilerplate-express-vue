@@ -50,6 +50,16 @@ class MemoryPermissionRepository implements PermissionRepository {
       ? 'granted'
       : 'denied';
   }
+
+  async listEffectivePermissions({ userId }: { userId: string }): Promise<readonly string[]> {
+    return [
+      ...new Set(
+        Array.from(this.userRoles.get(userId) ?? []).flatMap((role) => [
+          ...(this.rolePermissions.get(role) ?? new Set<string>()).values(),
+        ]),
+      ),
+    ].sort();
+  }
 }
 
 function createJwtService(directory: string): JwtService {
@@ -96,6 +106,10 @@ describe('RBAC permission middleware', () => {
     await expect(service.authorize({ userId: admin, permission: 'system.missing' })).resolves.toBe(
       'unknown',
     );
+    await expect(service.listEffectivePermissions({ userId: multiRoleUser })).resolves.toEqual([
+      'system.access',
+      'system.observe',
+    ]);
   });
 
   it('distinguishes authentication, forbidden, granted, and unknown permission paths', async () => {
