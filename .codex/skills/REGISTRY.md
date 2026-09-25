@@ -99,7 +99,7 @@ Specialists are conditional: `antislop-ui` for visual UI, `antislop-human` for a
 
 Physical filesystem grouping is independent from logical registry categories. Current nested groups under `engineering/`, `planning/`, `quality/`, `security/`, and `testing/` remain unchanged. Direct creative and Anti-Slop directories also remain unchanged.
 
-Recursive Codex discovery is **UNVERIFIED** by repository evidence. The registry records exact relative paths so discovery can be validated without assuming recursive scanning. Do not flatten or move directories as part of routing cleanup.
+Native recursive skill listing is **VERIFIED for `codex-cli 0.156.1`** by `codex debug prompt-input`: direct and nested `SKILL.md` paths appeared in model-visible prompt context. End-to-end task-triggered activation remains **NOT VERIFIED** because the Phase 3 `codex exec` probe failed during authentication/model initialization. This is verified host-runtime behavior for the tested Codex version, not a cross-version guarantee. The registry records exact relative paths for deterministic project governance and routing; do not flatten or move directories.
 
 ## Lockfile
 

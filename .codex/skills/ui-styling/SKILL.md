@@ -25,7 +25,6 @@ Use when:
 - Creating responsive, mobile-first layouts
 - Implementing dark mode and theme customization
 - Applying existing design-system tokens and component specifications
-- Generating visual designs, posters, or brand materials
 - Rapid prototyping with immediate visual feedback
 - Adding complex UI patterns (data tables, charts, command palettes)
 
@@ -44,12 +43,10 @@ Use when:
 - Consistent design tokens (colors, spacing, typography)
 - Automatic dead code elimination
 
-### Visual Design Layer: Canvas
-- Museum-quality visual compositions
-- Philosophy-driven design approach
-- Sophisticated visual communication
-- Minimal text, maximum visual impact
-- Systematic patterns and refined aesthetics
+### Visual Treatment Layer: Application UI
+- Apply approved UI/UX direction to application surfaces
+- Implement hierarchy, spacing, typography, states, and responsive behavior
+- Keep creative asset production, brand identity, banners, and presentations in their owning skills
 
 ## Quick Start
 
