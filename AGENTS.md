@@ -58,7 +58,9 @@ For example, instruction to allow empty `REDIS_USERNAME` and `REDIS_PASSWORD` fo
 
 ## Skill Activation
 
-Load project skills from `.codex/skills/REGISTRY.md` by task type. `document-planning` owns task generation; architecture, coding, security, testing, review, and verification skills apply only when relevant. External Anti-Slop skills remain mandatory additive filters, not replacements for project skills. Skills never override this file, approved task scope, validation, or human approval.
+Load project skills from `.codex/skills/REGISTRY.md` by task type. Use smallest complete skill set required for task. `document-planning` owns task generation; architecture, coding, security, testing, review, and verification skills apply only when relevant. External Anti-Slop skills remain mandatory additive filters, not replacements for project skills. Skills never override this file, approved task scope, validation, or human approval.
+
+Do not load umbrella and specialist skills together unless registry routing explicitly defines relationship and order. `frontend-patterns` owns Vue architecture and implementation; `ui-ux-pro-max` owns UI/UX decisions; `design-system` owns tokens/specifications; `ui-styling` owns compatible styling implementation; `antislop-ui`, `antislop-human`, and `antislop-layoutmobile` are conditional post-implementation audits; `browser-verification` owns rendered verification. Creative skills remain explicit/on-demand. `caveman` changes communication compression only and never architecture, security, scope, tests, or verification requirements.
 
 ### Documentation Consistency Gate
 
@@ -467,7 +469,7 @@ Never hide failures or turn NOT RUN into PASS.
 
 ## antislop
 
-For UI, copy, people, mobile layout, or code comments work, load the antislop skill for the task:
+For every approved task, load core `antislop` as project quality gate. For UI, copy, people, mobile layout, or code comments work, load only applicable specialist:
 
 - Core filter, always on: `antislop`
 - UI / visual: `antislop-ui`
@@ -475,6 +477,6 @@ For UI, copy, people, mobile layout, or code comments work, load the antislop sk
 - People: `antislop-human`
 - Mobile / responsive: `antislop-layoutmobile`
 - Code comments: `antislop-code`
-  Before starting, ask the user when antislop applies: during the work, or after it is done.
+  Specialists run after implementation and before final verification. Before UI work, ask the user when Anti-Slop applies: during the work, or after it is done.
 
 <!-- antislop:end -->
