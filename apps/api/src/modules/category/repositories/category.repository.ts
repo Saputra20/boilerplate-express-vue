@@ -1,10 +1,10 @@
 import { and, asc, count, desc, eq, ilike, isNull, or } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { categories } from '../../../config/drizzle/schema.js';
+import { categories } from '../../../config/drizzle/schema/index.js';
 import type { AuditEvent, AuditService } from '../../audit/services/audit.service.js';
 import type { CategoryList, CategoryRepository } from '../services/category.service.js';
 
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 
 type AuditExecutor = Pick<Database, 'insert'>;
 

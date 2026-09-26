@@ -1,11 +1,16 @@
 import { and, asc, count, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { permissions, rolePermissions, roles, userRoles } from '../../../config/drizzle/schema.js';
+import {
+  permissions,
+  rolePermissions,
+  roles,
+  userRoles,
+} from '../../../config/drizzle/schema/index.js';
 import type { AuditService } from '../../audit/services/audit.service.js';
 import type { RoleList, RoleRepository } from '../services/role.service.js';
 import { InvalidRolePermissionsError } from '../services/role.service.js';
 
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 type AuditExecutor = Pick<Database, 'insert'>;
 
 export function createRoleRepository(

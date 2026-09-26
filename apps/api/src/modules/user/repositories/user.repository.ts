@@ -1,9 +1,9 @@
 import { and, asc, count, desc, eq, ilike, isNull } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { authSessions, roles, userRoles, users } from '../../../config/drizzle/schema.js';
+import { authSessions, roles, userRoles, users } from '../../../config/drizzle/schema/index.js';
 import type { AuditService } from '../../audit/services/audit.service.js';
 import type { UserList, UserRepository } from '../services/user.service.js';
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 type Executor = Pick<Database, 'insert'>;
 export function createUserRepository(
   database: Database,

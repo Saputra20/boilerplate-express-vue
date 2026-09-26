@@ -71,4 +71,39 @@ describe('user management page', () => {
     expect(wrapper.text()).toContain('Unable to load users.');
     expect(wrapper.text()).toContain('Try again');
   });
+
+  it('keeps status changes as a draft until Apply and applies Reset on Apply', async () => {
+    const wrapper = mount(UserView, { attachTo: document.body });
+    await flushPromises();
+
+    const trigger = wrapper.get('[data-filter-trigger]');
+    await trigger.trigger('click');
+    await wrapper.findAll('select')[1]?.setValue('disabled');
+    expect(api.listUsers).toHaveBeenCalledTimes(1);
+
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'Apply')
+      ?.trigger('click');
+    await flushPromises();
+    expect(api.listUsers).toHaveBeenCalledTimes(2);
+    expect(api.listUsers.mock.calls[1]?.[0]).toMatchObject({ status: 'disabled', page: 1 });
+    expect(trigger.text()).toContain('1');
+
+    await trigger.trigger('click');
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'Reset')
+      ?.trigger('click');
+    expect(api.listUsers).toHaveBeenCalledTimes(2);
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'Apply')
+      ?.trigger('click');
+    await flushPromises();
+    expect(api.listUsers).toHaveBeenCalledTimes(3);
+    expect(api.listUsers.mock.calls[2]?.[0]).toMatchObject({ status: undefined });
+    expect(trigger.text()).not.toContain('1');
+    wrapper.unmount();
+  });
 });

@@ -1,9 +1,9 @@
 import { and, eq, gt } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { authSessions, tokenRevocations, users } from '../../../config/drizzle/schema.js';
+import { authSessions, tokenRevocations, users } from '../../../config/drizzle/schema/index.js';
 import type { AccessAuthRepository } from '../services/access-auth.service.js';
 
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 
 export function createAccessAuthRepository(database: Database): AccessAuthRepository {
   return {

@@ -1,8 +1,8 @@
 import { count, isNull } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { categories, roles, users } from '../../../config/drizzle/schema.js';
+import { categories, roles, users } from '../../../config/drizzle/schema/index.js';
 import type { DashboardRepository } from '../services/dashboard.service.js';
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 export function createDashboardRepository(database: Database): DashboardRepository {
   return {
     async summary() {

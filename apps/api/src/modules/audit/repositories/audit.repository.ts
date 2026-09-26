@@ -1,9 +1,9 @@
 import { lt } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { auditEvents } from '../../../config/drizzle/schema.js';
+import { auditEvents } from '../../../config/drizzle/schema/index.js';
 import type { AuditRepository } from '../services/audit.service.js';
 
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 
 export type AuditExecutor = Pick<Database, 'delete' | 'insert'>;
 

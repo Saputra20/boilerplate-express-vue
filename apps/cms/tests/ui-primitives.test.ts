@@ -157,6 +157,73 @@ describe('CMS UI primitives', () => {
     expect(wrapper.emitted('search')).toHaveLength(1);
   });
 
+  it('opens a filter popover and applies or resets through explicit actions', async () => {
+    const wrapper = mount(CmsTable, {
+      attachTo: document.body,
+      props: {
+        title: 'Users',
+        totalRecords: 1,
+        page: 1,
+        pageSize: 10,
+        itemLabel: 'users',
+        searchTerm: '',
+        searchLabel: 'Search users',
+        activeFilterCount: 1,
+      },
+      slots: {
+        filters:
+          '<label>Status<select aria-label="Status"><option value="all">All statuses</option><option value="active">Active</option></select></label>',
+      },
+    });
+
+    const trigger = wrapper.get('[data-filter-trigger]');
+    expect(trigger.text()).toContain('Filter');
+    expect(trigger.text()).toContain('1');
+    await trigger.trigger('click');
+    expect(trigger.attributes('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(wrapper.get('select[aria-label="Status"]').element);
+
+    const buttons = wrapper.findAll('button');
+    await buttons.find((button) => button.text() === 'Reset')?.trigger('click');
+    expect(wrapper.emitted('filter-reset')).toHaveLength(1);
+    expect(trigger.attributes('aria-expanded')).toBe('true');
+
+    await buttons.find((button) => button.text() === 'Apply')?.trigger('click');
+    expect(wrapper.emitted('filter-apply')).toHaveLength(1);
+    expect(wrapper.emitted('filter-close')).toHaveLength(1);
+    expect(trigger.attributes('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(trigger.element);
+    wrapper.unmount();
+  });
+
+  it('closes a filter popover on outside click and Escape', async () => {
+    const wrapper = mount(CmsTable, {
+      attachTo: document.body,
+      props: {
+        title: 'Users',
+        totalRecords: 0,
+        page: 1,
+        pageSize: 10,
+        itemLabel: 'users',
+        searchTerm: '',
+        searchLabel: 'Search users',
+      },
+      slots: { filters: '<select aria-label="Status"><option>All statuses</option></select>' },
+    });
+
+    const trigger = wrapper.get('[data-filter-trigger]');
+    await trigger.trigger('click');
+    await document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(trigger.attributes('aria-expanded')).toBe('false');
+
+    await trigger.trigger('click');
+    await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await wrapper.vm.$nextTick();
+    expect(trigger.attributes('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(trigger.element);
+    wrapper.unmount();
+  });
+
   it('shows numbered pages and emits the selected page', async () => {
     const wrapper = mount(CmsPagination, { props: { page: 2, totalPages: 3 } });
     const currentPage = wrapper.get('[aria-current="page"]');

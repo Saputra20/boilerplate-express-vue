@@ -1,8 +1,8 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { roles, userRoles, users } from '../../../config/drizzle/schema.js';
+import { roles, userRoles, users } from '../../../config/drizzle/schema/index.js';
 
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 
 export type AuthenticatedUserRecord = {
   id: string;

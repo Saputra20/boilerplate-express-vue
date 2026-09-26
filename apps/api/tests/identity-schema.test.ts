@@ -1,7 +1,10 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getTableName } from 'drizzle-orm';
 import { readRollbackMigrations } from '../src/config/drizzle/rollback.js';
-import {
+import * as schema from '../src/config/drizzle/schema/index.js';
+
+const {
   auditEvents,
   authAuditEvents,
   authSessions,
@@ -13,12 +16,58 @@ import {
   userRoles,
   users,
   userStatus,
-} from '../src/config/drizzle/schema.js';
+} = schema;
 
 const migrationsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '../drizzle');
 const tableColumns = (table: object) => Object.keys(table).filter((key) => key !== 'enableRLS');
 
 describe('identity schema', () => {
+  it('aggregates each existing table once through the schema index', () => {
+    expect(Object.keys(schema).sort()).toEqual([
+      'auditEvents',
+      'authAuditEvents',
+      'authSessions',
+      'categories',
+      'permissions',
+      'refreshTokens',
+      'rolePermissions',
+      'roles',
+      'tokenRevocations',
+      'userRoles',
+      'userStatus',
+      'users',
+    ]);
+    expect(
+      [
+        auditEvents,
+        authAuditEvents,
+        authSessions,
+        categories,
+        permissions,
+        refreshTokens,
+        rolePermissions,
+        roles,
+        schema.tokenRevocations,
+        userRoles,
+        users,
+      ]
+        .map(getTableName)
+        .sort(),
+    ).toEqual([
+      'audit_events',
+      'auth_audit_events',
+      'auth_sessions',
+      'categories',
+      'permissions',
+      'refresh_tokens',
+      'role_permissions',
+      'roles',
+      'token_revocations',
+      'user_roles',
+      'users',
+    ]);
+  });
+
   it('defines approved identity and login/session tables', () => {
     expect(tableColumns(users)).toEqual([
       'id',

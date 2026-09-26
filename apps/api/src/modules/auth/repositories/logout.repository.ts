@@ -5,10 +5,10 @@ import {
   authSessions,
   refreshTokens,
   tokenRevocations,
-} from '../../../config/drizzle/schema.js';
+} from '../../../config/drizzle/schema/index.js';
 import type { LogoutRepository } from '../services/logout.service.js';
 
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 
 export function createLogoutRepository(database: Database): LogoutRepository {
   return {

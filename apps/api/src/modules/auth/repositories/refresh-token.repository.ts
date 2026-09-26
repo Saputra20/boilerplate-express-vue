@@ -6,14 +6,14 @@ import {
   authSessions,
   refreshTokens,
   users,
-} from '../../../config/drizzle/schema.js';
+} from '../../../config/drizzle/schema/index.js';
 import { fingerprintToken } from '../../../helpers/token-fingerprint.helper.js';
 import type {
   RefreshFailureReason,
   RefreshRotationRepository,
 } from '../services/refresh-token.service.js';
 
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 
 export function createRefreshRepository(database: Database): RefreshRotationRepository {
   return {

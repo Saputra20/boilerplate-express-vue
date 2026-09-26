@@ -5,7 +5,7 @@ import {
   authSessions,
   refreshTokens,
   users,
-} from '../../../config/drizzle/schema.js';
+} from '../../../config/drizzle/schema/index.js';
 import type {
   AuthenticatedSessionInput,
   FailedLoginAuditInput,
@@ -13,7 +13,7 @@ import type {
   LoginUser,
 } from '../services/login.service.js';
 
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 
 export function createLoginRepository(database: Database): LoginRepository {
   return {

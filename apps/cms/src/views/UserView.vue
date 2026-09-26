@@ -25,6 +25,7 @@ const totalPages = ref(0);
 const total = ref(0);
 const search = ref('');
 const statusFilter = ref<'all' | 'active' | 'disabled'>('all');
+const statusDraft = ref(statusFilter.value);
 const sort = ref<'email.asc' | 'email.desc' | 'createdAt.asc' | 'createdAt.desc'>('createdAt.desc');
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -43,6 +44,7 @@ const canCreate = computed(() => auth.can('user.create'));
 const canUpdate = computed(() => auth.can('user.update'));
 const canDelete = computed(() => auth.can('user.delete'));
 const isEmpty = computed(() => !loading.value && error.value === null && users.value.length === 0);
+const activeFilterCount = computed(() => Number(statusFilter.value !== 'all'));
 
 async function loadUsers(): Promise<void> {
   loading.value = true;
@@ -160,6 +162,19 @@ function changeFilters(): void {
   page.value = 1;
   void loadUsers();
 }
+function openFilters(): void {
+  statusDraft.value = statusFilter.value;
+}
+function closeFilters(): void {
+  statusDraft.value = statusFilter.value;
+}
+function resetFilterDraft(): void {
+  statusDraft.value = 'all';
+}
+function applyFilters(): void {
+  statusFilter.value = statusDraft.value;
+  changeFilters();
+}
 function changePageSize(nextPageSize: number): void {
   pageSize.value = nextPageSize;
   page.value = 1;
@@ -196,13 +211,18 @@ onMounted(() => void loadUsers());
       item-label="users"
       :search-term="search"
       search-label="Search users by email"
+      :active-filter-count="activeFilterCount"
       :show-state="Boolean(error) || loading || isEmpty"
       @update:search-term="search = $event"
       @update:page-size="changePageSize"
       @search="searchUsers"
+      @filter-open="openFilters"
+      @filter-close="closeFilters"
+      @filter-reset="resetFilterDraft"
+      @filter-apply="applyFilters"
     >
       <template #filters>
-        <CmsSelect v-model="statusFilter" class="min-w-36" label="Status" @change="changeFilters">
+        <CmsSelect v-model="statusDraft" class="w-full" label="Status">
           <option value="all">All statuses</option>
           <option value="active">Active</option>
           <option value="disabled">Disabled</option>

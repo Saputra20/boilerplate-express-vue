@@ -16,6 +16,7 @@ withDefaults(
       | 'eye-off'
       | 'dots'
       | 'search'
+      | 'filter'
       | 'edit'
       | 'trash';
     size?: number;
@@ -72,6 +73,7 @@ withDefaults(
       v-else-if="name === 'search'"
       d="m20 20-4.5-4.5m2-5.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z"
     />
+    <path v-else-if="name === 'filter'" d="M4 6h16M7 12h10m-7 6h4" />
     <path v-else-if="name === 'edit'" d="m14 5 5 5M4 20l4.4-.9L19 8.5 15.5 5 5 15.5 4 20Z" />
     <path v-else-if="name === 'trash'" d="M4 7h16m-10 4v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" />
     <path v-else-if="name === 'dots'" d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.5" />

@@ -1,9 +1,9 @@
 import { and, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { permissions, rolePermissions, userRoles } from '../../../config/drizzle/schema.js';
+import { permissions, rolePermissions, userRoles } from '../../../config/drizzle/schema/index.js';
 import type { PermissionRepository } from '../services/permission.service.js';
 
-type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js')>;
+type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 
 export function createPermissionRepository(database: Database): PermissionRepository {
   return {
