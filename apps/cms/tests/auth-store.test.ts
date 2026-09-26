@@ -24,6 +24,22 @@ function createApiMock(): ApiClient {
     me: vi.fn(),
     logout: vi.fn(),
     logoutAll: vi.fn(),
+    listCategories: vi.fn(),
+    createCategory: vi.fn(),
+    updateCategory: vi.fn(),
+    deleteCategory: vi.fn(),
+    listRoles: vi.fn(),
+    getRole: vi.fn(),
+    createRole: vi.fn(),
+    updateRole: vi.fn(),
+    deleteRole: vi.fn(),
+    listPermissionCatalog: vi.fn(),
+    listUsers: vi.fn(),
+    getUser: vi.fn(),
+    createUser: vi.fn(),
+    updateUser: vi.fn(),
+    deleteUser: vi.fn(),
+    getDashboardSummary: vi.fn(),
   };
 }
 

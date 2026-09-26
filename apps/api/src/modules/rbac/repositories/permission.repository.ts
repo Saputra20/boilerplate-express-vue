@@ -7,6 +7,16 @@ type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema.js'
 
 export function createPermissionRepository(database: Database): PermissionRepository {
   return {
+    async listCatalog() {
+      return database
+        .select({
+          id: permissions.id,
+          code: permissions.code,
+          description: permissions.description,
+        })
+        .from(permissions)
+        .orderBy(permissions.code);
+    },
     async resolvePermission({ userId, permission }) {
       const rows = await database
         .select({ assignedRoleId: userRoles.roleId })

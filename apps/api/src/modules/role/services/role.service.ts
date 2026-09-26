@@ -18,11 +18,16 @@ const roleFields = {
   description: z.string().max(500).nullable(),
 };
 
+const permissionCodesSchema = z
+  .array(z.string().regex(/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/))
+  .default([]);
+
 export const createRoleSchema = z
   .object({
     code: roleCodeSchema,
     name: roleFields.name,
     description: roleFields.description.optional(),
+    permissionCodes: permissionCodesSchema,
   })
   .strict();
 
@@ -30,6 +35,7 @@ export const updateRoleSchema = z
   .object({
     name: roleFields.name.optional(),
     description: roleFields.description.optional(),
+    permissionCodes: z.array(z.string().regex(/^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/)).optional(),
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, 'At least one field is required');
@@ -52,6 +58,7 @@ export type Role = {
   description: string | null;
   createdAt: Date;
   updatedAt: Date;
+  permissionCodes: string[];
 };
 
 export type RoleList = {
@@ -76,6 +83,7 @@ export class RoleConflictError extends Error {}
 export class RoleNotFoundError extends Error {}
 export class RoleAssignedError extends Error {}
 export class ProtectedRoleError extends Error {}
+export class InvalidRolePermissionsError extends Error {}
 
 export type RoleService = {
   create(input: CreateRoleInput, audit: RoleAuditContext): Promise<Role>;
@@ -91,6 +99,7 @@ export function createRoleService(repository: RoleRepository): RoleService {
       try {
         return await repository.create(input, auditEvent('role.created', audit));
       } catch (error) {
+        if (error instanceof InvalidRolePermissionsError) throw error;
         if (isUniqueViolation(error)) throw new RoleConflictError();
         throw error;
       }
@@ -112,6 +121,7 @@ export function createRoleService(repository: RoleRepository): RoleService {
         if (role === null) throw new RoleNotFoundError();
         return role;
       } catch (error) {
+        if (error instanceof InvalidRolePermissionsError) throw error;
         if (isUniqueViolation(error)) throw new RoleConflictError();
         throw error;
       }

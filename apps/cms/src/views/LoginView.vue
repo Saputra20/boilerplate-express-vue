@@ -8,7 +8,6 @@ import { sanitizeReturnTo } from '../router/return-to';
 import { useAuthStore } from '../stores/auth';
 import CmsIcon from '../components/CmsIcon.vue';
 import { useTheme } from '../composables/useTheme';
-import CmsCard from '../components/ui/CmsCard.vue';
 import CmsButton from '../components/ui/CmsButton.vue';
 import CmsInput from '../components/ui/CmsInput.vue';
 import CmsPasswordInput from '../components/ui/CmsPasswordInput.vue';
@@ -97,24 +96,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-cms-background px-4 py-6 sm:px-6 sm:py-10">
-    <div
-      class="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col justify-between gap-10"
-    >
-      <header class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <span
-            class="grid size-10 place-items-center rounded-cms-md bg-cms-primary text-sm font-bold text-cms-primary-contrast"
-            >C</span
-          >
-          <div>
-            <p class="text-sm font-semibold text-cms-foreground">CMS</p>
-            <p class="text-xs text-cms-muted">Admin workspace</p>
-          </div>
-        </div>
+  <main class="min-h-screen bg-cms-shell-surface lg:flex">
+    <section class="flex min-h-screen w-full flex-col px-6 py-6 sm:px-10 lg:w-1/2 lg:px-12">
+      <header class="flex justify-end">
         <button
           type="button"
-          class="grid min-h-11 min-w-11 place-items-center rounded-cms-sm border border-cms-border text-cms-muted outline-none hover:bg-cms-muted-surface focus-visible:ring-2 focus-visible:ring-cms-focus"
+          class="grid size-10 place-items-center rounded-lg text-cms-muted outline-none transition-colors hover:bg-cms-muted-surface focus-visible:ring-2 focus-visible:ring-cms-focus"
           :aria-label="theme === 'dark' ? 'Use light theme' : 'Use dark theme'"
           @click="toggleTheme"
         >
@@ -122,30 +109,28 @@ onMounted(async () => {
         </button>
       </header>
 
-      <section aria-labelledby="login-title" class="mx-auto w-full max-w-md">
-        <CmsCard>
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-cms-primary">
-            Welcome back
-          </p>
-          <h1
-            id="login-title"
-            class="mt-3 text-2xl font-semibold tracking-tight text-cms-foreground"
-          >
-            Sign in to CMS
-          </h1>
-          <p class="mt-2 text-sm leading-6 text-cms-muted">
-            Use your approved account to continue.
-          </p>
+      <section aria-labelledby="login-title" class="flex flex-1 items-center justify-center py-12">
+        <div class="w-full max-w-md">
+          <div class="mb-8">
+            <h1
+              id="login-title"
+              class="mb-2 text-3xl font-semibold text-cms-foreground sm:text-4xl"
+            >
+              Sign in
+            </h1>
+            <p class="text-sm text-cms-muted">Enter your email and password to sign in.</p>
+          </div>
 
-          <FeedbackState v-if="formError" class="mt-5" :kind="formErrorKind" :message="formError" />
+          <FeedbackState v-if="formError" class="mb-5" :kind="formErrorKind" :message="formError" />
 
-          <form class="mt-6 space-y-5" novalidate @submit.prevent="submit">
+          <form class="space-y-5" novalidate @submit.prevent="submit">
             <CmsInput
               id="login-email"
               v-model="form.email"
               label="Email"
               name="email"
               type="email"
+              placeholder="name@example.com"
               error-id="login-email-error"
               :error="errors.email"
               :disabled="isSubmitting"
@@ -155,17 +140,42 @@ onMounted(async () => {
               v-model="form.password"
               label="Password"
               name="password"
+              placeholder="Enter your password"
               error-id="login-password-error"
               :error="errors.password"
               :disabled="isSubmitting"
             />
-            <CmsButton type="submit" class="w-full" :loading="isSubmitting">
+            <CmsButton
+              type="submit"
+              class="min-h-12 w-full py-3 font-medium shadow-cms-card"
+              :loading="isSubmitting"
+            >
               {{ isSubmitting ? 'Signing in…' : 'Sign in' }}
             </CmsButton>
           </form>
-        </CmsCard>
+        </div>
       </section>
-      <p class="text-center text-xs text-cms-muted">Secure access for authorized CMS users.</p>
-    </div>
+    </section>
+
+    <aside
+      class="relative hidden min-h-screen w-1/2 place-items-center overflow-hidden bg-[#161950] px-10 text-white dark:bg-white/[0.05] lg:grid"
+      aria-label="CMS branding"
+    >
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(255,255,255,.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.35)_1px,transparent_1px)] [background-size:48px_48px]"
+      />
+      <div class="relative z-10 flex max-w-sm flex-col items-center text-center">
+        <span
+          class="mb-6 grid size-16 place-items-center rounded-2xl border border-white/15 bg-white/10 text-2xl font-semibold text-white"
+          aria-hidden="true"
+          >C</span
+        >
+        <p class="text-2xl font-semibold">Content management</p>
+        <p class="mt-3 text-sm leading-6 text-white/60">
+          A clear workspace for managing your content and access.
+        </p>
+      </div>
+    </aside>
   </main>
 </template>

@@ -38,6 +38,10 @@ const dashboardSpecUrl = new URL(
   '../../modules/dashboard/v1/dashboard.openapi.yaml',
   import.meta.url,
 );
+const permissionCatalogSpecUrl = new URL(
+  '../../modules/rbac/permission-catalog.openapi.yaml',
+  import.meta.url,
+);
 
 export const OPENAPI_V1_DOCUMENT = await loadOpenApiDocument();
 
@@ -80,6 +84,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
   const role = loadModuleDocument(roleSpecUrl);
   const user = loadModuleDocument(userSpecUrl);
   const dashboard = loadModuleDocument(dashboardSpecUrl);
+  const permissionCatalog = loadModuleDocument(permissionCatalogSpecUrl);
   const document = {
     openapi: OPENAPI_VERSION,
     info: {
@@ -96,6 +101,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
       ...role.tags,
       ...user.tags,
       ...dashboard.tags,
+      ...permissionCatalog.tags,
     ],
     paths: {
       [OPENAPI_REDIRECT_PATH]: {
@@ -139,6 +145,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
       ...role.paths,
       ...user.paths,
       ...dashboard.paths,
+      ...permissionCatalog.paths,
     },
     components: {
       securitySchemes: {
@@ -163,6 +170,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
         ...role.schemas,
         ...user.schemas,
         ...dashboard.schemas,
+        ...permissionCatalog.schemas,
       },
       responses: {
         BadRequest: errorResponse('Bad request'),
@@ -240,6 +248,7 @@ function validateOpenApiDocument(document: OpenApiDocument): void {
     '/api/v1/users',
     '/api/v1/users/{id}',
     '/api/v1/dashboard/summary',
+    '/api/v1/misc/permissions',
   ];
   if (!samePaths(Object.keys(document.paths), expectedPaths)) {
     throw new Error('OpenAPI paths are invalid');

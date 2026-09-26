@@ -1,79 +1,103 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import AppHeader from './AppHeader.vue';
 import AppNavigation from './AppNavigation.vue';
 import CmsPageHeader from './CmsPageHeader.vue';
-import { useRoute } from 'vue-router';
 
-const drawerOpen = ref(false);
 const sidebarCollapsed = ref(false);
+const sidebarHovered = ref(false);
+const mobileNavigationOpen = ref(false);
 const route = useRoute();
-function closeDrawer() {
-  drawerOpen.value = false;
-  void nextTick(() =>
-    document.querySelector<HTMLButtonElement>('[aria-controls="mobile-navigation"]')?.focus(),
-  );
-}
 
-function handleKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && drawerOpen.value) closeDrawer();
-}
+const sidebarExpanded = () => !sidebarCollapsed.value || sidebarHovered.value;
 
-watch(drawerOpen, (isOpen) => {
-  if (isOpen) {
+function toggleNavigation(): void {
+  if (window.innerWidth >= 1280) {
+    sidebarCollapsed.value = !sidebarCollapsed.value;
+    return;
+  }
+
+  mobileNavigationOpen.value = !mobileNavigationOpen.value;
+  if (mobileNavigationOpen.value) {
     void nextTick(() => document.querySelector<HTMLElement>('[data-mobile-nav-link]')?.focus());
   }
-});
+}
 
-onMounted(() => window.addEventListener('keydown', handleKeydown));
-onBeforeUnmount(() => window.removeEventListener('keydown', handleKeydown));
+function closeMobileNavigation(): void {
+  mobileNavigationOpen.value = false;
+  void nextTick(() => document.getElementById('navigation-toggle-mobile')?.focus());
+}
+
+function handleKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && mobileNavigationOpen.value) closeMobileNavigation();
+}
+
+function expandSidebarOnHover(): void {
+  if (window.innerWidth >= 1280) sidebarHovered.value = true;
+}
+
+function handleResize(): void {
+  sidebarHovered.value = false;
+  if (window.innerWidth >= 1280) mobileNavigationOpen.value = false;
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize);
+  window.addEventListener('keydown', handleKeydown);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize);
+  window.removeEventListener('keydown', handleKeydown);
+});
 </script>
 
 <template>
-  <div class="min-h-screen bg-cms-background font-cms-sans text-cms-foreground">
+  <div class="min-h-screen bg-cms-background font-cms-sans text-cms-foreground xl:flex">
+    <button
+      v-if="mobileNavigationOpen"
+      type="button"
+      class="fixed inset-0 z-30 bg-black/40 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white xl:hidden"
+      aria-label="Dismiss navigation overlay"
+      @click="closeMobileNavigation"
+    />
     <aside
-      class="fixed inset-y-0 left-0 z-30 hidden border-r border-cms-border bg-cms-surface transition-[width] duration-200 md:block"
-      :class="sidebarCollapsed ? 'w-20' : 'w-64'"
+      id="primary-navigation"
+      class="fixed inset-y-0 left-0 z-40 flex w-[18.125rem] flex-col border-r border-cms-border bg-cms-shell-surface transition-[transform,width] duration-300 ease-in-out xl:translate-x-0"
+      :class="[
+        mobileNavigationOpen ? 'max-xl:translate-x-0' : 'max-xl:-translate-x-full',
+        sidebarExpanded() ? 'xl:w-[18.125rem]' : 'xl:w-[5.625rem]',
+      ]"
+      :role="mobileNavigationOpen ? 'dialog' : undefined"
+      :aria-modal="mobileNavigationOpen ? 'true' : undefined"
+      aria-label="Primary navigation"
+      @mouseenter="expandSidebarOnHover"
+      @mouseleave="sidebarHovered = false"
     >
       <AppNavigation
-        :collapsed="sidebarCollapsed"
-        @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
+        :collapsed="!mobileNavigationOpen && sidebarCollapsed && !sidebarHovered"
+        :mobile="mobileNavigationOpen"
+        @navigate="closeMobileNavigation"
       />
     </aside>
 
     <div
-      class="min-h-screen transition-[padding] duration-200"
-      :class="sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'"
+      id="application-content"
+      class="min-h-screen flex-1 transition-[margin] duration-300 ease-in-out"
+      :class="sidebarExpanded() ? 'xl:ml-[18.125rem]' : 'xl:ml-[5.625rem]'"
+      :inert="mobileNavigationOpen ? 'true' : undefined"
     >
-      <AppHeader :drawer-open="drawerOpen" @open-navigation="drawerOpen = true" />
-
-      <div
-        v-if="drawerOpen"
-        class="fixed inset-0 z-40 bg-cms-foreground/30 md:hidden"
-        aria-hidden="true"
-        @click="closeDrawer"
+      <AppHeader
+        :sidebar-collapsed="sidebarCollapsed"
+        :mobile-navigation-open="mobileNavigationOpen"
+        @toggle-navigation="toggleNavigation"
       />
-      <aside
-        v-if="drawerOpen"
-        id="mobile-navigation"
-        class="fixed inset-y-0 left-0 z-50 w-[min(20rem,85vw)] border-r border-cms-border bg-cms-surface shadow-xl md:hidden"
-        aria-label="Mobile navigation"
-        aria-modal="true"
-        role="dialog"
-      >
-        <AppNavigation mobile @navigate="closeDrawer" />
-      </aside>
 
       <main
         id="main-content"
-        class="min-h-[calc(100vh-5rem)] px-4 py-7 sm:px-6 lg:px-8"
-        :inert="drawerOpen"
+        class="mx-auto min-h-[calc(100vh-4rem)] w-full max-w-[1536px] px-4 pb-20 pt-4 md:px-6 md:pb-6 md:pt-6"
       >
-        <CmsPageHeader
-          v-if="route.meta.title"
-          :title="route.meta.title"
-          :description="route.meta.description"
-        />
+        <CmsPageHeader v-if="route.meta.title" :title="route.meta.title" />
         <RouterView />
       </main>
     </div>

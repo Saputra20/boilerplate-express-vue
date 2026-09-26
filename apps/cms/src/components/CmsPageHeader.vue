@@ -1,22 +1,25 @@
 <script setup lang="ts">
-defineProps<{ title: string; description?: string }>();
+defineProps<{ title: string }>();
 </script>
 
 <template>
-  <header class="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-    <div>
-      <nav aria-label="Breadcrumb" class="mb-2 text-xs font-medium text-cms-muted">
-        <ol class="flex items-center gap-2">
-          <li>CMS</li>
-          <li aria-hidden="true">/</li>
-          <li class="text-cms-foreground">{{ title }}</li>
-        </ol>
-      </nav>
-      <h1 class="text-2xl font-semibold tracking-tight text-cms-foreground sm:text-3xl">
-        {{ title }}
-      </h1>
-      <p v-if="description" class="mt-2 text-sm text-cms-muted">{{ description }}</p>
+  <header class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div class="min-w-0">
+      <h1 class="text-2xl font-semibold text-cms-foreground">{{ title }}</h1>
     </div>
-    <slot />
+    <nav aria-label="Breadcrumb">
+      <ol class="flex items-center gap-1.5 text-sm">
+        <li>
+          <RouterLink
+            to="/"
+            class="inline-flex items-center gap-1.5 text-cms-muted hover:text-cms-foreground"
+          >
+            Home
+            <span aria-hidden="true" class="text-base leading-none">›</span>
+          </RouterLink>
+        </li>
+        <li aria-current="page" class="text-cms-foreground">{{ title }}</li>
+      </ol>
+    </nav>
   </header>
 </template>

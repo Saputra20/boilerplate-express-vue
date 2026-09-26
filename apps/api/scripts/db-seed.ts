@@ -37,7 +37,14 @@ function loadSeedPassword(): string {
   return password;
 }
 
+function assertNonProductionEnvironment(): void {
+  if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
+    throw new Error('Development admin seeding is restricted to development and test environments');
+  }
+}
+
 async function seed(): Promise<void> {
+  assertNonProductionEnvironment();
   const passwordHash = await hashPassword(loadSeedPassword());
   const database = createDatabase(loadDatabaseConfig());
   await database.initialize();
@@ -93,10 +100,17 @@ async function seed(): Promise<void> {
 
         if (!permissionRecord)
           throw new Error(`Permission could not be created or loaded: ${code}`);
+      }
 
+      const allPermissions = await transaction
+        .select({ permissionId: permissions.id })
+        .from(permissions);
+      if (allPermissions.length > 0) {
         await transaction
           .insert(rolePermissions)
-          .values({ roleId: roleRecord.id, permissionId: permissionRecord.id })
+          .values(
+            allPermissions.map(({ permissionId }) => ({ roleId: roleRecord.id, permissionId })),
+          )
           .onConflictDoNothing();
       }
 

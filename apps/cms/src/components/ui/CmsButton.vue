@@ -1,7 +1,7 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    variant?: 'primary' | 'secondary' | 'outline' | 'destructive' | 'icon';
+    variant?: 'primary' | 'secondary' | 'outline' | 'destructive' | 'ghost' | 'icon';
     type?: 'button' | 'submit' | 'reset';
     disabled?: boolean;
     loading?: boolean;
@@ -14,13 +14,16 @@ withDefaults(
   <button
     :type="type"
     :disabled="disabled || loading"
-    class="inline-flex min-h-11 items-center justify-center gap-2 rounded-cms-sm px-4 text-sm font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-cms-focus focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+    class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-cms-focus focus-visible:ring-offset-2 focus-visible:ring-offset-cms-surface disabled:cursor-not-allowed disabled:opacity-50"
     :class="{
-      'bg-cms-primary text-cms-primary-contrast hover:brightness-110': variant === 'primary',
+      'bg-cms-primary text-cms-primary-contrast shadow-cms-card hover:bg-cms-primary-hover':
+        variant === 'primary',
       'bg-cms-muted-surface text-cms-foreground hover:brightness-95': variant === 'secondary',
-      'border border-cms-border bg-cms-surface text-cms-foreground hover:bg-cms-muted-surface':
+      'border border-cms-border bg-cms-surface text-cms-foreground shadow-cms-card hover:bg-cms-muted-surface':
         variant === 'outline',
-      'bg-cms-destructive text-white hover:brightness-110': variant === 'destructive',
+      'bg-cms-destructive text-cms-destructive-contrast shadow-cms-card hover:brightness-110':
+        variant === 'destructive',
+      'text-cms-muted hover:bg-cms-muted-surface hover:text-cms-foreground': variant === 'ghost',
       'min-w-11 px-2': variant === 'icon',
     }"
   >

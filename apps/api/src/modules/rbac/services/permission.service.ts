@@ -7,11 +7,13 @@ export type PermissionResolution = 'granted' | 'denied' | 'unknown';
 export type PermissionRepository = {
   resolvePermission(input: { userId: string; permission: string }): Promise<PermissionResolution>;
   listEffectivePermissions(input: { userId: string }): Promise<readonly string[]>;
+  listCatalog(): Promise<Array<{ id: string; code: string; description: string | null }>>;
 };
 
 export type PermissionService = {
   authorize(input: { userId: string; permission: string }): Promise<PermissionResolution>;
   listEffectivePermissions(input: { userId: string }): Promise<readonly string[]>;
+  listCatalog(): Promise<Array<{ id: string; code: string; description: string | null }>>;
 };
 
 export class AuthorizationConfigurationError extends Error {
@@ -32,6 +34,9 @@ export function createPermissionService(repository: PermissionRepository): Permi
     },
     listEffectivePermissions({ userId }) {
       return repository.listEffectivePermissions({ userId });
+    },
+    listCatalog() {
+      return repository.listCatalog();
     },
   };
 }

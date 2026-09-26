@@ -4,6 +4,7 @@ import {
   createRoleSchema,
   listRoleSchema,
   ProtectedRoleError,
+  InvalidRolePermissionsError,
   RoleAssignedError,
   RoleConflictError,
   roleIdSchema,
@@ -73,6 +74,10 @@ function handler(
       }
       if (error instanceof RoleNotFoundError) {
         response.status(404).json({ message: 'Not found' });
+        return;
+      }
+      if (error instanceof InvalidRolePermissionsError) {
+        response.status(400).json({ message: 'Bad request' });
         return;
       }
       if (error instanceof SyntaxError || (error instanceof Error && error.name === 'ZodError')) {

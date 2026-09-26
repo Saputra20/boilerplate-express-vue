@@ -3,7 +3,7 @@ tags:
 schemas:
   RoleV1:
     type: object
-    required: [id, code, name, description, createdAt, updatedAt]
+    required: [id, code, name, description, createdAt, updatedAt, permissionCodes]
     additionalProperties: false
     properties:
       id: { type: string, format: uuid }
@@ -12,6 +12,7 @@ schemas:
       description: { type: string, maxLength: 500, nullable: true }
       createdAt: { type: string, format: date-time }
       updatedAt: { type: string, format: date-time }
+      permissionCodes: { type: array, items: { type: string } }
   RoleV1CreateRequest:
     type: object
     required: [code, name]
@@ -20,6 +21,7 @@ schemas:
       code: { type: string, pattern: '^[a-z][a-z0-9_]*$', maxLength: 64 }
       name: { type: string, minLength: 1, maxLength: 120 }
       description: { type: string, maxLength: 500, nullable: true }
+      permissionCodes: { type: array, items: { type: string } }
   RoleV1UpdateRequest:
     type: object
     minProperties: 1
@@ -27,6 +29,7 @@ schemas:
     properties:
       name: { type: string, minLength: 1, maxLength: 120 }
       description: { type: string, maxLength: 500, nullable: true }
+      permissionCodes: { type: array, items: { type: string } }
   RoleV1ListResponse:
     type: object
     required: [items, pagination]

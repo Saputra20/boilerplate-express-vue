@@ -16,7 +16,7 @@ export function createDashboardRouter({
 }) {
   const router = Router();
   router.get(
-    '/',
+    '/summary',
     createAccessAuthMiddleware(accessAuthService),
     createPermissionMiddleware(permissionService, 'dashboard.read'),
     createDashboardController(dashboardService),

@@ -14,6 +14,7 @@ describe('authenticated context service', () => {
     const permissionService: PermissionService = {
       authorize: async () => 'denied',
       listEffectivePermissions: async () => ['content.read', 'content.write'],
+      listCatalog: async () => [],
     };
     const service = createAuthenticatedContextService(userRepository, permissionService);
 
@@ -33,6 +34,7 @@ describe('authenticated context service', () => {
       listEffectivePermissions: async () => {
         throw new Error('must not resolve permissions');
       },
+      listCatalog: async () => [],
     };
     const service = createAuthenticatedContextService(userRepository, permissionService);
 

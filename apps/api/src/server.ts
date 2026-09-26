@@ -16,6 +16,7 @@ import { createCategoryModule } from './modules/category/category.module.js';
 import { createRoleModule } from './modules/role/role.module.js';
 import { createUserModule } from './modules/user/user.module.js';
 import { createDashboardModule } from './modules/dashboard/dashboard.module.js';
+import { createPermissionCatalogRouter } from './modules/rbac/permission-catalog.router.js';
 
 export async function startServer(): Promise<void> {
   const env = initializeStartupPhase('environment validation', () => loadEnv());
@@ -83,6 +84,10 @@ export async function startServer(): Promise<void> {
         roleV1: roleModule.v1.router,
         userV1: userModule.v1.router,
         dashboardV1: dashboardModule.v1.router,
+        miscV1: createPermissionCatalogRouter({
+          accessAuthService: authModule.accessAuthService,
+          permissionService: authModule.permissionService,
+        }),
       },
       queueMonitor: {
         queue: queues.queue,

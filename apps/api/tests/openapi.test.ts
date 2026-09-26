@@ -86,6 +86,7 @@ describe('OpenAPI infrastructure', () => {
       expect(document.components.schemas.CategoryV1).toBeDefined();
       expect(document.components.schemas.CategoryV1ListResponse).toBeDefined();
       expect(document.components.schemas.RoleV1).toBeDefined();
+      expect(document.components.schemas.PermissionCatalogItem).toBeDefined();
       expect(document.components.schemas.HealthV1Status).toBeDefined();
       expect(document.components.schemas.HealthV1ReadinessStatus).toBeDefined();
       expect(Object.keys(document.paths).sort()).toEqual(
@@ -94,11 +95,13 @@ describe('OpenAPI infrastructure', () => {
           '/api/v1/auth/logout',
           '/api/v1/auth/logout-all',
           '/api/v1/auth/refresh',
+          '/api/v1/dashboard/summary',
           '/api/v1/me',
           '/api/v1/categories',
           '/api/v1/categories/{id}',
           '/api/v1/roles',
           '/api/v1/roles/{id}',
+          '/api/v1/misc/permissions',
           '/api/v1/users',
           '/api/v1/users/{id}',
           OPENAPI_REDIRECT_PATH,
@@ -115,6 +118,12 @@ describe('OpenAPI infrastructure', () => {
         { bearerAuth: [] },
       ]);
       expect(document.paths['/api/v1/me']?.get?.security).toEqual([{ bearerAuth: [] }]);
+      expect(document.paths['/api/v1/dashboard/summary']?.get?.security).toEqual([
+        { bearerAuth: [] },
+      ]);
+      expect(document.paths['/api/v1/misc/permissions']?.get?.security).toEqual([
+        { bearerAuth: [] },
+      ]);
       expect(document.paths['/api/v1/categories']?.get?.security).toEqual([{ bearerAuth: [] }]);
       expect(document.paths['/api/v1/categories/{id}']?.delete?.security).toEqual([
         { bearerAuth: [] },

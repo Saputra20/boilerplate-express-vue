@@ -27,6 +27,14 @@ class MemoryPermissionRepository implements PermissionRepository {
   private readonly rolePermissions = new Map<string, Set<string>>();
   private readonly userRoles = new Map<string, Set<string>>();
 
+  async listCatalog() {
+    return Array.from(this.permissions, (code, index) => ({
+      id: String(index),
+      code,
+      description: null,
+    }));
+  }
+
   assignRole(userId: string, role: string): void {
     const roles = this.userRoles.get(userId) ?? new Set<string>();
     roles.add(role);

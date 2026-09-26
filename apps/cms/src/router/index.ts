@@ -5,6 +5,9 @@ import HomeView from '../views/HomeView.vue';
 import LoginView from '../views/LoginView.vue';
 import NotFoundView from '../views/NotFoundView.vue';
 import DeniedView from '../views/DeniedView.vue';
+import CategoryView from '../views/CategoryView.vue';
+import RoleView from '../views/RoleView.vue';
+import UserView from '../views/UserView.vue';
 import { sanitizeReturnTo } from './return-to';
 
 declare module 'vue-router' {
@@ -13,7 +16,6 @@ declare module 'vue-router' {
     requiredPermission?: string;
     public?: boolean;
     title?: string;
-    description?: string;
   }
 }
 
@@ -35,10 +37,37 @@ export const routes = [
         component: HomeView,
         meta: {
           title: 'Overview',
-          description: 'Keep your workspace focused on the next approved module.',
+          requiredPermission: 'dashboard.read',
         },
       },
       { path: 'forbidden', name: 'denied', component: DeniedView },
+      {
+        path: 'categories',
+        name: 'categories',
+        component: CategoryView,
+        meta: {
+          title: 'Categories',
+          requiredPermission: 'category.read',
+        },
+      },
+      {
+        path: 'roles',
+        name: 'roles',
+        component: RoleView,
+        meta: {
+          title: 'Roles',
+          requiredPermission: 'role.read',
+        },
+      },
+      {
+        path: 'users',
+        name: 'users',
+        component: UserView,
+        meta: {
+          title: 'Users',
+          requiredPermission: 'user.read',
+        },
+      },
     ],
   },
   { path: '/login', name: 'login', component: LoginView, meta: { public: true } },

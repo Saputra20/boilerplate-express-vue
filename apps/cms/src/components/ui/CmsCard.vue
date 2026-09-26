@@ -6,17 +6,17 @@ withDefaults(defineProps<{ title?: string; description?: string }>(), {
 </script>
 
 <template>
-  <section class="rounded-cms-md border border-cms-border bg-cms-surface shadow-sm">
+  <section class="rounded-2xl border border-cms-border bg-cms-surface">
     <header
       v-if="title || description || $slots.actions"
-      class="flex items-start justify-between gap-4 border-b border-cms-border px-5 py-4 sm:px-6"
+      class="flex items-start justify-between gap-4 border-b border-cms-border px-6 py-5"
     >
       <div>
-        <h2 v-if="title" class="text-base font-semibold text-cms-foreground">{{ title }}</h2>
+        <h2 v-if="title" class="text-base font-medium text-cms-foreground">{{ title }}</h2>
         <p v-if="description" class="mt-1 text-sm text-cms-muted">{{ description }}</p>
       </div>
       <div v-if="$slots.actions" class="shrink-0"><slot name="actions" /></div>
     </header>
-    <div class="p-5 sm:p-6"><slot /></div>
+    <div class="p-4 sm:p-6"><slot /></div>
   </section>
 </template>

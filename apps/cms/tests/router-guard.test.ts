@@ -53,8 +53,8 @@ describe('authentication route guard', () => {
     expect(auth.restore).toHaveBeenCalled();
   });
 
-  it('allows authenticated protected access', async () => {
-    const auth = createAuthMock(true);
+  it('allows authenticated protected access when dashboard.read is present', async () => {
+    const auth = createAuthMock(true, ['dashboard.read']);
     const router = createGuardedRouter(auth);
 
     await router.push('/');
@@ -62,8 +62,18 @@ describe('authentication route guard', () => {
     expect(router.currentRoute.value.name).toBe('home');
   });
 
+  it('requires dashboard.read before rendering the summary', async () => {
+    const denied = createGuardedRouter(createAuthMock(true));
+    await denied.push('/');
+    expect(denied.currentRoute.value.name).toBe('denied');
+
+    const allowed = createGuardedRouter(createAuthMock(true, ['dashboard.read']));
+    await allowed.push('/');
+    expect(allowed.currentRoute.value.name).toBe('home');
+  });
+
   it('redirects authenticated login visits to root', async () => {
-    const auth = createAuthMock(true);
+    const auth = createAuthMock(true, ['dashboard.read']);
     const router = createGuardedRouter(auth);
 
     await router.push('/login?returnTo=%2F');
@@ -102,6 +112,16 @@ describe('authentication route guard', () => {
 
     expect(router.currentRoute.value.name).toBe('denied');
     expect(auth.can).toHaveBeenCalledWith('fixture.view');
+  });
+
+  it('requires user.read before rendering user management', async () => {
+    const denied = createGuardedRouter(createAuthMock(true));
+    await denied.push('/users');
+    expect(denied.currentRoute.value.name).toBe('denied');
+
+    const allowed = createGuardedRouter(createAuthMock(true, ['user.read']));
+    await allowed.push('/users');
+    expect(allowed.currentRoute.value.name).toBe('users');
   });
 });
 

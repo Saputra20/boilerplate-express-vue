@@ -10,7 +10,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
       :name="name"
       type="checkbox"
       :disabled="disabled"
-      class="size-4 rounded border-cms-border text-cms-primary accent-cms-primary focus-visible:ring-2 focus-visible:ring-cms-focus"
+      class="size-5 rounded-md border border-cms-border accent-cms-primary focus-visible:ring-2 focus-visible:ring-cms-focus disabled:cursor-not-allowed disabled:opacity-60"
       @change="emit('update:modelValue', ($event.target as HTMLInputElement).checked)"
     />
     {{ label }}

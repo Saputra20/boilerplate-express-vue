@@ -183,7 +183,22 @@ export function createAuthStore(apiClient: ApiClient) {
   });
 }
 
-export const useAuthStore = createAuthStore(createApiClient(loadEnv().VITE_API_BASE_URL));
+type AuthStoreDefinition = ReturnType<typeof createAuthStore>;
+type AuthStoreInstance = ReturnType<AuthStoreDefinition>;
+
+let authStoreInstance: AuthStoreInstance | undefined;
+
+export const cmsApiClient = createApiClient(
+  loadEnv().VITE_API_BASE_URL,
+  () => authStoreInstance?.accessToken ?? undefined,
+);
+
+const useAuthStoreDefinition = createAuthStore(cmsApiClient);
+
+export function useAuthStore(...args: Parameters<AuthStoreDefinition>): AuthStoreInstance {
+  authStoreInstance = useAuthStoreDefinition(...args);
+  return authStoreInstance;
+}
 
 export const authIdentitySchema = z.object({
   userId: z.string().uuid(),

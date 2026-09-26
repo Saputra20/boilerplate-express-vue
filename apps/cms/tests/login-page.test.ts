@@ -41,6 +41,17 @@ describe('LoginView', () => {
     authMock.isAuthenticated.mockReset().mockReturnValue(false);
   });
 
+  it('uses the split authentication layout without unsupported login options', async () => {
+    const { wrapper } = await mountLogin();
+
+    expect(wrapper.get('main').classes()).toContain('lg:flex');
+    expect(wrapper.get('[aria-label="CMS branding"]').classes()).toContain('lg:grid');
+    expect(wrapper.get('#login-title').text()).toBe('Sign in');
+    expect(wrapper.find('[aria-label="CMS sign in"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/signup"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/reset-password"]').exists()).toBe(false);
+  });
+
   it('validates email and password before submission', async () => {
     const { wrapper } = await mountLogin();
 
@@ -61,7 +72,10 @@ describe('LoginView', () => {
     await wrapper.get('form').trigger('submit');
     await flushPromises();
 
-    expect(authMock.login).toHaveBeenCalledWith({ email: 'user@example.com', password: 'not-trimmed ' });
+    expect(authMock.login).toHaveBeenCalledWith({
+      email: 'user@example.com',
+      password: 'not-trimmed ',
+    });
     expect(router.currentRoute.value.fullPath).toBe('/reports?tab=recent');
   });
 

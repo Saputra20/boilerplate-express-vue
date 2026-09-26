@@ -6,13 +6,15 @@ withDefaults(defineProps<{ variant?: 'neutral' | 'success' | 'warning' | 'danger
 
 <template>
   <span
-    class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+    class="inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium"
     :class="{
-      'bg-cms-muted-surface text-cms-muted': variant === 'neutral',
-      'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200':
+      'bg-gray-100 text-gray-700 dark:bg-white/[0.03] dark:text-gray-300': variant === 'neutral',
+      'bg-cms-success-soft text-cms-success-strong dark:bg-cms-success-bright/15 dark:text-cms-success-light':
         variant === 'success',
-      'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200': variant === 'warning',
-      'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200': variant === 'danger',
+      'bg-cms-warning-soft text-cms-warning-strong dark:bg-cms-warning-bright/15 dark:text-cms-warning-light':
+        variant === 'warning',
+      'bg-cms-danger-soft text-cms-danger-strong dark:bg-cms-danger-bright/15 dark:text-cms-danger-light':
+        variant === 'danger',
     }"
     ><slot
   /></span>

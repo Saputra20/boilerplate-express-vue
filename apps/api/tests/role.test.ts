@@ -16,6 +16,7 @@ const role = {
   description: null,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+  permissionCodes: [],
 };
 const audit = {
   actorUserId: '22222222-2222-4222-8222-222222222222',
@@ -48,6 +49,7 @@ describe('role contract', () => {
     expect(createRoleSchema.parse({ code: 'editor', name: ' Editor ' })).toEqual({
       code: 'editor',
       name: 'Editor',
+      permissionCodes: [],
     });
     expect(updateRoleSchema.parse({ name: ' Updated ' })).toEqual({ name: 'Updated' });
     expect(listRoleSchema.parse({})).toEqual({ page: 1, limit: 20, sort: 'createdAt.desc' });
@@ -58,6 +60,10 @@ describe('role contract', () => {
     expect(() => createRoleSchema.parse({ code: 'editor', name: '   ' })).toThrow();
     expect(() => updateRoleSchema.parse({ code: 'other' })).toThrow();
     expect(() => updateRoleSchema.parse({ name: 'Editor', unknown: true })).toThrow();
+    expect(updateRoleSchema.parse({ permissionCodes: ['category.read'] })).toEqual({
+      permissionCodes: ['category.read'],
+    });
+    expect(() => updateRoleSchema.parse({ permissionCodes: ['invalid'] })).toThrow();
   });
 
   it('maps not found, conflicts, protected admin, and assigned deletion', async () => {
@@ -76,7 +82,10 @@ describe('role contract', () => {
       },
     };
     await expect(
-      createRoleService(conflict).create({ code: 'editor', name: 'Editor' }, audit),
+      createRoleService(conflict).create(
+        { code: 'editor', name: 'Editor', permissionCodes: [] },
+        audit,
+      ),
     ).rejects.toBeInstanceOf(RoleConflictError);
 
     const admin = {
