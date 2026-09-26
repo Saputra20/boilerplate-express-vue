@@ -79,6 +79,10 @@ const envSchema = z.object({
   JWT_REFRESH_TOKEN_EXPIRES_IN: nonEmptyString,
   QUEUE_MONITOR_USERNAME: nonEmptyString,
   QUEUE_MONITOR_PASSWORD: queueMonitorPassword,
+  DEFAULT_USER_PASSWORD: z.string().superRefine((value, context) => {
+    if (Array.from(value).length < 12 || Array.from(value).length > 128)
+      context.addIssue({ code: 'custom', message: 'Invalid password length' });
+  }),
   CORS_ORIGINS: corsOriginsFromString,
 });
 

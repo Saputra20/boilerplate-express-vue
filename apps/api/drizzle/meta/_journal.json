@@ -85,6 +85,27 @@
       "when": 1790145177287,
       "tag": "0011_create-audit-events-table",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790348974045,
+      "tag": "0012_create-categories-table",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790380909390,
+      "tag": "0013_add-role-name-unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790382403489,
+      "tag": "0014_add-must-change-password",
+      "breakpoints": true
     }
   ]
 }

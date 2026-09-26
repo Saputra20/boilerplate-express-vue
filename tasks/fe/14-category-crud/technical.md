@@ -2,20 +2,20 @@
 
 ## 1. Metadata
 
-| Field | Value |
-| --- | --- |
-| Task ID | `fe/14-category-crud` |
-| Batch | N/A |
-| Owning Feature | Category management UI |
-| Workstream | Frontend |
-| Task Category | Business module UI |
-| Repository/App | `apps/cms` |
-| Status | Blocked — backend contract |
-| Priority | N/A |
-| Suggested Size | Medium |
-| Depends On | `fe/13-tailadmin-ui-foundation`, `be/26-category-crud` |
-| Blocks | N/A |
-| Execution Order | 14 |
+| Field           | Value                                                  |
+| --------------- | ------------------------------------------------------ |
+| Task ID         | `fe/14-category-crud`                                  |
+| Batch           | N/A                                                    |
+| Owning Feature  | Category management UI                                 |
+| Workstream      | Frontend                                               |
+| Task Category   | Business module UI                                     |
+| Repository/App  | `apps/cms`                                             |
+| Status          | Blocked — backend contract                             |
+| Priority        | N/A                                                    |
+| Suggested Size  | Medium                                                 |
+| Depends On      | `fe/13-tailadmin-ui-foundation`, `be/26-category-crud` |
+| Blocks          | N/A                                                    |
+| Execution Order | 14                                                     |
 
 ## 2. Outcome
 
@@ -47,7 +47,7 @@ Use exact backend schemas and permission keys. Do not duplicate authorization lo
 
 ## 9. Applicable Contracts
 
-**API/UI Contract:** BLOCKED — consume `be/26-category-crud` only after approval.
+**API/UI Contract:** Consume `be/26-category-crud` exactly: `/api/v1/categories` and `/api/v1/categories/:id`, fields `name`, `slug`, nullable `description`, `isActive`, pagination `{ page, limit, total, totalPages }`, search over name/slug, approved sort values, and permissions `category.read/create/update/delete`. FE must not revalidate or normalize slug beyond backend schema errors.
 
 ## 10. File Impact
 
@@ -98,7 +98,7 @@ Not applicable — project has no traceability ID system.
 
 ## 21. Open Points
 
-All category API and product decisions remain in `be/26-category-crud`.
+Backend contract is documented in `be/26-category-crud`; execution remains blocked until human review and backend implementation complete.
 
 ## 22. Definition Of Done
 

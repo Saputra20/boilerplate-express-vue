@@ -32,6 +32,8 @@ export function createAuthModule({ db, jwt }: AuthModuleDependencies) {
   );
 
   return {
+    accessAuthService,
+    permissionService,
     v1: {
       router: createAuthRouter({
         loginService,

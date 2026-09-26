@@ -6,6 +6,7 @@ import { fingerprintToken } from '../../../helpers/token-fingerprint.helper.js';
 export type LoginUser = {
   id: string;
   passwordHash: string;
+  mustChangePassword?: boolean;
   status: 'active' | 'disabled';
   deletedAt: Date | null;
 };
@@ -44,6 +45,7 @@ export type LoginResult = {
   refreshToken: string;
   tokenType: 'Bearer';
   expiresIn: number;
+  mustChangePassword?: boolean;
 };
 
 export class LoginError extends Error {
@@ -129,6 +131,7 @@ export function createLoginService(repository: LoginRepository, jwt: JwtService)
         refreshToken,
         tokenType: 'Bearer',
         expiresIn: accessTokenExpiresAt - accessTokenIssuedAt,
+        ...(user.mustChangePassword ? { mustChangePassword: true } : {}),
       };
     },
   };

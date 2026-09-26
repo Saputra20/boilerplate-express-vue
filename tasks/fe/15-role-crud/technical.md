@@ -2,20 +2,20 @@
 
 ## 1. Metadata
 
-| Field | Value |
-| --- | --- |
-| Task ID | `fe/15-role-crud` |
-| Batch | N/A |
-| Owning Feature | Role management UI |
-| Workstream | Frontend |
-| Task Category | Business module UI |
-| Repository/App | `apps/cms` |
-| Status | Blocked — backend contract |
-| Priority | N/A |
-| Suggested Size | Medium |
-| Depends On | `fe/13-tailadmin-ui-foundation`, `be/27-role-crud` |
-| Blocks | N/A |
-| Execution Order | 15 |
+| Field           | Value                                              |
+| --------------- | -------------------------------------------------- |
+| Task ID         | `fe/15-role-crud`                                  |
+| Batch           | N/A                                                |
+| Owning Feature  | Role management UI                                 |
+| Workstream      | Frontend                                           |
+| Task Category   | Business module UI                                 |
+| Repository/App  | `apps/cms`                                         |
+| Status          | Blocked — backend contract                         |
+| Priority        | N/A                                                |
+| Suggested Size  | Medium                                             |
+| Depends On      | `fe/13-tailadmin-ui-foundation`, `be/27-role-crud` |
+| Blocks          | N/A                                                |
+| Execution Order | 15                                                 |
 
 ## 2. Outcome
 
@@ -47,7 +47,7 @@ Use exact backend role and permission schemas. Do not infer authorization from d
 
 ## 9. Applicable Contracts
 
-**API/UI Contract:** BLOCKED — consume `be/27-role-crud` after approval.
+**API/UI Contract:** Consume `be/27-role-crud` exactly: role list/detail/create/update/delete routes, immutable lowercase `code`, editable `name`/`description`, complete `permissionCodes` replacement, permission catalog from `GET /api/v1/permissions`, pagination/search/sort contract, and permissions `role.read/create/update/delete` plus `permission.read`.
 
 ## 10. File Impact
 
@@ -98,7 +98,7 @@ Not applicable — project has no traceability ID system.
 
 ## 21. Open Points
 
-All role and permission decisions remain in `be/27-role-crud`.
+Backend contract is documented in `be/27-role-crud`; protected-role behavior and permission assignment remain unavailable until human review and backend implementation complete.
 
 ## 22. Definition Of Done
 

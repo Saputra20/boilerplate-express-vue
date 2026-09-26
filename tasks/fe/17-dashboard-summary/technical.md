@@ -2,20 +2,20 @@
 
 ## 1. Metadata
 
-| Field | Value |
-| --- | --- |
-| Task ID | `fe/17-dashboard-summary` |
-| Batch | N/A |
-| Owning Feature | CMS dashboard summary |
-| Workstream | Frontend |
-| Task Category | Business module UI |
-| Repository/App | `apps/cms` |
-| Status | Blocked — metric contract |
-| Priority | N/A |
-| Suggested Size | Small/Medium |
-| Depends On | `fe/13-tailadmin-ui-foundation`, `be/29-dashboard-summary` |
-| Blocks | N/A |
-| Execution Order | 17 |
+| Field           | Value                                                      |
+| --------------- | ---------------------------------------------------------- |
+| Task ID         | `fe/17-dashboard-summary`                                  |
+| Batch           | N/A                                                        |
+| Owning Feature  | CMS dashboard summary                                      |
+| Workstream      | Frontend                                                   |
+| Task Category   | Business module UI                                         |
+| Repository/App  | `apps/cms`                                                 |
+| Status          | Blocked — metric contract                                  |
+| Priority        | N/A                                                        |
+| Suggested Size  | Small/Medium                                               |
+| Depends On      | `fe/13-tailadmin-ui-foundation`, `be/29-dashboard-summary` |
+| Blocks          | N/A                                                        |
+| Execution Order | 17                                                         |
 
 ## 2. Outcome
 
@@ -47,7 +47,7 @@ Use exact metric definitions and freshness/error semantics. Keep empty state whe
 
 ## 9. Applicable Contracts
 
-**API/UI Contract:** BLOCKED — consume `be/29-dashboard-summary` after approval.
+**API/UI Contract:** Consume `be/29-dashboard-summary` exactly: `GET /api/v1/dashboard/summary`, permission `dashboard.read`, and response `{ users: { total, active, disabled }, roles: { total }, categories: { total, active } }`. FE renders backend-provided counts only; no derivation, fallback metrics, fake charts, or fabricated values.
 
 ## 10. File Impact
 
@@ -98,7 +98,7 @@ Not applicable — project has no traceability ID system.
 
 ## 21. Open Points
 
-All metric definitions and API decisions remain in `be/29-dashboard-summary`.
+Backend contract is documented in `be/29-dashboard-summary`; execution remains blocked until human review, `be/26` category schema availability, and backend implementation complete.
 
 ## 22. Definition Of Done
 

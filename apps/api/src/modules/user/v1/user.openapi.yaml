@@ -1,0 +1,158 @@
+tags:
+  - name: Users
+schemas:
+  UserV1:
+    type: object
+    required:
+      [
+        id,
+        email,
+        status,
+        emailVerifiedAt,
+        lastLoginAt,
+        createdAt,
+        updatedAt,
+        deletedAt,
+        role,
+        mustChangePassword,
+      ]
+    additionalProperties: false
+    properties:
+      id: { type: string, format: uuid }
+      email: { type: string, format: email }
+      status: { type: string, enum: [active, disabled] }
+      emailVerifiedAt: { type: string, format: date-time, nullable: true }
+      lastLoginAt: { type: string, format: date-time, nullable: true }
+      createdAt: { type: string, format: date-time }
+      updatedAt: { type: string, format: date-time }
+      deletedAt: { type: string, format: date-time, nullable: true }
+      role:
+        type: object
+        nullable: true
+        required: [id, code, name]
+        properties:
+          id: { type: string, format: uuid }
+          code: { type: string }
+          name: { type: string }
+      mustChangePassword: { type: boolean }
+  UserV1CreateRequest:
+    type: object
+    required: [email, roleId]
+    additionalProperties: false
+    properties:
+      email: { type: string, format: email }
+      roleId: { type: string, format: uuid }
+  UserV1UpdateRequest:
+    type: object
+    minProperties: 1
+    additionalProperties: false
+    properties:
+      email: { type: string, format: email }
+      roleId: { type: string, format: uuid, nullable: true }
+      status: { type: string, enum: [active, disabled] }
+  UserV1ListResponse:
+    type: object
+    required: [items, pagination]
+    properties:
+      items: { type: array, items: { $ref: '#/components/schemas/UserV1' } }
+      pagination:
+        type: object
+        required: [page, limit, total, totalPages]
+        properties:
+          page: { type: integer }
+          limit: { type: integer }
+          total: { type: integer }
+          totalPages: { type: integer }
+paths:
+  /api/v1/users:
+    get:
+      tags: [Users]
+      operationId: listUsers
+      security: [{ bearerAuth: [] }]
+      responses:
+        {
+          '200':
+            {
+              description: User list,
+              content:
+                {
+                  application/json: { schema: { $ref: '#/components/schemas/UserV1ListResponse' } },
+                },
+            },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        }
+    post:
+      tags: [Users]
+      operationId: createUser
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            { application/json: { schema: { $ref: '#/components/schemas/UserV1CreateRequest' } } },
+        }
+      responses:
+        {
+          '201':
+            {
+              description: Created,
+              content: { application/json: { schema: { $ref: '#/components/schemas/UserV1' } } },
+            },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '409': { description: Conflict },
+        }
+  /api/v1/users/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+    get:
+      tags: [Users]
+      operationId: getUser
+      security: [{ bearerAuth: [] }]
+      responses:
+        {
+          '200':
+            {
+              description: User,
+              content: { application/json: { schema: { $ref: '#/components/schemas/UserV1' } } },
+            },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: Not found },
+        }
+    put:
+      tags: [Users]
+      operationId: updateUser
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            { application/json: { schema: { $ref: '#/components/schemas/UserV1UpdateRequest' } } },
+        }
+      responses:
+        {
+          '200':
+            {
+              description: Updated,
+              content: { application/json: { schema: { $ref: '#/components/schemas/UserV1' } } },
+            },
+          '400': { $ref: '#/components/responses/BadRequest' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: Not found },
+          '409': { description: Conflict },
+        }
+    delete:
+      tags: [Users]
+      operationId: deleteUser
+      security: [{ bearerAuth: [] }]
+      responses:
+        {
+          '204': { description: Deleted },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: Not found },
+          '409': { description: Conflict },
+        }

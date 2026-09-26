@@ -41,6 +41,8 @@ schemas:
       expiresIn:
         type: integer
         minimum: 0
+      mustChangePassword:
+        type: boolean
 paths:
   /api/v1/auth/login:
     post:

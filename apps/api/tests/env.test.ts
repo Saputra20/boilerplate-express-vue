@@ -23,6 +23,7 @@ const validEnv = () => ({
   JWT_REFRESH_TOKEN_EXPIRES_IN: '7d',
   QUEUE_MONITOR_USERNAME: 'queue-monitor',
   QUEUE_MONITOR_PASSWORD: 'test-queue-password',
+  DEFAULT_USER_PASSWORD: 'correct horse battery staple',
   CORS_ORIGINS: 'http://localhost:5173',
 });
 

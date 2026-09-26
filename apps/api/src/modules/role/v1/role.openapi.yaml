@@ -1,0 +1,143 @@
+tags:
+  - name: Roles
+schemas:
+  RoleV1:
+    type: object
+    required: [id, code, name, description, createdAt, updatedAt]
+    additionalProperties: false
+    properties:
+      id: { type: string, format: uuid }
+      code: { type: string, pattern: '^[a-z][a-z0-9_]*$', maxLength: 64 }
+      name: { type: string, minLength: 1, maxLength: 120 }
+      description: { type: string, maxLength: 500, nullable: true }
+      createdAt: { type: string, format: date-time }
+      updatedAt: { type: string, format: date-time }
+  RoleV1CreateRequest:
+    type: object
+    required: [code, name]
+    additionalProperties: false
+    properties:
+      code: { type: string, pattern: '^[a-z][a-z0-9_]*$', maxLength: 64 }
+      name: { type: string, minLength: 1, maxLength: 120 }
+      description: { type: string, maxLength: 500, nullable: true }
+  RoleV1UpdateRequest:
+    type: object
+    minProperties: 1
+    additionalProperties: false
+    properties:
+      name: { type: string, minLength: 1, maxLength: 120 }
+      description: { type: string, maxLength: 500, nullable: true }
+  RoleV1ListResponse:
+    type: object
+    required: [items, pagination]
+    additionalProperties: false
+    properties:
+      items: { type: array, items: { $ref: '#/components/schemas/RoleV1' } }
+      pagination:
+        type: object
+        required: [page, limit, total, totalPages]
+        additionalProperties: false
+        properties:
+          page: { type: integer, minimum: 1 }
+          limit: { type: integer, minimum: 1, maximum: 100 }
+          total: { type: integer, minimum: 0 }
+          totalPages: { type: integer, minimum: 0 }
+paths:
+  /api/v1/roles:
+    get:
+      tags: [Roles]
+      operationId: listRoles
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100, default: 20 },
+          }
+        - { name: search, in: query, schema: { type: string, maxLength: 120 } }
+        - {
+            name: sort,
+            in: query,
+            schema:
+              {
+                type: string,
+                enum: [name.asc, name.desc, createdAt.asc, createdAt.desc],
+                default: createdAt.desc,
+              },
+          }
+      responses:
+        '200':
+          {
+            description: Role list,
+            content:
+              { application/json: { schema: { $ref: '#/components/schemas/RoleV1ListResponse' } } },
+          }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Roles]
+      operationId: createRole
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            { application/json: { schema: { $ref: '#/components/schemas/RoleV1CreateRequest' } } },
+        }
+      responses:
+        '201':
+          {
+            description: Created,
+            content: { application/json: { schema: { $ref: '#/components/schemas/RoleV1' } } },
+          }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { description: Conflict }
+  /api/v1/roles/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string, format: uuid } }]
+    get:
+      tags: [Roles]
+      operationId: getRole
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          {
+            description: Role,
+            content: { application/json: { schema: { $ref: '#/components/schemas/RoleV1' } } },
+          }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { description: Not found }
+    patch:
+      tags: [Roles]
+      operationId: updateRole
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            { application/json: { schema: { $ref: '#/components/schemas/RoleV1UpdateRequest' } } },
+        }
+      responses:
+        '200':
+          {
+            description: Updated,
+            content: { application/json: { schema: { $ref: '#/components/schemas/RoleV1' } } },
+          }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { description: Not found }
+        '409': { description: Conflict }
+    delete:
+      tags: [Roles]
+      operationId: deleteRole
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { description: Not found }
+        '409': { description: Conflict }

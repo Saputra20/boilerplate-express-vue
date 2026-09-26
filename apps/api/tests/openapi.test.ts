@@ -61,6 +61,7 @@ describe('OpenAPI infrastructure', () => {
           {
             get?: { security?: Array<Record<string, string[]>> };
             post?: { security?: Array<Record<string, string[]>> };
+            delete?: { security?: Array<Record<string, string[]>> };
           }
         >;
         components: {
@@ -82,6 +83,9 @@ describe('OpenAPI infrastructure', () => {
       expect(document.components.schemas.AuthV1TokenResponse).toBeDefined();
       expect(document.components.schemas.MeV1User).toBeDefined();
       expect(document.components.schemas.MeV1Response).toBeDefined();
+      expect(document.components.schemas.CategoryV1).toBeDefined();
+      expect(document.components.schemas.CategoryV1ListResponse).toBeDefined();
+      expect(document.components.schemas.RoleV1).toBeDefined();
       expect(document.components.schemas.HealthV1Status).toBeDefined();
       expect(document.components.schemas.HealthV1ReadinessStatus).toBeDefined();
       expect(Object.keys(document.paths).sort()).toEqual(
@@ -91,6 +95,12 @@ describe('OpenAPI infrastructure', () => {
           '/api/v1/auth/logout-all',
           '/api/v1/auth/refresh',
           '/api/v1/me',
+          '/api/v1/categories',
+          '/api/v1/categories/{id}',
+          '/api/v1/roles',
+          '/api/v1/roles/{id}',
+          '/api/v1/users',
+          '/api/v1/users/{id}',
           OPENAPI_REDIRECT_PATH,
           OPENAPI_DOCUMENT_PATH,
           OPENAPI_UI_PATH,
@@ -105,6 +115,10 @@ describe('OpenAPI infrastructure', () => {
         { bearerAuth: [] },
       ]);
       expect(document.paths['/api/v1/me']?.get?.security).toEqual([{ bearerAuth: [] }]);
+      expect(document.paths['/api/v1/categories']?.get?.security).toEqual([{ bearerAuth: [] }]);
+      expect(document.paths['/api/v1/categories/{id}']?.delete?.security).toEqual([
+        { bearerAuth: [] },
+      ]);
       expect(document.paths['/health']?.get?.security).toBeUndefined();
       expect(document.paths['/ready']?.get?.security).toBeUndefined();
       expect(document.paths['/ops/queues']).toBeUndefined();

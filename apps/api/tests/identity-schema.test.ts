@@ -5,6 +5,7 @@ import {
   auditEvents,
   authAuditEvents,
   authSessions,
+  categories,
   permissions,
   refreshTokens,
   rolePermissions,
@@ -23,6 +24,7 @@ describe('identity schema', () => {
       'id',
       'email',
       'passwordHash',
+      'mustChangePassword',
       'status',
       'emailVerifiedAt',
       'lastLoginAt',
@@ -73,6 +75,16 @@ describe('identity schema', () => {
       'metadata',
       'createdAt',
     ]);
+    expect(tableColumns(categories)).toEqual([
+      'id',
+      'name',
+      'slug',
+      'description',
+      'isActive',
+      'createdAt',
+      'updatedAt',
+      'deletedAt',
+    ]);
     expect(tableColumns(roles)).toEqual([
       'id',
       'code',
@@ -103,6 +115,9 @@ describe('identity schema', () => {
     const migrations = await readRollbackMigrations(migrationsDirectory);
 
     expect(migrations.map((migration) => migration.tag)).toEqual([
+      '0014_add-must-change-password',
+      '0013_add-role-name-unique',
+      '0012_create-categories-table',
       '0011_create-audit-events-table',
       '0010_create-token-revocations-table',
       '0009_extend-auth-audit-event-vocabulary',
@@ -117,6 +132,11 @@ describe('identity schema', () => {
       '0000_create-users-table',
     ]);
     expect(migrations.flatMap((migration) => migration.statements)).toEqual([
+      'ALTER TABLE "users" DROP COLUMN "must_change_password";',
+      'DROP INDEX IF EXISTS "roles_name_unique";',
+      'DROP INDEX "categories_active_created_at_index";',
+      'DROP INDEX "categories_active_slug_unique";',
+      'DROP TABLE "categories";',
       'DROP TABLE "audit_events";',
       'ALTER TABLE "auth_audit_events" DROP CONSTRAINT "auth_audit_events_event_type_check";',
       'ALTER TABLE "auth_audit_events" DROP CONSTRAINT "auth_audit_events_reason_check";',

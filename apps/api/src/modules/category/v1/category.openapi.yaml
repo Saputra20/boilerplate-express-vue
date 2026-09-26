@@ -1,0 +1,168 @@
+tags:
+  - name: Categories
+schemas:
+  CategoryV1:
+    type: object
+    required: [id, name, slug, description, isActive, createdAt, updatedAt, deletedAt]
+    additionalProperties: false
+    properties:
+      id: { type: string, format: uuid }
+      name: { type: string, minLength: 1, maxLength: 120 }
+      slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+      description: { type: string, maxLength: 500, nullable: true }
+      isActive: { type: boolean }
+      createdAt: { type: string, format: date-time }
+      updatedAt: { type: string, format: date-time }
+      deletedAt: { type: string, format: date-time, nullable: true }
+  CategoryV1CreateRequest:
+    type: object
+    required: [name, slug]
+    additionalProperties: false
+    properties:
+      name: { type: string, minLength: 1, maxLength: 120 }
+      slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+      description: { type: string, maxLength: 500, nullable: true }
+      isActive: { type: boolean, default: true }
+  CategoryV1UpdateRequest:
+    type: object
+    minProperties: 1
+    additionalProperties: false
+    properties:
+      name: { type: string, minLength: 1, maxLength: 120 }
+      slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+      description: { type: string, maxLength: 500, nullable: true }
+      isActive: { type: boolean }
+  CategoryV1ListResponse:
+    type: object
+    required: [items, pagination]
+    additionalProperties: false
+    properties:
+      items:
+        type: array
+        items: { $ref: '#/components/schemas/CategoryV1' }
+      pagination:
+        type: object
+        required: [page, limit, total, totalPages]
+        additionalProperties: false
+        properties:
+          page: { type: integer, minimum: 1 }
+          limit: { type: integer, minimum: 1, maximum: 100 }
+          total: { type: integer, minimum: 0 }
+          totalPages: { type: integer, minimum: 0 }
+paths:
+  /api/v1/categories:
+    get:
+      tags: [Categories]
+      operationId: listCategories
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100, default: 20 },
+          }
+        - { name: search, in: query, schema: { type: string, maxLength: 120 } }
+        - { name: isActive, in: query, schema: { type: boolean } }
+        - {
+            name: sort,
+            in: query,
+            schema:
+              {
+                type: string,
+                enum: [name.asc, name.desc, createdAt.asc, createdAt.desc],
+                default: createdAt.desc,
+              },
+          }
+      responses:
+        '200':
+          {
+            description: Category list,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: '#/components/schemas/CategoryV1ListResponse' } },
+              },
+          }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Forbidden }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    post:
+      tags: [Categories]
+      operationId: createCategory
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: '#/components/schemas/CategoryV1CreateRequest' } },
+            },
+        }
+      responses:
+        '201':
+          {
+            description: Created,
+            content: { application/json: { schema: { $ref: '#/components/schemas/CategoryV1' } } },
+          }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Forbidden }
+        '409': { description: Conflict }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+  /api/v1/categories/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Categories]
+      operationId: getCategory
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          {
+            description: Category,
+            content: { application/json: { schema: { $ref: '#/components/schemas/CategoryV1' } } },
+          }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Forbidden }
+        '404': { description: Not found }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    patch:
+      tags: [Categories]
+      operationId: updateCategory
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: '#/components/schemas/CategoryV1UpdateRequest' } },
+            },
+        }
+      responses:
+        '200':
+          {
+            description: Updated,
+            content: { application/json: { schema: { $ref: '#/components/schemas/CategoryV1' } } },
+          }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Forbidden }
+        '404': { description: Not found }
+        '409': { description: Conflict }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
+    delete:
+      tags: [Categories]
+      operationId: deleteCategory
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Forbidden }
+        '404': { description: Not found }
+        '500': { $ref: '#/components/responses/InternalServerError' }

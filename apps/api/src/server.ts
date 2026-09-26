@@ -12,6 +12,10 @@ import { createJwt, type JwtService } from './config/jwt/jwt.js';
 import { sql } from 'drizzle-orm';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createCategoryModule } from './modules/category/category.module.js';
+import { createRoleModule } from './modules/role/role.module.js';
+import { createUserModule } from './modules/user/user.module.js';
+import { createDashboardModule } from './modules/dashboard/dashboard.module.js';
 
 export async function startServer(): Promise<void> {
   const env = initializeStartupPhase('environment validation', () => loadEnv());
@@ -45,12 +49,40 @@ export async function startServer(): Promise<void> {
     queues = createQueueInfrastructure(redisConfig, logging.logger);
     await queues.initialize();
     const authModule = createAuthModule({ db: database.db, jwt });
+    const categoryModule = createCategoryModule({
+      db: database.db,
+      accessAuthService: authModule.accessAuthService,
+      permissionService: authModule.permissionService,
+      logger: logging.logger,
+    });
+    const roleModule = createRoleModule({
+      db: database.db,
+      accessAuthService: authModule.accessAuthService,
+      permissionService: authModule.permissionService,
+      logger: logging.logger,
+    });
+    const userModule = createUserModule({
+      db: database.db,
+      accessAuthService: authModule.accessAuthService,
+      permissionService: authModule.permissionService,
+      logger: logging.logger,
+      defaultUserPassword: env.DEFAULT_USER_PASSWORD,
+    });
+    const dashboardModule = createDashboardModule({
+      db: database.db,
+      accessAuthService: authModule.accessAuthService,
+      permissionService: authModule.permissionService,
+    });
     app = createApp({
       logging,
       security: { corsOrigins: env.CORS_ORIGINS },
       routers: {
         authV1: authModule.v1.router,
         meV1: authModule.v1.meRouter,
+        categoryV1: categoryModule.v1.router,
+        roleV1: roleModule.v1.router,
+        userV1: userModule.v1.router,
+        dashboardV1: dashboardModule.v1.router,
       },
       queueMonitor: {
         queue: queues.queue,

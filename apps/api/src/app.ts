@@ -14,6 +14,10 @@ export type AppDependencies = {
   routers?: {
     authV1?: Router;
     meV1?: Router;
+    categoryV1?: Router;
+    roleV1?: Router;
+    userV1?: Router;
+    dashboardV1?: Router;
   };
   health?: HealthRouteOptions;
   queueMonitor?: QueueMonitorOptions;
@@ -30,6 +34,10 @@ export function createApp({ logging, security, routers, health, queueMonitor }: 
   installOpenApiRoutes(app);
   if (routers?.authV1) app.use('/api/v1/auth', routers.authV1);
   if (routers?.meV1) app.use('/api/v1', routers.meV1);
+  if (routers?.categoryV1) app.use('/api/v1/categories', routers.categoryV1);
+  if (routers?.roleV1) app.use('/api/v1/roles', routers.roleV1);
+  if (routers?.userV1) app.use('/api/v1/users', routers.userV1);
+  if (routers?.dashboardV1) app.use('/api/v1/dashboard', routers.dashboardV1);
   if (queueMonitor) installQueueMonitor(app, queueMonitor, logging.logger);
 
   app.use((_request, response) => {

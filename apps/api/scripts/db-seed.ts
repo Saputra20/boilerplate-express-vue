@@ -12,7 +12,22 @@ import { hashPassword } from '../src/helpers/password.helper.js';
 
 const seedEmail = 'developer@dispostable.com';
 const seedRoleCode = 'admin';
-const seedPermissionCode = 'system.access';
+const seedPermissionCodes = [
+  'system.access',
+  'category.read',
+  'category.create',
+  'category.update',
+  'category.delete',
+  'role.read',
+  'role.create',
+  'role.update',
+  'role.delete',
+  'user.read',
+  'user.create',
+  'user.update',
+  'user.delete',
+  'dashboard.read',
+];
 
 function loadSeedPassword(): string {
   const password = process.env.SEED_ADMIN_PASSWORD;
@@ -51,31 +66,39 @@ async function seed(): Promise<void> {
 
       if (!roleRecord) throw new Error('Admin role could not be created or loaded');
 
-      const [permission] = await transaction
-        .insert(permissions)
-        .values({
-          code: seedPermissionCode,
-          description: 'Foundation access permission',
-        })
-        .onConflictDoNothing({ target: permissions.code })
-        .returning({ id: permissions.id });
+      for (const code of seedPermissionCodes) {
+        const [permission] = await transaction
+          .insert(permissions)
+          .values({
+            code,
+            description:
+              code === 'system.access'
+                ? 'Foundation access permission'
+                : code.startsWith('role.')
+                  ? 'Role management permission'
+                  : 'Category management permission',
+          })
+          .onConflictDoNothing({ target: permissions.code })
+          .returning({ id: permissions.id });
 
-      const permissionRecord =
-        permission ??
-        (
-          await transaction
-            .select({ id: permissions.id })
-            .from(permissions)
-            .where(eq(permissions.code, seedPermissionCode))
-            .limit(1)
-        )[0];
+        const permissionRecord =
+          permission ??
+          (
+            await transaction
+              .select({ id: permissions.id })
+              .from(permissions)
+              .where(eq(permissions.code, code))
+              .limit(1)
+          )[0];
 
-      if (!permissionRecord) throw new Error('Access permission could not be created or loaded');
+        if (!permissionRecord)
+          throw new Error(`Permission could not be created or loaded: ${code}`);
 
-      await transaction
-        .insert(rolePermissions)
-        .values({ roleId: roleRecord.id, permissionId: permissionRecord.id })
-        .onConflictDoNothing();
+        await transaction
+          .insert(rolePermissions)
+          .values({ roleId: roleRecord.id, permissionId: permissionRecord.id })
+          .onConflictDoNothing();
+      }
 
       const [existingUser] = await transaction
         .select({ id: users.id, status: users.status, deletedAt: users.deletedAt })

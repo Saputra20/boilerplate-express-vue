@@ -31,6 +31,13 @@ export type OpenApiDocument = Record<string, unknown> & {
 const authSpecUrl = new URL('../../modules/auth/v1/auth.openapi.yaml', import.meta.url);
 const meSpecUrl = new URL('../../modules/me/v1/me.openapi.yaml', import.meta.url);
 const healthSpecUrl = new URL('../../modules/health/health.openapi.yaml', import.meta.url);
+const categorySpecUrl = new URL('../../modules/category/v1/category.openapi.yaml', import.meta.url);
+const roleSpecUrl = new URL('../../modules/role/v1/role.openapi.yaml', import.meta.url);
+const userSpecUrl = new URL('../../modules/user/v1/user.openapi.yaml', import.meta.url);
+const dashboardSpecUrl = new URL(
+  '../../modules/dashboard/v1/dashboard.openapi.yaml',
+  import.meta.url,
+);
 
 export const OPENAPI_V1_DOCUMENT = await loadOpenApiDocument();
 
@@ -69,6 +76,10 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
   const auth = loadModuleDocument(authSpecUrl);
   const me = loadModuleDocument(meSpecUrl);
   const health = loadModuleDocument(healthSpecUrl);
+  const category = loadModuleDocument(categorySpecUrl);
+  const role = loadModuleDocument(roleSpecUrl);
+  const user = loadModuleDocument(userSpecUrl);
+  const dashboard = loadModuleDocument(dashboardSpecUrl);
   const document = {
     openapi: OPENAPI_VERSION,
     info: {
@@ -76,7 +87,16 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
       version: OPENAPI_INFO_VERSION,
     },
     servers: [{ url: '/' }],
-    tags: [{ name: 'Documentation' }, ...auth.tags, ...me.tags, ...health.tags],
+    tags: [
+      { name: 'Documentation' },
+      ...auth.tags,
+      ...me.tags,
+      ...health.tags,
+      ...category.tags,
+      ...role.tags,
+      ...user.tags,
+      ...dashboard.tags,
+    ],
     paths: {
       [OPENAPI_REDIRECT_PATH]: {
         get: {
@@ -115,6 +135,10 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
       ...auth.paths,
       ...me.paths,
       ...health.paths,
+      ...category.paths,
+      ...role.paths,
+      ...user.paths,
+      ...dashboard.paths,
     },
     components: {
       securitySchemes: {
@@ -135,6 +159,10 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
         ...auth.schemas,
         ...me.schemas,
         ...health.schemas,
+        ...category.schemas,
+        ...role.schemas,
+        ...user.schemas,
+        ...dashboard.schemas,
       },
       responses: {
         BadRequest: errorResponse('Bad request'),
@@ -205,6 +233,13 @@ function validateOpenApiDocument(document: OpenApiDocument): void {
     '/api/v1/me',
     '/health',
     '/ready',
+    '/api/v1/categories',
+    '/api/v1/categories/{id}',
+    '/api/v1/roles',
+    '/api/v1/roles/{id}',
+    '/api/v1/users',
+    '/api/v1/users/{id}',
+    '/api/v1/dashboard/summary',
   ];
   if (!samePaths(Object.keys(document.paths), expectedPaths)) {
     throw new Error('OpenAPI paths are invalid');

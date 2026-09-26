@@ -22,6 +22,7 @@ export function createLoginRepository(database: Database): LoginRepository {
         .select({
           id: users.id,
           passwordHash: users.passwordHash,
+          mustChangePassword: users.mustChangePassword,
           status: users.status,
           deletedAt: users.deletedAt,
         })

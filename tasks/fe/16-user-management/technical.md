@@ -2,20 +2,20 @@
 
 ## 1. Metadata
 
-| Field | Value |
-| --- | --- |
-| Task ID | `fe/16-user-management` |
-| Batch | N/A |
-| Owning Feature | User management UI |
-| Workstream | Frontend |
-| Task Category | Business module UI |
-| Repository/App | `apps/cms` |
-| Status | Blocked — backend contract |
-| Priority | N/A |
-| Suggested Size | Large |
-| Depends On | `fe/13-tailadmin-ui-foundation`, `be/28-user-management` |
-| Blocks | N/A |
-| Execution Order | 16 |
+| Field           | Value                                                    |
+| --------------- | -------------------------------------------------------- |
+| Task ID         | `fe/16-user-management`                                  |
+| Batch           | N/A                                                      |
+| Owning Feature  | User management UI                                       |
+| Workstream      | Frontend                                                 |
+| Task Category   | Business module UI                                       |
+| Repository/App  | `apps/cms`                                               |
+| Status          | Blocked — backend contract                               |
+| Priority        | N/A                                                      |
+| Suggested Size  | Large                                                    |
+| Depends On      | `fe/13-tailadmin-ui-foundation`, `be/28-user-management` |
+| Blocks          | N/A                                                      |
+| Execution Order | 16                                                       |
 
 ## 2. Outcome
 
@@ -47,7 +47,7 @@ Use exact backend response/request schemas. Never display sensitive fields or tr
 
 ## 9. Applicable Contracts
 
-**API/UI Contract:** BLOCKED — consume `be/28-user-management` after approval.
+**API/UI Contract:** Consume `be/28-user-management` exactly: user list/detail/create/update/delete routes, fields `id`, `email`, `status`, `emailVerifiedAt`, `roles`, `createdAt`, `updatedAt`, create-time password only, complete `roleCodes` replacement, pagination/search/status/role filters, and permissions `user.read/create/update/delete`. Never expose or store frontend copies of password hashes or tokens.
 
 ## 10. File Impact
 
@@ -98,7 +98,7 @@ Not applicable — project has no traceability ID system.
 
 ## 21. Open Points
 
-All user-management decisions remain in `be/28-user-management`.
+Backend contract is documented in `be/28-user-management`; execution remains blocked until human review and backend implementation complete.
 
 ## 22. Definition Of Done
 

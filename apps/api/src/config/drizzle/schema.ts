@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   type AnyPgColumn,
+  boolean,
   check,
   customType,
   index,
@@ -10,6 +11,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -26,6 +28,7 @@ export const users = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     email: lowercaseText('email').notNull().unique(),
     passwordHash: text('password_hash').notNull(),
+    mustChangePassword: boolean('must_change_password').default(false).notNull(),
     status: userStatus('status').notNull(),
     emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
@@ -163,6 +166,29 @@ export const auditEvents = pgTable(
   ],
 );
 
+export const categories = pgTable(
+  'categories',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: text('name').notNull(),
+    slug: text('slug').notNull(),
+    description: text('description'),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('categories_active_slug_unique')
+      .on(table.slug)
+      .where(sql`${table.isActive} = true AND ${table.deletedAt} IS NULL`),
+    index('categories_active_created_at_index').on(table.isActive, table.createdAt),
+  ],
+);
+
 export const roles = pgTable(
   'roles',
   {
@@ -176,7 +202,10 @@ export const roles = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [check('roles_code_lowercase_check', sql`${table.code} = lower(${table.code})`)],
+  (table) => [
+    check('roles_code_lowercase_check', sql`${table.code} = lower(${table.code})`),
+    uniqueIndex('roles_name_unique').on(table.name),
+  ],
 );
 
 export const permissions = pgTable(

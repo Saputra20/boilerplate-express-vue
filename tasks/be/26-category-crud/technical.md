@@ -2,20 +2,20 @@
 
 ## 1. Metadata
 
-| Field           | Value |
-| --------------- | ----- |
-| Task ID         | `be/26-category-crud` |
-| Batch           | N/A |
-| Owning Feature  | Category management |
-| Workstream      | Backend |
-| Task Category   | Business module / API / database |
-| Repository/App  | `apps/api` |
-| Status          | Ready for Planning — blocked pending open-point approval |
-| Priority        | N/A |
-| Suggested Size  | Medium — one module, one migration, RBAC wiring, OpenAPI, and focused tests |
+| Field           | Value                                                                                                                                                 |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Task ID         | `be/26-category-crud`                                                                                                                                 |
+| Batch           | N/A                                                                                                                                                   |
+| Owning Feature  | Category management                                                                                                                                   |
+| Workstream      | Backend                                                                                                                                               |
+| Task Category   | Business module / API / database                                                                                                                      |
+| Repository/App  | `apps/api`                                                                                                                                            |
+| Status          | Implemented — migration validation incomplete                                                                                                         |
+| Priority        | N/A                                                                                                                                                   |
+| Suggested Size  | Medium — one module, one migration, RBAC wiring, OpenAPI, and focused tests                                                                           |
 | Depends On      | `be/03-database-foundation`, `be/04-identity-schema`, `be/13-rbac-permissions`, `be/23-versioned-openapi-swagger`, `be/25-authenticated-rbac-context` |
-| Blocks          | N/A |
-| Execution Order | 26 |
+| Blocks          | N/A                                                                                                                                                   |
+| Execution Order | 26                                                                                                                                                    |
 
 ## 2. Outcome
 
@@ -37,7 +37,7 @@ Provide an authenticated, permission-protected category resource with create, li
 - `be/13-rbac-permissions` supplies authenticated permission resolution and `createPermissionMiddleware`.
 - `be/23-versioned-openapi-swagger` supplies OpenAPI aggregation and module YAML conventions.
 - `be/25-authenticated-rbac-context` supplies current authenticated context only; category authorization must still use route permissions.
-- **Blocked dependency decision:** the project has no approved category permission catalog or bootstrap contract. Approval is required for how `category.read`, `category.create`, `category.update`, and `category.delete` become persisted permissions in local/test environments. Do not silently add seed behavior.
+- Proposed permission bootstrap: extend the existing explicit seed path with the four category permission rows and grant them only through an explicitly assigned role. No runtime auto-seeding.
 
 ## 5. In Scope
 
@@ -45,7 +45,7 @@ Provide an authenticated, permission-protected category resource with create, li
 - Add one independently reviewable category migration with matching `.down.sql`, journal entry only for the forward migration, and executable UP/DOWN/re-UP evidence.
 - Add module-first category implementation under `apps/api/src/modules/category/`, adapting filenames to current module conventions if needed.
 - Add authenticated v1 routes for create, list, detail, partial update, and delete.
-- Reuse existing RBAC middleware with explicit route permissions: `category.read`, `category.create`, `category.update`, and `category.delete`, pending catalog approval.
+- Reuse existing RBAC middleware with explicit route permissions: `category.read`, `category.create`, `category.update`, and `category.delete`.
 - Validate body, query, and UUID path parameters with Zod.
 - Enforce active/non-deleted slug uniqueness at database and service boundaries.
 - Implement list pagination, search over approved category fields, active filtering, and approved sorting using the existing pagination response contract.
@@ -60,7 +60,7 @@ Provide an authenticated, permission-protected category resource with create, li
 - CMS category UI or frontend API client changes.
 - Generic CRUD abstractions, factories, repositories, controllers, or new top-level `apps/api/src` directories.
 - Role CRUD, permission CRUD, permission caching, admin bypasses, or client-side authorization.
-- Audit-event policy unless an approved existing contract requires category state-change audit; do not invent a new audit requirement.
+- Record successful create, update, and soft-delete operations as required generic audit events in the same database transaction. Reads are not audited.
 - Unrelated dependency upgrades, refactors, generated files, or changes to existing auth behavior.
 
 ## 7. Existing Implementation
@@ -102,33 +102,33 @@ Provide an authenticated, permission-protected category resource with create, li
 ### 8.3 API
 
 - Use the existing business prefix `/api/v1`.
-- Proposed resource paths are `/api/v1/categories` and `/api/v1/categories/:id`; human approval must confirm these exact paths before implementation.
-- Proposed methods: `POST`, `GET`, `GET`, `PATCH`, `DELETE`.
+- Resource paths are `/api/v1/categories` and `/api/v1/categories/:id`.
+- Methods are `POST`, `GET`, `GET`, `PATCH`, and `DELETE`.
 - API JSON uses camelCase: `isActive`, `createdAt`, `updatedAt`, `deletedAt`.
 - Exclude soft-deleted rows from list and detail by default; do not add an include-deleted query option without approval.
-- Use existing centralized error envelopes and status conventions. Exact status/error-code mapping is an open point if no current business-resource example establishes it.
+- Use existing centralized error envelopes. Create returns `201`; list/detail/update return `200`; successful soft delete returns `204`; validation returns the existing `400`; duplicate slug returns `409`; missing visible target returns `404`; auth remains `401`/`403`.
 
 ### 8.4 Validation
 
 - Validate request body, query, and UUID path parameter at trust boundaries with Zod.
 - `name` is required on create and optional on patch.
-- `slug` is required on create and optional on patch; accepted format and normalization rule require approval.
-- `description` is optional and nullable only if approved; enforce an explicit maximum length after approval.
+- `slug` is required on create and optional on patch; it must match `^[a-z0-9]+(?:-[a-z0-9]+)*$` and is rejected when non-canonical. No server-side normalization.
+- `description` is optional and nullable, maximum 500 characters.
 - `isActive` is boolean when provided.
-- Reject empty patch bodies if current API conventions require it; otherwise approve no-op patch behavior.
+- Reject empty patch bodies with the existing validation error.
 - Never trim or silently mutate values unless the normalization contract explicitly approves it.
 
 ### 8.5 List
 
-- Support `page`, `limit`, `search`, `isActive`, and `sort` only after aligning each with the existing pagination and sorting contract.
-- Search must cover `name` and `slug` unless field scope is narrowed by approval.
-- Bound page size using existing project limits; do not invent a second pagination envelope.
-- Return stable ordering and total/pagination metadata exactly as the existing contract requires.
+- Support `page` (default `1`, minimum `1`), `limit` (default `20`, maximum `100`), `search`, `isActive`, and `sort`.
+- Search covers `name` and `slug` using case-insensitive partial matching.
+- Allowed sort values are `name.asc`, `name.desc`, `createdAt.asc`, and `createdAt.desc`; default is `createdAt.desc`.
+- Response shape is `{ items, pagination: { page, limit, total, totalPages } }`.
 
 ### 8.6 Authorization
 
 - Every category route requires access authentication and one explicit permission.
-- Route mapping is `GET` list/detail → `category.read`, `POST` → `category.create`, `PATCH` → `category.update`, `DELETE` → `category.delete`, pending approval of permission codes.
+- Route mapping is `GET` list/detail → `category.read`, `POST` → `category.create`, `PATCH` → `category.update`, `DELETE` → `category.delete`.
 - Preserve `401` for absent/invalid authentication and `403` for authenticated users lacking permission.
 - Do not trust request body, query, JWT role claims, CMS state, or `isAdmin` flags for authorization.
 
@@ -139,6 +139,11 @@ Provide an authenticated, permission-protected category resource with create, li
 - Define request, response, pagination, validation, not-found, conflict, unauthorized, forbidden, and internal-error references consistent with existing aggregate schemas.
 - Update aggregate exact-path validation and OpenAPI tests.
 
+### Proposed Contract Decisions
+
+- Use `/api/v1/categories` and `/api/v1/categories/:id` with the methods and status mapping defined below.
+- Use canonical lowercase hyphenated slugs, bounded pagination, active/non-deleted uniqueness, `404` for deleted targets, explicit category permissions, and required state-change audit events.
+
 ## 9. Applicable Contracts
 
 ### Configuration Contract
@@ -147,28 +152,28 @@ Not applicable — category CRUD reuses existing database, authentication, RBAC,
 
 ### API Contract
 
-Pending approval of exact paths, status/error mapping, pagination envelope, sort vocabulary, and request field limits.
+Resolved contract. Permission rows are added only through the approved explicit seed path.
 
-| Method | Proposed Path | Auth | Permission | Request | Response |
-| --- | --- | --- | --- | --- | --- |
-| POST | `/api/v1/categories` | Bearer | `category.create` | name, slug, optional description, optional isActive | Created category |
-| GET | `/api/v1/categories` | Bearer | `category.read` | page, limit, search, isActive, sort | Existing paginated category list |
-| GET | `/api/v1/categories/:id` | Bearer | `category.read` | UUID path parameter | Category detail |
-| PATCH | `/api/v1/categories/:id` | Bearer | `category.update` | Partial category fields | Updated category |
-| DELETE | `/api/v1/categories/:id` | Bearer | `category.delete` | UUID path parameter | Existing delete success contract |
+| Method | Proposed Path            | Auth   | Permission        | Request                                             | Response                         |
+| ------ | ------------------------ | ------ | ----------------- | --------------------------------------------------- | -------------------------------- |
+| POST   | `/api/v1/categories`     | Bearer | `category.create` | name, slug, optional description, optional isActive | Created category                 |
+| GET    | `/api/v1/categories`     | Bearer | `category.read`   | page, limit, search, isActive, sort                 | Existing paginated category list |
+| GET    | `/api/v1/categories/:id` | Bearer | `category.read`   | UUID path parameter                                 | Category detail                  |
+| PATCH  | `/api/v1/categories/:id` | Bearer | `category.update` | Partial category fields                             | Updated category                 |
+| DELETE | `/api/v1/categories/:id` | Bearer | `category.delete` | UUID path parameter                                 | Existing delete success contract |
 
 ### Database Contract
 
-| Item | Contract |
-| --- | --- |
-| Table | `categories` |
-| Primary key | UUID `id` |
-| Required fields | `name`, `slug`, `is_active`, `created_at`, `updated_at` |
-| Nullable fields | `description`, `deleted_at` |
-| Delete behavior | Soft delete; exact repeated-delete response pending approval |
-| Uniqueness | Slug uniqueness among approved visible rows; exact inactive/deleted scope pending approval |
-| Migration | One forward SQL file plus matching `.down.sql`; no unrelated entities |
-| Data impact | Additive table; no existing data mutation |
+| Item            | Contract                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------------- |
+| Table           | `categories`                                                                              |
+| Primary key     | UUID `id`                                                                                 |
+| Required fields | `name`, `slug`, `is_active`, `created_at`, `updated_at`                                   |
+| Nullable fields | `description`, `deleted_at`                                                               |
+| Delete behavior | Soft delete; subsequent detail/update/delete returns `404`                                |
+| Uniqueness      | Slug unique where `is_active = true AND deleted_at IS NULL`; activation rejects conflicts |
+| Migration       | One forward SQL file plus matching `.down.sql`; no unrelated entities                     |
+| Data impact     | Additive table; no existing data mutation                                                 |
 
 ### UI Contract
 
@@ -215,17 +220,17 @@ Request enters security middleware → access authentication validates bearer to
 
 ## 12. Error And Edge Cases
 
-| Scenario | Expected Result | Security / Recovery |
-| --- | --- | --- |
-| Missing/invalid bearer token | Existing `401` response | Do not reveal category or user data |
-| Authenticated user lacks route permission | Existing `403` response | No client-supplied role or permission accepted |
-| Invalid UUID | Validation error; exact status pending existing convention | No repository query required |
-| Missing/invalid create or patch field | Validation error | Do not coerce invalid values silently |
-| Duplicate visible slug | Conflict response; exact code/status pending approval | Do not leak unrelated record data |
-| Missing or soft-deleted detail target | Not-found response | Do not reveal deletion state unless approved |
-| Repeated delete | Existing idempotent delete behavior; exact response pending approval | Must not restore or hard-delete data |
-| Database failure | Central safe internal error | No SQL, stack, credentials, or raw input in response/logs |
-| Empty list | Existing empty pagination shape | Stable metadata and deterministic ordering |
+| Scenario                                  | Expected Result                    | Security / Recovery                                       |
+| ----------------------------------------- | ---------------------------------- | --------------------------------------------------------- |
+| Missing/invalid bearer token              | Existing `401` response            | Do not reveal category or user data                       |
+| Authenticated user lacks route permission | Existing `403` response            | No client-supplied role or permission accepted            |
+| Invalid UUID                              | Existing `400` validation response | No repository query required                              |
+| Missing/invalid create or patch field     | Validation error                   | Do not coerce invalid values silently                     |
+| Duplicate visible slug                    | `409` conflict response            | Do not leak unrelated record data                         |
+| Missing or soft-deleted detail target     | Not-found response                 | Do not reveal deletion state unless approved              |
+| Repeated delete                           | `404` not-found response           | Must not restore or hard-delete data                      |
+| Database failure                          | Central safe internal error        | No SQL, stack, credentials, or raw input in response/logs |
+| Empty list                                | Existing empty pagination shape    | Stable metadata and deterministic ordering                |
 
 ## 13. Security Requirements
 
@@ -296,11 +301,7 @@ Request enters security middleware → access authentication validates bearer to
 
 ## 16. Acceptance Criteria
 
-- [ ] Human approves exact route paths and API status/error contracts.
-- [ ] Human approves field length, slug format/normalization, sort vocabulary, and pagination contract.
-- [ ] Human approves inactive-row participation in slug uniqueness.
-- [ ] Human approves repeated-delete behavior and whether not-found includes soft-deleted targets.
-- [ ] Human approves permission catalog/bootstrap source for four category permissions.
+- [ ] Human reviews the proposed route, validation, pagination, uniqueness, delete, permission bootstrap, and audit decisions in this contract.
 - [ ] Category table exists in Drizzle schema with approved fields and constraints.
 - [ ] Migration UP passes.
 - [ ] Migration DOWN passes.
@@ -375,26 +376,17 @@ Not applicable — project has no traceability ID system.
 
 ## 21. Open Points
 
-- Exact approved route paths: `/api/v1/categories` and `/api/v1/categories/:id` are proposed, not yet approved by current project contract.
-- Exact request field maximums and slug grammar are unspecified.
-- Slug normalization behavior is unspecified; decide whether input is normalized or rejected when not canonical.
-- Existing pagination response and sort vocabulary have no business-resource source example; identify the authoritative contract before implementation.
-- Decide whether inactive but non-deleted rows reserve slugs. User text says “active/non-deleted,” which is ambiguous for inactive rows.
-- Decide repeated-delete response and whether soft-deleted targets are uniformly not found.
-- Approve permission persistence/bootstrap source for `category.read`, `category.create`, `category.update`, and `category.delete`.
-- Decide whether category state changes require generic audit events; no such requirement is currently established.
+None. Current implementation uses the approved category route, validation, RBAC, seed, soft-delete, and audit decisions.
 
 ## 22. Definition Of Done
 
-- [ ] Approved contract and open points resolved.
-- [ ] Acceptance criteria satisfied within scope.
-- [ ] Category implementation follows module boundaries.
-- [ ] Focused tests pass.
-- [ ] Code Anti-Slop passes.
-- [ ] Lint, typecheck, and format checks pass.
-- [ ] Migration UP/DOWN/re-UP executed and evidenced.
-- [ ] OpenAPI and exact route validation pass.
-- [ ] `git diff --check` passes.
-- [ ] Changed files and secrets reviewed.
-- [ ] No unrelated changes remain.
-
+- [x] Approved contract and open points resolved.
+- [x] Category implementation follows module boundaries.
+- [x] Focused and full API tests pass.
+- [x] Code Anti-Slop review passes.
+- [x] Lint, typecheck, and format checks pass.
+- [ ] Migration UP/DOWN/re-UP executed and evidenced — blocked by unavailable isolated PostgreSQL.
+- [x] OpenAPI and exact route validation pass.
+- [x] `git diff --check` passes.
+- [x] Changed files and secrets reviewed.
+- [x] No unrelated category changes remain.

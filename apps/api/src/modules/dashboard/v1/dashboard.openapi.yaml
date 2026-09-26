@@ -1,0 +1,39 @@
+tags:
+  - name: Dashboard
+schemas:
+  DashboardSummaryV1:
+    type: object
+    required: [users, roles, categories]
+    properties:
+      users:
+        type: object
+        required: [total, active, disabled]
+        properties:
+          total: { type: integer, minimum: 0 }
+          active: { type: integer, minimum: 0 }
+          disabled: { type: integer, minimum: 0 }
+      roles:
+        type: object
+        required: [total]
+        properties:
+          total: { type: integer, minimum: 0 }
+      categories:
+        type: object
+        required: [total, active]
+        properties:
+          total: { type: integer, minimum: 0 }
+          active: { type: integer, minimum: 0 }
+paths:
+  /api/v1/dashboard/summary:
+    get:
+      tags: [Dashboard]
+      operationId: getDashboardSummary
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Dashboard summary
+          content:
+            { application/json: { schema: { $ref: '#/components/schemas/DashboardSummaryV1' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '500': { $ref: '#/components/responses/InternalServerError' }
