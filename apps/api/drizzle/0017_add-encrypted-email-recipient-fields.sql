@@ -1,0 +1,6 @@
+ALTER TABLE "email_deliveries" ALTER COLUMN "recipient" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "email_deliveries" ADD COLUMN "recipient_ciphertext" "bytea";--> statement-breakpoint
+ALTER TABLE "email_deliveries" ADD COLUMN "recipient_nonce" "bytea";--> statement-breakpoint
+ALTER TABLE "email_deliveries" ADD COLUMN "recipient_auth_tag" "bytea";--> statement-breakpoint
+ALTER TABLE "email_deliveries" ADD COLUMN "recipient_key_version" integer;--> statement-breakpoint
+ALTER TABLE "email_deliveries" ADD CONSTRAINT "email_deliveries_recipient_encryption_fields_check" CHECK (("email_deliveries"."recipient_ciphertext" IS NULL AND "email_deliveries"."recipient_nonce" IS NULL AND "email_deliveries"."recipient_auth_tag" IS NULL AND "email_deliveries"."recipient_key_version" IS NULL) OR ("email_deliveries"."recipient_ciphertext" IS NOT NULL AND "email_deliveries"."recipient_nonce" IS NOT NULL AND "email_deliveries"."recipient_auth_tag" IS NOT NULL AND "email_deliveries"."recipient_key_version" IS NOT NULL));

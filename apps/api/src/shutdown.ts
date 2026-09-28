@@ -6,6 +6,7 @@ type ShutdownResources = {
   database: { close(): Promise<void> };
   redis: { close(): void };
   queues?: { close(): Promise<void> };
+  email?: { close(): Promise<void> };
   logging: { close(): void };
 };
 
@@ -32,6 +33,12 @@ export async function shutdown(
 
   try {
     await resources.queues?.close();
+  } catch (error) {
+    failure ??= error;
+  }
+
+  try {
+    await resources.email?.close();
   } catch (error) {
     failure ??= error;
   }

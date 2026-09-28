@@ -15,22 +15,22 @@ export type QueueMonitorCredentials = {
 };
 
 export type QueueMonitorOptions = {
-  queue: Queue;
+  queue?: Queue;
+  queues?: Queue[];
   credentials: QueueMonitorCredentials;
 };
 
 export function installQueueMonitor(
   app: Express,
-  { queue, credentials }: QueueMonitorOptions,
+  { queue, queues, credentials }: QueueMonitorOptions,
   logger: Pick<Logger, 'warn'>,
-): BullMQAdapter {
-  const queueAdapter = new BullMQAdapter(queue, {
-    readOnlyMode: true,
-    allowRetries: false,
-  });
+): BullMQAdapter[] {
+  const queueAdapters = createQueueMonitorAdapters(queues ?? (queue ? [queue] : []));
   const serverAdapter = new ExpressAdapter();
   serverAdapter.setBasePath(QUEUE_MONITOR_PATH);
-  createBullBoard({ queues: [queueAdapter], serverAdapter });
+  createBullBoard({ queues: queueAdapters, serverAdapter });
+
+  if (queueAdapters.length === 0) throw new Error('Queue monitor requires at least one queue');
 
   app.use(
     QUEUE_MONITOR_PATH,
@@ -38,7 +38,17 @@ export function installQueueMonitor(
     serverAdapter.getRouter(),
   );
 
-  return queueAdapter;
+  return queueAdapters;
+}
+
+function createQueueMonitorAdapters(queues: Queue[]): BullMQAdapter[] {
+  return queues.map(
+    (item) =>
+      new BullMQAdapter(item, {
+        readOnlyMode: true,
+        allowRetries: false,
+      }),
+  );
 }
 
 function createBasicAuthMiddleware(

@@ -11,7 +11,7 @@ import {
   QUEUE_MONITOR_PATH,
   QUEUE_MONITOR_REALM,
 } from '../src/config/queue/queue-monitor.js';
-import { DEFAULT_QUEUE_NAME } from '../src/config/queue/queue.js';
+import { DEFAULT_QUEUE_NAME, EMAIL_QUEUE_NAME } from '../src/config/queue/queue.js';
 
 const monitorCredentials = {
   username: 'queue-monitor',
@@ -112,17 +112,48 @@ describe('queue monitor', () => {
     const queue = createQueue();
 
     try {
-      const adapter = installQueueMonitor(
+      const [adapter] = installQueueMonitor(
         app,
         { queue, credentials: monitorCredentials },
         { warn: () => undefined },
       );
 
+      expect(adapter).toBeDefined();
       expect(adapter.getName()).toBe(DEFAULT_QUEUE_NAME);
       expect(adapter.readOnlyMode).toBe(true);
       expect(adapter.allowRetries).toBe(false);
     } finally {
       await queue.close();
+    }
+  });
+
+  it('registers the email queue alongside default in read-only mode', async () => {
+    const app = express();
+    const queue = createQueue();
+    const emailQueue = new Queue(EMAIL_QUEUE_NAME, {
+      connection: {
+        host: '127.0.0.1',
+        port: 1,
+        maxRetriesPerRequest: null,
+        retryStrategy: null,
+      },
+    });
+
+    try {
+      const adapters = installQueueMonitor(
+        app,
+        { queues: [queue, emailQueue], credentials: monitorCredentials },
+        { warn: () => undefined },
+      );
+
+      expect(adapters.map((adapter) => adapter.getName())).toEqual([
+        DEFAULT_QUEUE_NAME,
+        EMAIL_QUEUE_NAME,
+      ]);
+      expect(adapters.every((adapter) => adapter.readOnlyMode && !adapter.allowRetries)).toBe(true);
+    } finally {
+      await queue.close();
+      await emailQueue.close();
     }
   });
 

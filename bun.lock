@@ -22,6 +22,7 @@
         "ioredis": "^5.7.0",
         "jsonwebtoken": "^9.0.2",
         "morgan": "^1.10.1",
+        "nodemailer": "10.0.10",
         "pg": "^8.16.3",
         "pino": "^9.10.0",
         "pino-http": "^10.5.0",
@@ -31,6 +32,7 @@
       },
       "devDependencies": {
         "@eslint/js": "^9.36.0",
+        "@jest/globals": "^30.1.3",
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.3",
         "@types/jest": "^30.0.0",
@@ -1315,6 +1317,8 @@
     "node-int64": ["node-int64@0.4.0", "", {}, "sha512-O5lz91xSOeoXP6DulyHfllpq+Eg00MWitZIbtPfoSEvqIHdl5gfcY6hYzDWnj0qD5tz52PI08u9qUvSVeUBeHw=="],
 
     "node-releases": ["node-releases@2.0.56", "", {}, "sha512-x0InOIyzgdk+eyaWaRJFH5snEtiImgBgblZ2CyPrLmqqcuMQkEvcDPHbzqbD8eDsSeJbVOjn+crzyzHaM4D+/A=="],
+
+    "nodemailer": ["nodemailer@10.0.10", "", {}, "sha512-He9XskOFms62SyAKkLu8CcGcYHAo+BSHSsORI8s4PJH8qZgZY4L4lDfvyN0twvmbpyG+eGrxpyBlskj9d9rJ8A=="],
 
     "nopt": ["nopt@10.0.1", "", { "dependencies": { "abbrev": "^5.0.0" }, "bin": { "nopt": "bin/nopt.js" } }, "sha512-df3sBr/6ax9hSGuC3CspvLlbnX8cP5L5nZwXF8cGN8l0zSWR6BvzmQ6jPUKjvo6+/xdpkNvEcucBNUdBeeV13g=="],
 

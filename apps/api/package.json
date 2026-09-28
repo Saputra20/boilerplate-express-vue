@@ -15,7 +15,10 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:rollback": "bun scripts/db-rollback.ts",
-    "db:seed": "bun scripts/db-seed.ts"
+    "db:seed": "bun scripts/db-seed.ts",
+    "db:migrate-email-recipient-phase-a": "bun scripts/db-migrate-email-recipient-phase-a.ts",
+    "db:backfill-email-recipients": "bun scripts/backfill-email-delivery-recipients.ts",
+    "email:preview": "NODE_ENV=development bun scripts/preview-email-templates.ts"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "12.1.0",
@@ -32,6 +35,7 @@
     "ioredis": "^5.7.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
+    "nodemailer": "10.0.10",
     "pg": "^8.16.3",
     "pino": "^9.10.0",
     "pino-http": "^10.5.0",
@@ -41,6 +45,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@jest/globals": "^30.1.3",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",

@@ -4,11 +4,18 @@ import {
   DEFAULT_JOB_ATTEMPTS,
   DEFAULT_JOB_BACKOFF_DELAY_MS,
   DEFAULT_JOB_OPTIONS,
+  EMAIL_JOB_OPTIONS,
+  EMAIL_QUEUE_NAME,
+  EMAIL_WORKER_CONCURRENCY,
   DEFAULT_QUEUE_NAME,
+  buildEmailQueueFailureLogFields,
   FAILED_JOB_RETENTION_SECONDS,
   createQueueInfrastructure,
+  normalizeEmailQueueFailure,
 } from '../src/config/queue/queue.js';
 import { shutdown } from '../src/shutdown.js';
+import { EmailDeliveryError } from '../src/config/email/transport.js';
+import { UnrecoverableError } from 'bullmq';
 import {
   API_INTEGRATION_ENABLED,
   createTestQueueName,
@@ -53,6 +60,14 @@ describe('BullMQ foundation defaults', () => {
       removeOnComplete: true,
       removeOnFail: { age: 604800 },
     });
+    expect(EMAIL_QUEUE_NAME).toBe('email');
+    expect(EMAIL_WORKER_CONCURRENCY).toBe(5);
+    expect(EMAIL_JOB_OPTIONS).toEqual({
+      attempts: 5,
+      backoff: { type: 'exponential', delay: 5000 },
+      removeOnComplete: { count: 1000 },
+      removeOnFail: { age: FAILED_JOB_RETENTION_SECONDS },
+    });
   });
 
   it('allows an isolated queue name without changing production default', async () => {
@@ -75,6 +90,47 @@ describe('BullMQ foundation defaults', () => {
     await expect(queues.initialize()).rejects.toThrow('BullMQ initialization failed');
   });
 
+  it('normalizes email worker exceptions to bounded operator-safe categories', () => {
+    const providerSecret = 'smtp-provider-private-response';
+    const retryable = normalizeEmailQueueFailure(new EmailDeliveryError('retryable'));
+    const permanent = normalizeEmailQueueFailure(new EmailDeliveryError('permanent'));
+    const uncertain = normalizeEmailQueueFailure(new EmailDeliveryError('uncertain'));
+    const unknown = normalizeEmailQueueFailure(new Error(providerSecret));
+    const terminal = normalizeEmailQueueFailure(new UnrecoverableError(providerSecret));
+
+    expect(retryable).toMatchObject({
+      message: 'TRANSIENT_PROVIDER_FAILURE',
+      failureCategory: 'TRANSIENT_PROVIDER_FAILURE',
+    });
+    expect(permanent).toBeInstanceOf(UnrecoverableError);
+    expect(permanent.message).toBe('PERMANENT_DELIVERY_FAILURE');
+    expect(uncertain).toBeInstanceOf(UnrecoverableError);
+    expect(uncertain.message).toBe('PROVIDER_OUTCOME_UNKNOWN');
+    expect(unknown.message).toBe('UNCLASSIFIED_FAILURE');
+    expect(terminal).toBeInstanceOf(UnrecoverableError);
+    expect(terminal.message).toBe('UNCLASSIFIED_FAILURE');
+    expect(JSON.stringify([retryable, permanent, uncertain, unknown, terminal])).not.toContain(
+      providerSecret,
+    );
+  });
+
+  it('logs only bounded email queue failure metadata', () => {
+    const privateProviderResponse = 'smtp response with private recipient@example.test';
+    const fields = buildEmailQueueFailureLogFields(
+      EMAIL_QUEUE_NAME,
+      { id: 'opaque-delivery-id', attemptsMade: 99 },
+      new Error(privateProviderResponse),
+    );
+
+    expect(fields).toEqual({
+      queueName: EMAIL_QUEUE_NAME,
+      jobId: 'opaque-delivery-id',
+      attemptsMade: EMAIL_JOB_OPTIONS.attempts,
+      failureCategory: 'UNCLASSIFIED_FAILURE',
+    });
+    expect(JSON.stringify(fields)).not.toContain(privateProviderResponse);
+  });
+
   it('closes queue resources before database and Redis shutdown', async () => {
     const calls: string[] = [];
 
@@ -91,6 +147,11 @@ describe('BullMQ foundation defaults', () => {
             calls.push('queues');
           },
         },
+        email: {
+          async close() {
+            calls.push('email');
+          },
+        },
         database: {
           async close() {
             calls.push('database');
@@ -101,7 +162,7 @@ describe('BullMQ foundation defaults', () => {
       },
     );
 
-    expect(calls).toEqual(['server', 'queues', 'database', 'redis', 'logging']);
+    expect(calls).toEqual(['server', 'queues', 'email', 'database', 'redis', 'logging']);
   });
 });
 
@@ -208,5 +269,27 @@ integrationDescribe('BullMQ foundation Redis integration', () => {
 
     const [failedJob] = await queues.queue.getFailed();
     expect(failedJob?.failedReason).toBe('Unsupported BullMQ job');
+  });
+
+  it('applies the approved email queue options and worker concurrency only to email', async () => {
+    const emailQueues = createQueueInfrastructure(
+      testRedisConfig,
+      pino({ enabled: false }),
+      EMAIL_QUEUE_NAME,
+    );
+
+    try {
+      await emailQueues.initialize();
+      const worker = await emailQueues.createWorker({ 'test.email': async () => 'sent' });
+      expect(worker.concurrency).toBe(EMAIL_WORKER_CONCURRENCY);
+
+      const job = await emailQueues.queue.add('test.email', { emailDeliveryId: randomUUID() });
+      expect(job.opts).toMatchObject(EMAIL_JOB_OPTIONS);
+      expect(job.data).toEqual({ emailDeliveryId: job.data.emailDeliveryId });
+      expect(Object.keys(job.data)).toEqual(['emailDeliveryId']);
+    } finally {
+      await emailQueues.close();
+      await deleteRedisNamespace(cleanupRedis, `bull:${EMAIL_QUEUE_NAME}`);
+    }
   });
 });

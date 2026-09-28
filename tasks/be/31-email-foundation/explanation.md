@@ -30,8 +30,8 @@ Gunakan fake SMTP untuk test sukses, error, redaksi, dan shutdown; jalankan lint
 
 ## Apa yang harus direview manusia?
 
-Provider, nama environment, sender identity, URL publik, dan apakah SMTP wajib pada setiap deployment.
+Implementasi perlu membuktikan pilihan library memenuhi kriteria task. Kredensial SMTP dan alamat/nama pengirim diberikan melalui konfigurasi deployment.
 
 ## Apa yang belum dikerjakan?
 
-Implementasi, dependency, dan konfigurasi belum dibuat.
+Fondasi transport sudah dikerjakan dalam task ini. Flow verifikasi/reset, template, serta worker antrean ada di task lanjutan.

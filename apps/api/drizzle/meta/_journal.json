@@ -106,6 +106,41 @@
       "when": 1790382403489,
       "tag": "0014_add-must-change-password",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790439709736,
+      "tag": "0015_create-email-deliveries-table",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790467786446,
+      "tag": "0016_create-auth-challenges-table",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790469565811,
+      "tag": "0017_add-encrypted-email-recipient-fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790469577538,
+      "tag": "0018_remove-plaintext-email-delivery-recipient",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790503561903,
+      "tag": "0019_extend-auth-challenge-purpose-for-password-reset",
+      "breakpoints": true
     }
   ]
 }

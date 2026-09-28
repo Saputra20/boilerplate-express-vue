@@ -26,7 +26,7 @@ export class PasswordError extends Error {
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  if (!passwordSchema.safeParse(password).success) {
+  if (!isValidPassword(password)) {
     throw new PasswordError('validation');
   }
 
@@ -35,6 +35,10 @@ export async function hashPassword(password: string): Promise<string> {
   } catch {
     throw new PasswordError('hashing');
   }
+}
+
+export function isValidPassword(password: string): boolean {
+  return passwordSchema.safeParse(password).success;
 }
 
 export async function verifyPassword(

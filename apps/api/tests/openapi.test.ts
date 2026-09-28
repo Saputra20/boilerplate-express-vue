@@ -92,6 +92,10 @@ describe('OpenAPI infrastructure', () => {
       expect(Object.keys(document.paths).sort()).toEqual(
         [
           '/api/v1/auth/login',
+          '/api/v1/auth/password-reset/request',
+          '/api/v1/auth/password-reset/confirm',
+          '/api/v1/auth/email-verification/request',
+          '/api/v1/auth/email-verification/verify',
           '/api/v1/auth/logout',
           '/api/v1/auth/logout-all',
           '/api/v1/auth/refresh',
@@ -112,6 +116,14 @@ describe('OpenAPI infrastructure', () => {
         ].sort(),
       );
       expect(document.paths['/api/v1/auth/login']?.post?.security).toBeUndefined();
+      expect(document.paths['/api/v1/auth/password-reset/request']?.post?.security).toBeUndefined();
+      expect(document.paths['/api/v1/auth/password-reset/confirm']?.post?.security).toBeUndefined();
+      expect(
+        document.paths['/api/v1/auth/email-verification/request']?.post?.security,
+      ).toBeUndefined();
+      expect(
+        document.paths['/api/v1/auth/email-verification/verify']?.post?.security,
+      ).toBeUndefined();
       expect(document.paths['/api/v1/auth/refresh']?.post?.security).toBeUndefined();
       expect(document.paths['/api/v1/auth/logout']?.post?.security).toEqual([{ bearerAuth: [] }]);
       expect(document.paths['/api/v1/auth/logout-all']?.post?.security).toEqual([

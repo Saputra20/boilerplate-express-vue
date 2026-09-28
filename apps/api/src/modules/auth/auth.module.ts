@@ -14,13 +14,30 @@ import { createAuthenticatedContextService } from './services/context.service.js
 import { createPermissionRepository } from '../rbac/repositories/permission.repository.js';
 import { createPermissionService } from '../rbac/services/permission.service.js';
 import { createMeRouter } from './v1/me.router.js';
+import { createAuditRepository } from '../audit/repositories/audit.repository.js';
+import { createAuditService } from '../audit/services/audit.service.js';
+import { createEmailVerificationRepository } from './repositories/email-verification.repository.js';
+import { createEmailVerificationService } from './services/email-verification.service.js';
+import { createPasswordRecoveryRepository } from './repositories/password-recovery.repository.js';
+import { createPasswordRecoveryService } from './services/password-recovery.service.js';
+import type { EmailDeliveryService } from '../notification/email/delivery.service.js';
+import type { Logger } from 'pino';
 
 export type AuthModuleDependencies = {
   db: Database;
   jwt: JwtService;
+  logger: Logger;
+  emailDeliveryService?: Pick<EmailDeliveryService, 'create'>;
+  publicAppUrl?: URL;
 };
 
-export function createAuthModule({ db, jwt }: AuthModuleDependencies) {
+export function createAuthModule({
+  db,
+  jwt,
+  logger,
+  emailDeliveryService,
+  publicAppUrl,
+}: AuthModuleDependencies) {
   const loginService = createLoginService(createLoginRepository(db), jwt);
   const refreshService = createRefreshService(createRefreshRepository(db), jwt);
   const accessAuthService = createAccessAuthService(createAccessAuthRepository(db), jwt);
@@ -30,6 +47,22 @@ export function createAuthModule({ db, jwt }: AuthModuleDependencies) {
     createAuthenticatedUserRepository(db),
     permissionService,
   );
+  const auditService = createAuditService(createAuditRepository(db), logger);
+  const emailVerificationService = createEmailVerificationService({
+    repository: createEmailVerificationRepository(db, auditService),
+    delivery: emailDeliveryService,
+    publicAppUrl,
+  });
+  const passwordRecoveryService = createPasswordRecoveryService({
+    repository: createPasswordRecoveryRepository(db, auditService),
+    delivery: emailDeliveryService,
+    publicAppUrl,
+    onRequestFailure: (requestId) =>
+      logger.error(
+        { eventType: 'auth.password_reset.request_failed', requestId },
+        'Password recovery request processing failed',
+      ),
+  });
 
   return {
     accessAuthService,
@@ -40,6 +73,8 @@ export function createAuthModule({ db, jwt }: AuthModuleDependencies) {
         refreshService,
         accessAuthService,
         logoutService,
+        emailVerificationService,
+        passwordRecoveryService,
       }),
       meRouter: createMeRouter({ accessAuthService, contextService }),
     },

@@ -1,10 +1,12 @@
 import { createApp } from './app.js';
 import { createAuthModule } from './modules/auth/auth.module.js';
+import { loadEmailConfig } from './config/email/config.js';
 import { loadEnv } from './config/env.js';
+import { createSmtpEmailTransport, type EmailTransport } from './config/email/transport.js';
 import { createDatabase } from './config/database/client.js';
 import { loadDatabaseConfig } from './config/database/config.js';
 import { createLogging } from './config/logger/logger.js';
-import { createQueueInfrastructure } from './config/queue/queue.js';
+import { createQueueInfrastructure, EMAIL_QUEUE_NAME } from './config/queue/queue.js';
 import { createRedis } from './config/redis/client.js';
 import { loadRedisConfig } from './config/redis/config.js';
 import { shutdown } from './shutdown.js';
@@ -17,9 +19,15 @@ import { createRoleModule } from './modules/role/role.module.js';
 import { createUserModule } from './modules/user/user.module.js';
 import { createDashboardModule } from './modules/dashboard/dashboard.module.js';
 import { createPermissionCatalogRouter } from './modules/rbac/permission-catalog.router.js';
+import { createEmailDeliveryRepository } from './modules/notification/repositories/email-delivery.repository.js';
+import {
+  createEmailDeliveryService,
+  EMAIL_JOB_NAMES,
+} from './modules/notification/email/delivery.service.js';
 
 export async function startServer(): Promise<void> {
   const env = initializeStartupPhase('environment validation', () => loadEnv());
+  const emailConfig = initializeStartupPhase('email configuration', () => loadEmailConfig(env));
   const logging = initializeStartupPhase('logging initialization', () => createLogging());
   const database = initializeStartupPhase('PostgreSQL configuration', () =>
     createDatabase(loadDatabaseConfig(env)),
@@ -29,6 +37,9 @@ export async function startServer(): Promise<void> {
     createRedis(redisConfig),
   );
   let queues: ReturnType<typeof createQueueInfrastructure> | undefined;
+  let emailQueues: ReturnType<typeof createQueueInfrastructure> | undefined;
+  let emailDeliveryService: ReturnType<typeof createEmailDeliveryService> | undefined;
+  let email: EmailTransport | undefined;
   let jwt: JwtService;
   let app: ReturnType<typeof createApp>;
   let startupPhase = 'JWT initialization';
@@ -49,7 +60,34 @@ export async function startServer(): Promise<void> {
     startupPhase = 'BullMQ initialization';
     queues = createQueueInfrastructure(redisConfig, logging.logger);
     await queues.initialize();
-    const authModule = createAuthModule({ db: database.db, jwt });
+    startupPhase = 'email transport initialization';
+    if (emailConfig.enabled) {
+      if (!env.EMAIL_DELIVERY_ENCRYPTION_KEY) throw new Error('Email encryption key unavailable');
+      const emailTransport = createSmtpEmailTransport(emailConfig);
+      email = emailTransport;
+      emailQueues = createQueueInfrastructure(redisConfig, logging.logger, EMAIL_QUEUE_NAME);
+      await emailQueues.initialize();
+      const deliveryService = createEmailDeliveryService({
+        repository: createEmailDeliveryRepository(database.db),
+        queue: emailQueues.queue,
+        transport: emailTransport,
+        encryptionKey: Buffer.from(env.EMAIL_DELIVERY_ENCRYPTION_KEY, 'hex'),
+        allowLoopbackHttp: env.NODE_ENV !== 'production',
+      });
+      emailDeliveryService = deliveryService;
+      await emailQueues.createWorker(
+        Object.fromEntries(
+          EMAIL_JOB_NAMES.map((name) => [name, (job) => deliveryService.process(job)]),
+        ),
+      );
+    }
+    const authModule = createAuthModule({
+      db: database.db,
+      jwt,
+      logger: logging.logger,
+      emailDeliveryService,
+      publicAppUrl: env.PUBLIC_APP_URL,
+    });
     const categoryModule = createCategoryModule({
       db: database.db,
       accessAuthService: authModule.accessAuthService,
@@ -90,7 +128,7 @@ export async function startServer(): Promise<void> {
         }),
       },
       queueMonitor: {
-        queue: queues.queue,
+        queues: [queues.queue, ...(emailQueues ? [emailQueues.queue] : [])],
         credentials: {
           username: env.QUEUE_MONITOR_USERNAME,
           password: env.QUEUE_MONITOR_PASSWORD,
@@ -108,6 +146,8 @@ export async function startServer(): Promise<void> {
     });
   } catch {
     await queues?.close().catch(() => undefined);
+    await emailQueues?.close().catch(() => undefined);
+    await email?.close().catch(() => undefined);
     await database.close().catch(() => undefined);
     redis.close();
     logging.logger.error({ startupPhase }, 'API startup failed');
@@ -126,7 +166,18 @@ export async function startServer(): Promise<void> {
 
     shuttingDown = true;
     logging.logger.info({ signal }, 'API shutdown started');
-    void shutdown(server, { database, redis, queues, logging })
+    void shutdown(server, {
+      database,
+      redis,
+      queues: {
+        close: async () => {
+          await emailQueues?.close();
+          await queues?.close();
+        },
+      },
+      email,
+      logging,
+    })
       .then(() => {
         process.exitCode = 0;
       })

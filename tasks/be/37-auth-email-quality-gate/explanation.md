@@ -10,7 +10,7 @@ Fondasi SMTP, template, worker, challenge, reset password, dan observabilitas sa
 
 ## 3. Apa yang berubah?
 
-Task ini menjalankan pengujian gabungan dan hanya memperbaiki defect kecil yang langsung melanggar kontrak task 31–36.
+Gate lingkungan diperiksa ulang pada 2026-09-27. PostgreSQL dan Redis test tetap tidak tersedia, dan bind socket loopback tetap ditolak oleh environment. Validasi integrasi belum berjalan; tidak ada perubahan kode aplikasi.
 
 ## 4. Apa yang tidak berubah?
 
@@ -18,7 +18,7 @@ Tidak menambah fitur email baru, endpoint baru, UI, RBAC, perubahan provider, at
 
 ## 5. Dependency task apa?
 
-Semua task 31 sampai 36 harus selesai dan seluruh keputusan yang membutuhkan persetujuan harus sudah tercatat.
+Implementasi dan kontrak task 31–36 sudah tersedia. Bukti database, migration, Redis, monitor HTTP, dan full suite yang masih pending menjadi pekerjaan gate ini; status predecessor tidak dinaikkan tanpa bukti eksekusi.
 
 ## 6. Risiko utama?
 
@@ -26,12 +26,12 @@ Masalah antar modul dapat membocorkan token atau data pribadi, menyebabkan respo
 
 ## 7. Bagaimana cara mengecek hasilnya?
 
-Jalankan layanan PostgreSQL/Redis terisolasi, transport SMTP palsu, uji alur penuh verifikasi dan reset, migrasi UP/DOWN/reapply, shutdown, Queue Monitor, serta pemeriksaan log dan diff.
+Saat environment menyediakan PostgreSQL dan Redis terisolasi serta mengizinkan bind loopback, jalankan seluruh integrasi, migrasi UP/DOWN/reapply, HTTP/Supertest, full API suite, dan pemeriksaan keamanan. Bukti probe dan status saat ini tercatat di `technical.md`.
 
 ## 8. Apa yang harus direview manusia?
 
-Manusia perlu memastikan seluruh open point pendahulu sudah disetujui, terutama handoff token, API publik, TTL/rate limit, dan dampak reset pada sesi.
+Reviewer perlu menyediakan environment test terisolasi yang memenuhi gate PostgreSQL, Redis, dan loopback socket. Keputusan kontrak task 31–36 tetap disetujui dan tidak perlu dibuka ulang.
 
 ## 9. Apa yang belum dikerjakan?
 
-Belum ada perubahan kode pada task perencanaan ini. Task ini dijalankan setelah task 31–36 benar-benar selesai.
+Semua validasi database, migrasi, Redis/BullMQ, Queue Monitor HTTP, OpenAPI/Supertest, security regression runtime, dan full API suite masih pending. Task 33–36 tetap berstatus implementation dengan validasi pending; task 37 belum complete.

@@ -2,7 +2,7 @@
 
 ## 1. Apa yang dibuat?
 
-Task ini merencanakan alur lupa kata sandi dan reset kata sandi dengan challenge sekali pakai yang kedaluwarsa.
+Task ini mengimplementasikan permintaan pemulihan kata sandi dan reset sekali pakai melalui email, memakai challenge bersama yang kedaluwarsa.
 
 ## 2. Kenapa dibuat?
 
@@ -10,11 +10,11 @@ Sistem Auth sudah memiliki hash Argon2id dan sesi, tetapi belum memiliki alur pe
 
 ## 3. Apa yang berubah?
 
-Implementasi nantinya memakai challenge bersama, email reset, pembaruan hash kata sandi, audit, dan aturan sesi yang sudah disetujui.
+API publik, TTL satu jam, rate limit, audit, pencabutan semua sesi, dan pembersihan flag `mustChangePassword` sudah disetujui. Implementasi memakai challenge bersama, email reset terenkripsi melalui be/33, pembaruan hash, dan transaksi atomik.
 
 ## 4. Apa yang tidak berubah?
 
-Task ini tidak mengubah kebijakan kata sandi, role, permission, halaman frontend, atau perilaku sesi tanpa keputusan manusia.
+Task ini tidak mengubah kebijakan kata sandi, role, permission, atau halaman frontend. Reset kata sandi mencabut seluruh sesi aktif sesuai keputusan yang disetujui.
 
 ## 5. Dependency task apa?
 
@@ -30,8 +30,8 @@ Uji respons yang sama untuk email dikenal dan tidak dikenal, token valid/tidak v
 
 ## 8. Apa yang harus direview manusia?
 
-Manusia perlu menyetujui kontrak API, TTL, rate limit, URL reset, perilaku `mustChangePassword`, dan apakah reset mencabut sesi atau refresh token yang ada.
+Reviewer perlu memeriksa kontrak API, migrasi purpose challenge, transaksi reset/revokasi sesi, dan bukti integrasi PostgreSQL.
 
 ## 9. Apa yang belum dikerjakan?
 
-Belum ada kode. Task masih terblokir oleh desain pengiriman token aman dan keputusan API/kebijakan sesi.
+Belum ada halaman frontend reset kata sandi. Integrasi PostgreSQL, migration purpose UP/DOWN/RE-UP, HTTP/OpenAPI, dan full API suite sudah tervalidasi melalui be/37.

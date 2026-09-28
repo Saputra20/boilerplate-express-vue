@@ -7,6 +7,7 @@ import type { AccessAuthService } from '../../src/modules/auth/services/access-a
 import type { LoginService } from '../../src/modules/auth/services/login.service.js';
 import type { LogoutService } from '../../src/modules/auth/services/logout.service.js';
 import type { RefreshService } from '../../src/modules/auth/services/refresh-token.service.js';
+import type { PasswordRecoveryService } from '../../src/modules/auth/services/password-recovery.service.js';
 import type { HealthRouteOptions } from '../../src/modules/health/health.router.js';
 import { createLogging, type Logging } from '../../src/config/logger/logger.js';
 import type { QueueMonitorOptions } from '../../src/config/queue/queue-monitor.js';
@@ -20,6 +21,7 @@ type TestAppOptions = {
   refreshService?: RefreshService;
   accessAuthService?: AccessAuthService;
   logoutService?: LogoutService;
+  passwordRecoveryService?: PasswordRecoveryService;
   queueMonitor?: QueueMonitorOptions;
   healthRoutes?: HealthRouteOptions;
 };
@@ -39,19 +41,22 @@ export function createTestApp(options: TestAppOptions = {}): TestApp {
     options.refreshService !== undefined ||
     options.accessAuthService !== undefined ||
     options.logoutService !== undefined;
+  const hasRecoveryService = options.passwordRecoveryService !== undefined;
   const app = createApp({
     logging,
     security: options.securityOptions ?? { corsOrigins: [TEST_CORS_ORIGIN] },
-    routers: hasAuthService
-      ? {
-          authV1: createAuthRouter({
-            loginService: options.loginService,
-            refreshService: options.refreshService,
-            accessAuthService: options.accessAuthService,
-            logoutService: options.logoutService,
-          }),
-        }
-      : undefined,
+    routers:
+      hasAuthService || hasRecoveryService
+        ? {
+            authV1: createAuthRouter({
+              loginService: options.loginService,
+              refreshService: options.refreshService,
+              accessAuthService: options.accessAuthService,
+              logoutService: options.logoutService,
+              passwordRecoveryService: options.passwordRecoveryService,
+            }),
+          }
+        : undefined,
     queueMonitor: options.queueMonitor,
     health: options.healthRoutes,
   });

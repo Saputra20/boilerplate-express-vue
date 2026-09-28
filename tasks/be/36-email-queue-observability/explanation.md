@@ -2,7 +2,7 @@
 
 ## 1. Apa yang dibuat?
 
-Task ini merencanakan visibilitas aman untuk job email transaksional pada Queue Monitor dan log aplikasi.
+Task ini menambahkan visibilitas aman untuk status dan kegagalan job email transaksional pada Queue Monitor dan log aplikasi.
 
 ## 2. Kenapa dibuat?
 
@@ -10,7 +10,7 @@ Operator perlu mengetahui status dan kegagalan pengiriman, tetapi Bull Board dap
 
 ## 3. Apa yang berubah?
 
-Job email akan memakai metadata aman dan kegagalan provider akan diubah menjadi kategori terbatas yang aman untuk dilihat.
+Queue email terdaftar di monitor yang read-only. Worker menormalkan kegagalan menjadi kategori terbatas sebelum BullMQ menyimpan alasan gagal, dan log kegagalan hanya memuat nama queue, ID delivery, jumlah percobaan yang dibatasi, serta kategori aman. Payload job tetap hanya berisi ID delivery.
 
 ## 4. Apa yang tidak berubah?
 
@@ -18,7 +18,7 @@ Basic Auth pada `/ops/queues`, sifat read-only Queue Monitor, retry antrean, RBA
 
 ## 5. Dependency task apa?
 
-Membutuhkan fondasi antrean, Queue Monitor, audit, dan worker email pada task 33.
+Task ini memakai queue worker be/33, audit be/14, dan monitor be/16. Validasi PostgreSQL/Redis, Queue Monitor HTTP, dan full API suite telah lulus di be/37.
 
 ## 6. Risiko utama?
 
@@ -26,12 +26,12 @@ Payload job atau alasan gagal dapat membocorkan token, alamat email, isi pesan, 
 
 ## 7. Bagaimana cara mengecek hasilnya?
 
-Uji job sukses dan gagal dengan provider palsu, lalu periksa payload, Queue Monitor, dan log. Semua data sensitif harus tidak ada.
+Focused unit/integration tests mencakup kategori error, metadata log, payload, Queue Monitor HTTP, dan Redis/BullMQ runtime. Lint, typecheck, format, full API suite, dan `git diff --check` juga lulus di be/37.
 
 ## 8. Apa yang harus direview manusia?
 
-Manusia perlu meninjau kategori kegagalan yang aman dan memutuskan terpisah bila akses operasional perlu berpindah dari Basic Auth ke RBAC.
+Review kategori kegagalan, daftar field log, payload opaque ID, dan bahwa Queue Monitor tetap memakai Basic Auth dan mode read-only. Validasi HTTP dan runtime queue menjadi bukti lanjutan di be/37.
 
 ## 9. Apa yang belum dikerjakan?
 
-Task ini belum mengubah kode atau mengubah mekanisme akses Queue Monitor.
+Tidak ada validasi backend email yang tertunda untuk be/33–37. Review visual dan kompatibilitas email-client be/32 tetap terpisah dan tidak dinyatakan lulus oleh gate backend ini.
