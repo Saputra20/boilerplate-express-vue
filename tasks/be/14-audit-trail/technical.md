@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Database / security infrastructure |
 | Repository/App | `apps/api` |
-| Status | Ready — approved execution contract |
+| Status | COMPLETE — isolated persistence evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 14 |
 | Suggested Size | Small — one focused generic audit boundary and migration |
 | Depends On | `be/03-database-foundation`, `be/06-logging-foundation`, `be/10-login-session`, `be/13-rbac-permissions` |
@@ -263,3 +263,16 @@ None.
 - [ ] Code Anti-Slop passes.
 - [ ] Format, lint, typecheck, and `git diff --check` pass.
 - [ ] Changed-file/secret review complete; no public audit API, scheduler, or unrelated changes remain.
+
+## Reconciliation Validation Addendum (2026-09-28)
+
+### State
+
+The generic audit storage contract and task-specific validation are complete.
+
+### Evidence
+
+- The audit service/repository persisted validated metadata in isolated PostgreSQL; actor deletion preserved the audit row and set the actor FK to null.
+- Cleanup removed a record older than the 90-day cutoff. A forced owner-transaction failure rolled back both the sample state change and required audit append.
+- Migration 0011 and compatible successor migrations passed UP, reverse-order DOWN, audit-table absence verification, and re-UP using the repository rollback executor.
+- Existing audit tests and the full API integration suite passed (39 suites, 229 tests). Root lint, typecheck, format check, and `git diff --check` passed on 2026-09-28.

@@ -10,7 +10,7 @@
 | Workstream      | Backend                                                                                                                  |
 | Task Category   | API contract planning                                                                                                    |
 | Repository/App  | `apps/api`                                                                                                               |
-| Status          | Proposed contract — human approval required                                                                              |
+| Status          | IMPLEMENTED — VALIDATION PENDING                                                                              |
 | Priority        | N/A                                                                                                                      |
 | Suggested Size  | Large                                                                                                                    |
 | Depends On      | `be/04-identity-schema`, `be/13-rbac-permissions`, `be/23-versioned-openapi-swagger`, `be/25-authenticated-rbac-context` |
@@ -121,3 +121,7 @@ Not applicable — project has no traceability ID system.
 ## 22. Definition Of Done
 
 All user-management decisions are approved, auth ownership remains clear, implementation is split, and no behavior is guessed.
+
+## Reconciliation Addendum (2026-09-28)
+
+The proposed status is stale relative to the approved user-management decisions in this conversation and the existing module at `apps/api/src/modules/user/`. The implementation is present; this addendum does not certify every acceptance criterion or database validation. Preserve the approved contract and record validation before completion.

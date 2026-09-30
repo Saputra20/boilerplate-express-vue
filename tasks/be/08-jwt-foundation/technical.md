@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | JWT foundation |
 | Repository/App | `apps/api` |
-| Status | Ready: approved for implementation |
+| Status | COMPLETE — validation evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 8 |
 | Suggested Size | Small - focused JWT infrastructure, startup integration, and tests |
 | Depends On | `be/02-environment-validation`, `be/04-identity-schema`, `be/07-security-foundation` |
@@ -299,3 +299,7 @@ None.
 - [ ] Lint, typecheck, and `git diff --check` pass.
 - [ ] Changed files and diff are reviewed; no raw key, token, secret, generated junk, or unrelated change remains.
 - [ ] No database migration, OpenAPI change, API route, browser verification, or UI work is claimed without evidence.
+
+## Reconciliation Addendum (2026-09-28)
+
+`apps/api/tests/jwt.test.ts` ran in the final API suite and covers RS256 verification, claims, token classes, expiry, invalid keys, and secret-safe failures. The full API suite passed (39 suites, 229 tests); root lint, typecheck, format check, and `git diff --check` passed.

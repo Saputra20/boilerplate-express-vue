@@ -10,11 +10,11 @@
 | Workstream | Backend |
 | Task Category | Operational monitor |
 | Repository/App | `apps/api` |
-| Status | Implemented — visual verification pending |
+| Status | IMPLEMENTED — VISUAL VALIDATION BLOCKED BY ENVIRONMENT |
 | Priority | Foundation execution order 16 |
 | Suggested Size | Small — one protected third-party dashboard boundary |
 | Depends On | `be/05-redis-foundation`, `be/07-security-foundation`, `be/13-rbac-permissions`, `be/15-bullmq-foundation` |
-| Blocks | `be/17-openapi` |
+| Blocks | None — legacy `be/17-openapi` edge is superseded by `be/22`–`be/23` |
 | Execution Order | 16 |
 
 ## 2. Outcome
@@ -274,3 +274,11 @@ None.
 - [ ] Code Anti-Slop passes.
 - [ ] Format, lint, typecheck, and `git diff --check` pass.
 - [ ] Changed-file and secret review complete.
+
+## Reconciliation Validation Addendum (2026-09-28)
+
+## Reconciliation Validation Addendum (2026-09-28)
+
+- Runtime check: unauthenticated `GET /ops/queues` returned `401`; the synthetic test credential returned `200`. No dashboard mutations were issued.
+- Source configures the BullMQ adapter with `readOnlyMode: true` and `allowRetries: false`. The full API integration suite passed (39 suites, 229 tests), including queue monitor and Redis/BullMQ coverage.
+- Visual inspection could not run: Codex in-app browser rejected the local monitor URL with `net::ERR_BLOCKED_BY_CLIENT`. No UI or security changes were made to work around this restriction. Visual validation remains blocked.

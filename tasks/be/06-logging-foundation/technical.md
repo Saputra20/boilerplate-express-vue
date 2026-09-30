@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Logging foundation |
 | Repository/App | `apps/api` |
-| Status | Ready: approved for implementation |
+| Status | COMPLETE — validation evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 6 |
 | Suggested Size | Small — focused logging infrastructure and tests |
 | Depends On | `be/02-environment-validation` |
@@ -283,3 +283,7 @@ None.
 - [ ] Lint, typecheck, applicable tests, and `git diff --check` pass.
 - [ ] Changed-file, secret-exposure, `git diff`, and `git status` reviews are complete.
 - [ ] No dependency, external observability stack, API, database, or authentication scope was added without explicit approval.
+
+## Reconciliation Addendum (2026-09-28)
+
+`apps/api/tests/logging.test.ts` ran in the final API suite and covers correlated destinations, redaction, bounded rotation, retention cleanup, file failure fallback, and fatal initialization without fallback. The full API suite passed (39 suites, 229 tests); root lint, typecheck, format check, and `git diff --check` passed.

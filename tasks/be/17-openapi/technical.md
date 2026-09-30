@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | OpenAPI infrastructure |
 | Repository/App | `apps/api` |
-| Status | Implemented — visual verification pending |
+| Status | SUPERSEDED — REPLACED BY BE/22–BE/23 |
 | Priority | Foundation execution order 17 |
 | Suggested Size | Small — one documented API contract boundary |
 | Depends On | `be/07-security-foundation`; current auth contracts from `be/08`, `be/10`, `be/11`, `be/12`; operational-route exclusion from `be/16` |
@@ -266,3 +266,7 @@ None.
 - [ ] Focused and regression tests, format, lint, typecheck, Code Anti-Slop, and diff check pass.
 - [ ] Browser verification passes when available, or its unavailable status is reported truthfully.
 - [ ] Changed-file, secret, and human reviews complete.
+
+## Reconciliation Addendum (2026-09-28)
+
+This task’s original unversioned OpenAPI contract has been superseded by API versioning in BE/22 and the versioned OpenAPI implementation in BE/23. BE/23 owns current route aggregation and its recorded fallback validation. The old visual-review status is historical and is not a separate current implementation gate.

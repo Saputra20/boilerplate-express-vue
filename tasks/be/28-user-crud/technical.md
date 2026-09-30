@@ -10,7 +10,7 @@
 | Workstream      | Backend |
 | Task Category   | Administrative API / identity management |
 | Repository/App  | `apps/api` |
-| Status          | Ready for Planning — blocked pending open-point approval |
+| Status          | SUPERSEDED — REPLACED BY BE/28 USER-MANAGEMENT |
 | Priority        | Security-sensitive |
 | Suggested Size  | Large — user API, auth-state coordination, role assignment, audit, authorization, and integration tests |
 | Depends On      | `be/04-identity-schema`, `be/09-password-hashing`, `be/10-login-session`, `be/12-logout-revocation`, `be/13-rbac-permissions`, `be/14-audit-trail`, `be/23-versioned-openapi-swagger`, `be/25-authenticated-rbac-context`, `be/27-role-crud` |
@@ -400,3 +400,6 @@ Not applicable — no UI changes.
 - [ ] Changed files, secrets, auth-state effects, audit, and scope reviewed.
 - [ ] No unrelated changes remain.
 
+## Reconciliation Addendum (2026-09-28)
+
+This earlier user CRUD planning record is superseded by the later approved BE/28 user-management contract and its existing implementation. Preserve this document as history; do not execute it as a second CRUD task. Its former open points must not override decisions approved for user management.

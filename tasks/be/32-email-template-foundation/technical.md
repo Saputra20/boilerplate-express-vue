@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Shared transactional-email rendering |
 | Repository/App | `apps/api` |
-| Status | IMPLEMENTED — VISUAL / CLIENT REVIEW PENDING |
+| Status | IMPLEMENTED — VISUAL / CLIENT REVIEW BLOCKED BY ENVIRONMENT |
 | Priority | High |
 | Suggested Size | Medium |
 | Depends On | `be/31-email-foundation`, `be/21-api-module-architecture-refactor` |
@@ -313,3 +313,11 @@ Inspect these stable artifacts in `tasks/be/32-email-template-foundation/artifac
 - [ ] Required local preview and plain-text evidence are visually reviewed; client claims reflect actual inspection. (NOT RUN — pending manual review.)
 - [ ] Code/UI/Copy Anti-Slop checks pass after any remediation.
 - [ ] `git diff --check`, changed-file review, and secret review pass; no unrelated changes remain.
+
+## Reconciliation Validation Addendum (2026-09-28)
+
+### Reconciliation Review Addendum (2026-09-28)
+
+- The six repository-local HTML/plain-text artifacts were inspected as source/text; all action URLs and identities use deterministic synthetic preview values. Focused template tests passed (1 suite, 8 tests), and `bun run email:preview` regenerated the stable artifacts.
+- Review found the preview fixture supplied a full sentence where the renderer expects an expiry duration, causing doubled punctuation. Only the synthetic fixture value was corrected; renderer design and business behavior were not changed. The resulting text reads as one sentence with one period.
+- Rendered desktop/mobile/dark-mode and email-client review remains blocked. Codex in-app browser rejected the local application preview with `net::ERR_BLOCKED_BY_CLIENT`, and the existing file-preview policy does not permit an alternate browser route. No visual or client-compatibility PASS is claimed.

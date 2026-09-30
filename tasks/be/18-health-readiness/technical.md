@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Health and readiness |
 | Repository/App | `apps/api` |
-| Status | Ready — approved execution contract |
+| Status | COMPLETE — validation evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 18 |
 | Suggested Size | Small — two bounded operational routes |
 | Depends On | Database capability from `be/03`, Redis capability from `be/05`, safe middleware from `be/07`, OpenAPI registration from `be/17` |
@@ -257,3 +257,7 @@ None.
 - [ ] No migration, env knob, extra client, business route, or diagnostic payload is added.
 - [ ] Focused/full tests, format, lint, typecheck, Code Anti-Slop, and diff check pass.
 - [ ] Changed-file, secret, and human reviews complete.
+
+## Reconciliation Addendum (2026-09-28)
+
+`apps/api/tests/health-readiness.test.ts` ran in the final API suite and covers public liveness/readiness, concurrent bounded dependency probes, failure/timeout safety, rate-limit exemption, and OpenAPI. The full API suite passed (39 suites, 229 tests); root lint, typecheck, format check, and `git diff --check` passed.

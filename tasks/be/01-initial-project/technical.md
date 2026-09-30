@@ -12,7 +12,7 @@
 | Category | init foundation |
 | Repository | `apps/api` |
 | Platform | Bun / Express API |
-| Status | Planned — not executed |
+| Status | COMPLETE — validation evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 1 |
 | Suggested Size | Small — one reviewable change set |
 | Depends On | None. |
@@ -201,3 +201,7 @@ Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unu
 ## 18. Open Points
 
 None.
+
+## Reconciliation Addendum (2026-09-28)
+
+The repository workspace, API shell, package scripts, environment examples, lint/format/test configuration, and local development foundation are present. The final API suite passed (39 suites, 229 tests); root lint, typecheck, format check, and `git diff --check` passed on 2026-09-28. No business behavior or out-of-scope files were added.

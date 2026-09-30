@@ -315,6 +315,8 @@ Backend is authorization source of truth: user → role → permission → actio
 - Stack: Vue 3, Vite, TypeScript, Pinia, Vue Router, Axios, Zod, Tailwind CSS.
 - Use business-specific components. Shared UI holds only genuine primitives. Keep page logic near its module. Do not duplicate backend business logic.
 - Use typed API contracts. Handle applicable loading, success, empty, error, disabled, hover, focus, responsive, and mobile states. Do not hide API errors.
+- For new or explicitly reworked CMS record-management workflows, use dedicated routed pages for create, detail, update/edit, and delete/confirmation operations. Do not use modal popups as the primary surface for those workflows; show destructive confirmation on the dedicated page. Reuse existing API contracts and permissions, and do not invent or broaden authorization to support a route.
+- Apply this route-based rule within the owning approved task. Do not opportunistically migrate existing modules or override an existing approved task contract without explicit scope to rework it.
 
 ## UI/UX Rules
 

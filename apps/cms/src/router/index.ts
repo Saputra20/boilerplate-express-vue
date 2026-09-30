@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import type { Router } from 'vue-router';
+import type { RouteLocationNormalized, Router } from 'vue-router';
 import AppShell from '../components/AppShell.vue';
 import HomeView from '../views/HomeView.vue';
 import LoginView from '../views/LoginView.vue';
@@ -7,7 +7,9 @@ import NotFoundView from '../views/NotFoundView.vue';
 import DeniedView from '../views/DeniedView.vue';
 import CategoryView from '../views/CategoryView.vue';
 import RoleView from '../views/RoleView.vue';
+import RoleFormView from '../views/RoleFormView.vue';
 import UserView from '../views/UserView.vue';
+import UserFormView from '../views/UserFormView.vue';
 import { sanitizeReturnTo } from './return-to';
 
 declare module 'vue-router' {
@@ -51,12 +53,58 @@ export const routes = [
         },
       },
       {
+        path: 'roles/create',
+        name: 'role-create',
+        component: RoleFormView,
+        props: { mode: 'create' },
+        meta: {
+          title: 'Create role',
+          requiredPermission: 'role.create',
+        },
+      },
+      {
+        path: 'roles/:id/edit',
+        name: 'role-edit',
+        component: RoleFormView,
+        props: (route: RouteLocationNormalized) => ({
+          mode: 'edit' as const,
+          roleId: String(route.params.id),
+        }),
+        meta: {
+          title: 'Edit role',
+          requiredPermission: 'role.update',
+        },
+      },
+      {
         path: 'roles',
         name: 'roles',
         component: RoleView,
         meta: {
           title: 'Roles',
           requiredPermission: 'role.read',
+        },
+      },
+      {
+        path: 'users/create',
+        name: 'user-create',
+        component: UserFormView,
+        props: { mode: 'create' },
+        meta: {
+          title: 'Create user',
+          requiredPermission: 'user.create',
+        },
+      },
+      {
+        path: 'users/:id/edit',
+        name: 'user-edit',
+        component: UserFormView,
+        props: (route: RouteLocationNormalized) => ({
+          mode: 'edit' as const,
+          userId: String(route.params.id),
+        }),
+        meta: {
+          title: 'Edit user',
+          requiredPermission: 'user.update',
         },
       },
       {

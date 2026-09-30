@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Password foundation |
 | Repository/App | `apps/api` |
-| Status | Ready: approved for implementation |
+| Status | COMPLETE — validation evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 9 |
 | Suggested Size | Small - focused local password hashing/verification module and tests |
 | Depends On | `be/04-identity-schema` |
@@ -277,3 +277,7 @@ None.
 - [ ] Lint, typecheck, and `git diff --check` pass.
 - [ ] Changed files and diff are reviewed; no plaintext, hash fixture, salt, secret, generated junk, or unrelated change remains.
 - [ ] No migration, API route, login/session behavior, OpenAPI update, or UI work is claimed without evidence.
+
+## Reconciliation Addendum (2026-09-28)
+
+`apps/api/tests/password.test.ts` ran in the final API suite and covers Argon2id, length boundaries, whitespace preservation, salt uniqueness, correct/wrong credentials, and malformed hashes. The full API suite passed (39 suites, 229 tests); root lint, typecheck, format check, and `git diff --check` passed.

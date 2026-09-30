@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Security foundation |
 | Repository/App | `apps/api` |
-| Status | Ready: approved for implementation |
+| Status | COMPLETE — validation evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 7 |
 | Suggested Size | Small — focused API middleware, startup lifecycle, and tests |
 | Depends On | `be/02-environment-validation`, `be/06-logging-foundation` |
@@ -289,3 +289,7 @@ None.
 - [ ] Lint, typecheck, full applicable tests, and `git diff --check` pass.
 - [ ] Changed-file, secret-exposure, `git diff`, and `git status` reviews are complete.
 - [ ] No auth/JWT/RBAC/session/distributed-limiter scope is added.
+
+## Reconciliation Addendum (2026-09-28)
+
+`apps/api/tests/security.test.ts` ran in the final API suite and covers CORS, request limits, safe errors, and security middleware. The full API suite passed (39 suites, 229 tests); root lint, typecheck, format check, and `git diff --check` passed.

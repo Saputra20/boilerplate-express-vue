@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Business module / API |
 | Repository/App | `apps/api` |
-| Status | Approved implementation task — dependency-gated |
+| Status | COMPLETE — persistence and migration evidence recorded 2026-09-28 |
 | Priority | N/A |
 | Suggested Size | Medium |
 | Depends On | `be/27-role-crud` (approved), `be/04-identity-schema`, `be/13-rbac-permissions`, `be/14-audit-trail`, `be/23-versioned-openapi-swagger`, `be/25-authenticated-rbac-context`, approved role-permission catalog dependency |
@@ -259,3 +259,12 @@ Not applicable — project has no traceability ID system.
 - [ ] Code Anti-Slop passes.
 - [ ] `git diff --check`, changed-file review, and secret review pass.
 - [ ] No unrelated production changes remain.
+
+## Reconciliation Validation Addendum (2026-09-28)
+
+### Reconciliation Validation Addendum (2026-09-28)
+
+- Isolated PostgreSQL verified role permission persistence, atomic rollback when an invalid permission code is submitted, and `roles_name_unique` migration UP/DOWN/re-UP behavior.
+- Existing role tests and the full API suite passed (39 suites, 229 tests), covering the role routes, permissions, authorization, audit behavior, and OpenAPI.
+- Validation confirmed Drizzle wraps PostgreSQL `23505` violations under `cause`; the role service now maps both direct and wrapped uniqueness violations to `RoleConflictError`. Regression coverage is in `apps/api/tests/role.test.ts`, and the real-database service conflict check passed.
+- Root lint, typecheck, format check, `git diff --check`, and Code Anti-Slop review passed. No new migration was created.

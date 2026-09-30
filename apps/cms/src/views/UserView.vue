@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
-import type { ManagedUser, Role } from '../api/types';
+import type { ManagedUser } from '../api/types';
 import { cmsApiClient, useAuthStore } from '../stores/auth';
 import CmsBadge from '../components/ui/CmsBadge.vue';
 import CmsButton from '../components/ui/CmsButton.vue';
 import CmsEmptyState from '../components/ui/CmsEmptyState.vue';
 import CmsIcon from '../components/CmsIcon.vue';
-import CmsInput from '../components/ui/CmsInput.vue';
 import CmsLoadingState from '../components/ui/CmsLoadingState.vue';
 import CmsModal from '../components/ui/CmsModal.vue';
 import CmsPagination from '../components/ui/CmsPagination.vue';
@@ -17,8 +17,8 @@ import CmsSortableHeader from '../components/ui/CmsSortableHeader.vue';
 import FeedbackState from '../components/FeedbackState.vue';
 
 const auth = useAuthStore();
+const router = useRouter();
 const users = ref<ManagedUser[]>([]);
-const roles = ref<Role[]>([]);
 const page = ref(1);
 const pageSize = ref(10);
 const totalPages = ref(0);
@@ -29,16 +29,11 @@ const statusDraft = ref(statusFilter.value);
 const sort = ref<'email.asc' | 'email.desc' | 'createdAt.asc' | 'createdAt.desc'>('createdAt.desc');
 const loading = ref(true);
 const error = ref<string | null>(null);
-const formError = ref<string | null>(null);
-const modalOpen = ref(false);
 const detailOpen = ref(false);
 const deleteOpen = ref(false);
-const saving = ref(false);
 const deleting = ref(false);
-const loadingRoles = ref(false);
+const deleteError = ref<string | null>(null);
 const selected = ref<ManagedUser | null>(null);
-const editing = ref<ManagedUser | null>(null);
-const form = reactive({ email: '', roleId: '', status: 'active' as 'active' | 'disabled' });
 
 const canCreate = computed(() => auth.can('user.create'));
 const canUpdate = computed(() => auth.can('user.update'));
@@ -67,62 +62,6 @@ async function loadUsers(): Promise<void> {
   }
 }
 
-async function loadRoles(): Promise<void> {
-  loadingRoles.value = true;
-  try {
-    const response = await cmsApiClient.listRoles({ page: 1, limit: 100, sort: 'name.asc' });
-    roles.value = response.items;
-  } catch (cause) {
-    formError.value = cause instanceof ApiError ? cause.message : 'Unable to load roles.';
-  } finally {
-    loadingRoles.value = false;
-  }
-}
-
-async function openCreate(): Promise<void> {
-  selected.value = null;
-  editing.value = null;
-  Object.assign(form, { email: '', roleId: '', status: 'active' });
-  formError.value = null;
-  modalOpen.value = true;
-  await loadRoles();
-}
-
-async function openEdit(user: ManagedUser): Promise<void> {
-  selected.value = null;
-  editing.value = user;
-  Object.assign(form, {
-    email: user.email,
-    roleId: user.role?.id ?? '',
-    status: user.status,
-  });
-  formError.value = null;
-  modalOpen.value = true;
-  await loadRoles();
-}
-
-async function save(): Promise<void> {
-  saving.value = true;
-  formError.value = null;
-  try {
-    if (editing.value) {
-      await cmsApiClient.updateUser(editing.value.id, {
-        email: form.email,
-        roleId: form.roleId,
-        status: form.status,
-      });
-    } else {
-      await cmsApiClient.createUser({ email: form.email, roleId: form.roleId });
-    }
-    modalOpen.value = false;
-    await loadUsers();
-  } catch (cause) {
-    formError.value = cause instanceof ApiError ? cause.message : 'Unable to save user.';
-  } finally {
-    saving.value = false;
-  }
-}
-
 async function openDetails(user: ManagedUser): Promise<void> {
   try {
     selected.value = await cmsApiClient.getUser(user.id);
@@ -134,21 +73,21 @@ async function openDetails(user: ManagedUser): Promise<void> {
 
 function openDelete(user: ManagedUser): void {
   selected.value = user;
-  formError.value = null;
+  deleteError.value = null;
   deleteOpen.value = true;
 }
 
 async function remove(): Promise<void> {
   if (!selected.value) return;
   deleting.value = true;
-  formError.value = null;
+  deleteError.value = null;
   try {
     await cmsApiClient.deleteUser(selected.value.id);
     deleteOpen.value = false;
     if (users.value.length === 1 && page.value > 1) page.value -= 1;
     await loadUsers();
   } catch (cause) {
-    formError.value = cause instanceof ApiError ? cause.message : 'Unable to delete user.';
+    deleteError.value = cause instanceof ApiError ? cause.message : 'Unable to delete user.';
   } finally {
     deleting.value = false;
   }
@@ -201,7 +140,7 @@ onMounted(() => void loadUsers());
 <template>
   <section class="w-full">
     <div v-if="canCreate" class="mb-4 flex flex-wrap items-center justify-end gap-3">
-      <CmsButton @click="openCreate">Add user</CmsButton>
+      <CmsButton @click="router.push('/users/create')">Add user</CmsButton>
     </div>
     <CmsTable
       title="Users"
@@ -303,7 +242,7 @@ onMounted(() => void loadUsers());
                 type="button"
                 class="grid min-h-11 min-w-11 place-items-center rounded-lg text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
                 :aria-label="`Edit user ${user.email}`"
-                @click="openEdit(user)"
+                @click="router.push(`/users/${user.id}/edit`)"
               >
                 <CmsIcon name="edit" />
               </button>
@@ -315,40 +254,6 @@ onMounted(() => void loadUsers());
         <CmsPagination :page="page" :total-pages="totalPages" @change="changePage" />
       </template>
     </CmsTable>
-
-    <CmsModal
-      :open="modalOpen"
-      :title="editing ? 'Edit user' : 'Add user'"
-      @close="modalOpen = false"
-      ><form class="space-y-4" @submit.prevent="save">
-        <CmsInput v-model="form.email" label="Email" type="email" required /><CmsSelect
-          v-model="form.roleId"
-          label="Role"
-          required
-          :disabled="loadingRoles"
-        >
-          <option value="" disabled>
-            {{ loadingRoles ? 'Loading roles…' : 'Select a role' }}
-          </option>
-          <option v-for="role in roles" :key="role.id" :value="role.id">
-            {{ role.name }}
-          </option> </CmsSelect
-        ><CmsSelect v-if="editing" v-model="form.status" label="Status">
-          <option value="active">Active</option>
-          <option value="disabled">Disabled</option>
-        </CmsSelect>
-        <p v-else class="rounded-cms-sm bg-cms-muted-surface p-3 text-sm text-cms-muted">
-          A default password will be assigned. The user must change it at first login.
-        </p>
-        <p v-if="formError" role="alert" class="text-sm text-cms-destructive">{{ formError }}</p>
-        <div class="flex justify-end gap-3">
-          <CmsButton type="button" variant="outline" @click="modalOpen = false">Cancel</CmsButton
-          ><CmsButton type="submit" :loading="saving" :disabled="loadingRoles || roles.length === 0"
-            >Save user</CmsButton
-          >
-        </div>
-      </form></CmsModal
-    >
 
     <CmsModal :open="detailOpen" title="User details" @close="detailOpen = false"
       ><dl v-if="selected" class="grid gap-4 sm:grid-cols-2">
@@ -389,18 +294,20 @@ onMounted(() => void loadUsers());
       ></CmsModal
     >
 
-    <CmsModal :open="deleteOpen" title="Delete user" @close="deleteOpen = false"
-      ><p class="text-sm leading-6 text-cms-muted">
+    <CmsModal :open="deleteOpen" title="Delete user" @close="deleteOpen = false">
+      <p class="text-sm leading-6 text-cms-muted">
         Delete <strong class="text-cms-foreground">{{ selected?.email }}</strong
         >? This will disable the account and revoke its active sessions.
       </p>
-      <p v-if="formError" role="alert" class="mt-4 text-sm text-cms-destructive">{{ formError }}</p>
-      <template #footer
-        ><CmsButton variant="outline" @click="deleteOpen = false">Cancel</CmsButton
-        ><CmsButton variant="destructive" :loading="deleting" @click="remove"
-          >Delete user</CmsButton
-        ></template
-      ></CmsModal
-    >
+      <p v-if="deleteError" role="alert" class="mt-4 text-sm text-cms-destructive">
+        {{ deleteError }}
+      </p>
+      <template #footer>
+        <CmsButton variant="outline" @click="deleteOpen = false">Cancel</CmsButton>
+        <CmsButton variant="destructive" :loading="deleting" @click="remove">
+          Delete user
+        </CmsButton>
+      </template>
+    </CmsModal>
   </section>
 </template>

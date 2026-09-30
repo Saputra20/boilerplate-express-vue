@@ -12,7 +12,7 @@
 | Category | env foundation |
 | Repository | `apps/api` |
 | Platform | Bun / Express API |
-| Status | Planned — not executed |
+| Status | COMPLETE — validation evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 2 |
 | Suggested Size | Small — one reviewable change set |
 | Depends On | be/01-initial-project |
@@ -205,3 +205,7 @@ Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unu
 ## 18. Open Points
 
 None.
+
+## Reconciliation Addendum (2026-09-28)
+
+`apps/api/tests/env.test.ts` ran in the final full API suite (39 suites, 229 tests passed); centralized Zod validation remains in `apps/api/src/config/env.ts`. Root lint, typecheck, format check, and `git diff --check` passed. Invalid config errors expose invalid keys without values.

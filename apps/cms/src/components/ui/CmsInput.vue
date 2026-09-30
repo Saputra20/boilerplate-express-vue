@@ -7,6 +7,10 @@ withDefaults(
     name?: string;
     type?: string;
     placeholder?: string;
+    pattern?: string;
+    maxLength?: number;
+    required?: boolean;
+    title?: string;
     error?: string;
     disabled?: boolean;
     ariaDescribedby?: string;
@@ -19,6 +23,10 @@ withDefaults(
     name: undefined,
     type: 'text',
     placeholder: undefined,
+    pattern: undefined,
+    maxLength: undefined,
+    required: false,
+    title: undefined,
     error: undefined,
     disabled: false,
     ariaDescribedby: undefined,
@@ -40,6 +48,10 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
       :name="name"
       :type="type"
       :placeholder="placeholder"
+      :pattern="pattern"
+      :maxlength="maxLength"
+      :required="required"
+      :title="title"
       :disabled="disabled"
       :aria-invalid="Boolean(error)"
       :aria-describedby="[ariaDescribedby, error && errorId].filter(Boolean).join(' ') || undefined"

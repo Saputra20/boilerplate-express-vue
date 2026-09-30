@@ -134,6 +134,16 @@ describe('API client', () => {
     });
   });
 
+  it('rejects role codes outside the backend lowercase format before sending a request', async () => {
+    const transport = createTransport();
+    const client = createApiClient('http://localhost:3000', () => 'access-token', transport);
+
+    await expect(
+      client.createRole({ code: 'TEST', name: 'Test', permissionCodes: [] }),
+    ).rejects.toThrow();
+    expect(transport.request).not.toHaveBeenCalled();
+  });
+
   it('uses approved user routes, update method, and safe response fields', async () => {
     const transport = createTransport();
     const user = {

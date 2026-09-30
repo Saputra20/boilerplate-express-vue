@@ -12,7 +12,7 @@
 | Category | database foundation |
 | Repository | `apps/api` |
 | Platform | Bun / Express API |
-| Status | Planned — not executed |
+| Status | COMPLETE — validation evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 3 |
 | Suggested Size | Small — one reviewable change set |
 | Depends On | be/02-environment-validation |
@@ -201,3 +201,16 @@ Code Anti-Slop: required. Reject generic abstraction, duplicated logic, dead/unu
 ## 18. Open Points
 
 Exact production migration deployment procedure is not specified.
+
+## Reconciliation Validation Addendum (2026-09-28)
+
+### State
+
+Implementation and this task's applicable validation are complete.
+
+### Evidence
+
+- `apps/api/src/config/database/client.ts` initializes a Drizzle/PostgreSQL pool from the separated database configuration and closes the pool on initialization failure.
+- The real PostgreSQL API integration suite passed (39 suites, 229 tests); focused PostgreSQL isolation passed (2 suites, 3 tests).
+- On the disposable PostgreSQL test service, the migration boundary applied identity migrations 0000–0004, executed repository-compatible reverse migrations in dependency order, verified schema restoration, and reapplied them successfully.
+- Root lint, typecheck, format check, and `git diff --check` passed on 2026-09-28. No business table was introduced by this reconciliation.

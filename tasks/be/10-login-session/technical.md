@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Login foundation |
 | Repository/App | `apps/api` |
-| Status | Ready: approved for implementation |
+| Status | COMPLETE — persistence and migration evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 10 |
 | Suggested Size | Small - login endpoint, session/refresh persistence, auth audit events, and tests |
 | Depends On | `be/04-identity-schema`, `be/06-logging-foundation`, `be/07-security-foundation`, `be/08-jwt-foundation`, `be/09-password-hashing` |
@@ -351,3 +351,16 @@ None.
 - [ ] Code Anti-Slop passes; UI Anti-Slop and visual verification are documented not applicable.
 - [ ] Lint, typecheck, and `git diff --check` pass.
 - [ ] Changed files/diff are reviewed; no raw token, password, hash, secret, generated junk, or unrelated change remains.
+
+## Reconciliation Validation Addendum (2026-09-28)
+
+### State
+
+Login/session implementation and this task's validation are complete.
+
+### Evidence
+
+- Existing `apps/api/tests/login-session.test.ts` and the full API integration suite passed (39 suites, 229 tests), covering request/response behavior, generic failures, token claims, safe logging, and issuance failure behavior.
+- On isolated PostgreSQL, the real login repository persisted the session, refresh JTI/digest, and success/failure audit rows. A forced audit insert failure rolled back the session write; persisted refresh metadata contained only the synthetic SHA-256 digest.
+- The current compatible schema migrated UP, rolled back to an empty schema in reverse dependency order, and reapplied successfully. No raw token was written to logs or stored by the repository check.
+- Root lint, typecheck, format check, and `git diff --check` passed on 2026-09-28.

@@ -85,7 +85,11 @@ export const permissionCatalogSchema = z.array(
   z.object({ id: z.uuid(), code: z.string(), description: z.string().nullable() }),
 );
 export const createRoleRequestSchema = z.object({
-  code: z.string().min(1).max(64),
+  code: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-z][a-z0-9_]*$/),
   name: z.string().min(1).max(120),
   description: z.string().max(500).nullable().optional(),
   permissionCodes: z.array(z.string()),

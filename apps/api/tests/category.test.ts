@@ -83,5 +83,19 @@ describe('category contract', () => {
     await expect(
       createCategoryService(conflictRepository).create({ name: 'News', slug: 'news' }, audit),
     ).rejects.toBeInstanceOf(CategoryConflictError);
+
+    const wrappedConflictRepository = {
+      ...repository(),
+      async create() {
+        const cause = Object.assign(new Error('duplicate'), { code: '23505' });
+        throw Object.assign(new Error('Database query failed'), { cause });
+      },
+    };
+    await expect(
+      createCategoryService(wrappedConflictRepository).create(
+        { name: 'News', slug: 'news' },
+        audit,
+      ),
+    ).rejects.toBeInstanceOf(CategoryConflictError);
   });
 });

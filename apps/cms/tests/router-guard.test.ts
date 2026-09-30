@@ -123,6 +123,21 @@ describe('authentication route guard', () => {
     await allowed.push('/users');
     expect(allowed.currentRoute.value.name).toBe('users');
   });
+
+  it.each([
+    ['/roles/create', 'role.create', 'role-create'],
+    ['/roles/00000000-0000-4000-8000-000000000001/edit', 'role.update', 'role-edit'],
+    ['/users/create', 'user.create', 'user-create'],
+    ['/users/00000000-0000-4000-8000-000000000001/edit', 'user.update', 'user-edit'],
+  ])('protects %s with %s', async (path, permission, routeName) => {
+    const denied = createGuardedRouter(createAuthMock(true));
+    await denied.push(path);
+    expect(denied.currentRoute.value.name).toBe('denied');
+
+    const allowed = createGuardedRouter(createAuthMock(true, [permission]));
+    await allowed.push(path);
+    expect(allowed.currentRoute.value.name).toBe(routeName);
+  });
 });
 
 describe('returnTo sanitization', () => {

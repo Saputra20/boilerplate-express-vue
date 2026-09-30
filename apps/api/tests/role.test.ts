@@ -88,6 +88,20 @@ describe('role contract', () => {
       ),
     ).rejects.toBeInstanceOf(RoleConflictError);
 
+    const wrappedConflict = {
+      ...repository(),
+      async create() {
+        const cause = Object.assign(new Error('duplicate'), { code: '23505' });
+        throw Object.assign(new Error('Database query failed'), { cause });
+      },
+    };
+    await expect(
+      createRoleService(wrappedConflict).create(
+        { code: 'editor', name: 'Editor', permissionCodes: [] },
+        audit,
+      ),
+    ).rejects.toBeInstanceOf(RoleConflictError);
+
     const admin = {
       ...repository(),
       async findById() {

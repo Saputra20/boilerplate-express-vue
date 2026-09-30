@@ -10,7 +10,7 @@
 | Workstream      | Backend                                                                                                                                               |
 | Task Category   | Business module / API / database                                                                                                                      |
 | Repository/App  | `apps/api`                                                                                                                                            |
-| Status          | Implemented — migration validation incomplete                                                                                                         |
+| Status          | COMPLETE — migration and persistence evidence recorded 2026-09-28                                                                                                         |
 | Priority        | N/A                                                                                                                                                   |
 | Suggested Size  | Medium — one module, one migration, RBAC wiring, OpenAPI, and focused tests                                                                           |
 | Depends On      | `be/03-database-foundation`, `be/04-identity-schema`, `be/13-rbac-permissions`, `be/23-versioned-openapi-swagger`, `be/25-authenticated-rbac-context` |
@@ -390,3 +390,12 @@ None. Current implementation uses the approved category route, validation, RBAC,
 - [x] `git diff --check` passes.
 - [x] Changed files and secrets reviewed.
 - [x] No unrelated category changes remain.
+
+## Reconciliation Validation Addendum (2026-09-28)
+
+### Reconciliation Validation Addendum (2026-09-28)
+
+- Isolated PostgreSQL verified the category migration UP, partial uniqueness for active/non-deleted slugs, soft deletion, slug reuse after soft deletion, matching DOWN, and re-UP.
+- The full API suite passed (39 suites, 229 tests), including category route, validation, authorization, and OpenAPI coverage.
+- Validation exposed that PostgreSQL uniqueness errors are wrapped by Drizzle under `cause`; the category service previously failed to translate this to its approved conflict response. The service now handles both direct and wrapped `23505` errors, with regression coverage in `apps/api/tests/category.test.ts` and a successful real-database service check.
+- Root lint, typecheck, format check, `git diff --check`, and Code Anti-Slop review passed. No migration or schema was changed by the fix.

@@ -1,3 +1,4 @@
+import { createMemoryHistory, createRouter, RouterView } from 'vue-router';
 import { flushPromises, mount } from '@vue/test-utils';
 import { vi } from 'vitest';
 
@@ -18,6 +19,16 @@ vi.mock('../src/stores/auth', () => ({
 }));
 
 import UserView from '../src/views/UserView.vue';
+
+async function mountUserView() {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [{ path: '/users', component: UserView }],
+  });
+  await router.push('/users');
+  await router.isReady();
+  return mount(RouterView, { global: { plugins: [router] } });
+}
 
 const user = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -43,7 +54,7 @@ describe('user management page', () => {
   });
 
   it('renders backend user fields without exposing credential data', async () => {
-    const wrapper = mount(UserView, { attachTo: document.body });
+    const wrapper = await mountUserView();
     await flushPromises();
 
     expect(wrapper.text()).toContain('member@example.com');
@@ -65,7 +76,7 @@ describe('user management page', () => {
 
   it('surfaces list failures in the page error state', async () => {
     api.listUsers.mockRejectedValue(new Error('offline'));
-    const wrapper = mount(UserView);
+    const wrapper = await mountUserView();
     await flushPromises();
 
     expect(wrapper.text()).toContain('Unable to load users.');
@@ -73,7 +84,7 @@ describe('user management page', () => {
   });
 
   it('keeps status changes as a draft until Apply and applies Reset on Apply', async () => {
-    const wrapper = mount(UserView, { attachTo: document.body });
+    const wrapper = await mountUserView();
     await flushPromises();
 
     const trigger = wrapper.get('[data-filter-trigger]');

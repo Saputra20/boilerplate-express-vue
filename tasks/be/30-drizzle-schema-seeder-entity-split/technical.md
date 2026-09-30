@@ -10,7 +10,7 @@
 | Workstream      | Backend                                                                                       |
 | Task Category   | Behavior-preserving structural refactor                                                       |
 | Repository/App  | `apps/api`                                                                                    |
-| Status          | Implemented — validation evidence recorded in completion response                              |
+| Status          | COMPLETE — generation and seeder evidence recorded 2026-09-28                              |
 | Priority        | N/A                                                                                           |
 | Suggested Size  | Large — 11 schemas, repository-wide import updates, seed decomposition, and equivalence proof |
 | Depends On      | `be/21-api-module-architecture-refactor`; current seed/schema source in `apps/api`            |
@@ -316,3 +316,11 @@ None. This contract freezes the refactor to the current source model and current
 - [x] Code Anti-Slop passes after any fixes.
 - [x] `git diff --check` passes and all changed files are reviewed for scope and secrets.
 - [x] Completion evidence is recorded; no check is marked PASS without its actual output.
+
+## Reconciliation Validation Addendum (2026-09-28)
+
+### Reconciliation Validation Addendum (2026-09-28)
+
+- Drizzle Kit generated against a temporary mirror of the repository migration history and reported `No schema changes, nothing to migrate`; repository migration files were unchanged.
+- Focused `db-seed.integration.test.ts` and `database-integration.test.ts` passed: 2 suites, 3 tests. This includes repeated idempotent seeding, transaction rollback, and synthetic secret-safe output.
+- The full API integration suite passed (39 suites, 229 tests). Root lint, typecheck, format check, stale-schema-import inspection, and `git diff --check` passed. No API build script is configured; TypeScript typecheck is the applicable static build proof.

@@ -10,7 +10,7 @@
 | Workstream | Backend |
 | Task Category | Identity foundation |
 | Repository/App | `apps/api` |
-| Status | Ready: approved for implementation |
+| Status | COMPLETE — isolated migration evidence recorded 2026-09-28 |
 | Priority | Foundation execution order 4 |
 | Suggested Size | Small, reviewable database change set |
 | Depends On | `be/03-database-foundation` |
@@ -228,3 +228,16 @@ None.
 - [ ] Isolated PostgreSQL evidence proves forward, rollback, restoration, and re-apply.
 - [ ] Focused/full tests, lint, typecheck, generation, migration validation, and Code Anti-Slop pass.
 - [ ] `git diff --check`, changed-file review, secret review, and human review complete.
+
+## Reconciliation Validation Addendum (2026-09-28)
+
+### State
+
+The identity schema and its own migration acceptance checks are complete.
+
+### Evidence
+
+- Isolated PostgreSQL confirmed exactly the five identity tables after migrations 0000–0004, required-column nullability, duplicate email rejection, duplicate junction-pair rejection, invalid-FK rejection, and role deletion cascades to dependent junction rows.
+- Migrations 0000–0004 passed UP, matching DOWN in reverse dependency order, schema-removal verification, and re-UP using the repository rollback executor.
+- The migration generation comparison against a temporary copy of the existing Drizzle history reported no schema changes. The full API integration suite passed (39 suites, 229 tests).
+- Root lint, typecheck, format check, and `git diff --check` passed on 2026-09-28.

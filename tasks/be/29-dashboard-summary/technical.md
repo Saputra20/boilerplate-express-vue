@@ -10,7 +10,7 @@
 | Workstream      | Backend                                                     |
 | Task Category   | API contract planning                                       |
 | Repository/App  | `apps/api`                                                  |
-| Status          | Proposed contract — human approval required                 |
+| Status          | IMPLEMENTED — VALIDATION PENDING                 |
 | Priority        | N/A                                                         |
 | Suggested Size  | Small/Medium                                                |
 | Depends On      | Domain-owning modules and `be/23-versioned-openapi-swagger` |
@@ -119,3 +119,7 @@ Not applicable — project has no traceability ID system.
 ## 22. Definition Of Done
 
 Metric requirements are approved or dashboard is explicitly informational-only; no fabricated data or endpoint exists.
+
+## Reconciliation Addendum (2026-09-28)
+
+The proposed status is stale relative to the previously approved dashboard plan and the existing module at `apps/api/src/modules/dashboard/`. The implementation is present; this addendum does not certify every acceptance criterion or database validation. Record the task-specific evidence before completion.

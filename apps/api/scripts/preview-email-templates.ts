@@ -19,11 +19,11 @@ const syntheticQuery = `token=synthetic-preview-value&context=${'preview-only-'.
 const templates = {
   'verify-email': renderEmailVerification({
     actionUrl: `https://cms.example.test/verify?${syntheticQuery}`,
-    expiryDisplay: 'Synthetic preview expiry wording; this is not a real account link.',
+    expiryDisplay: 'a synthetic review interval (not a real expiry)',
   }),
   'reset-password': renderPasswordReset({
     actionUrl: `https://cms.example.test/password/reset?${syntheticQuery}`,
-    expiryDisplay: 'Synthetic preview expiry wording; this is not a real account link.',
+    expiryDisplay: 'a synthetic review interval (not a real expiry)',
   }),
   'password-changed': renderPasswordChanged({
     changedAt: 'Synthetic preview timestamp: Monday, January 1, 2035 at 12:00 UTC.',

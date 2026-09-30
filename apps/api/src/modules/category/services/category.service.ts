@@ -145,6 +145,16 @@ function auditEvent(
 }
 
 function isUniqueViolation(error: unknown): boolean {
+  if (hasUniqueViolationCode(error)) return true;
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'cause' in error &&
+    hasUniqueViolationCode(error.cause)
+  );
+}
+
+function hasUniqueViolationCode(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === '23505';
 }
 
