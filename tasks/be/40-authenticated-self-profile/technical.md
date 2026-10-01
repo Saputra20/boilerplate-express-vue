@@ -10,7 +10,7 @@
 | Workstream      | Backend                                                                                                                                                                                                                                       |
 | Task Category   | Authenticated API / profile data                                                                                                                                                                                                              |
 | Repository/App  | `apps/api`                                                                                                                                                                                                                                    |
-| Status          | READY FOR IMPLEMENTATION                                                                                                                                                                                                                      |
+| Status          | IN PROGRESS - implementation added; required validation remains                                                                                                                                                                             |
 | Priority        | Normal; authenticated user data                                                                                                                                                                                                               |
 | Suggested Size  | Medium                                                                                                                                                                                                                                        |
 | Depends On      | `be/03-database-foundation`, `be/04-identity-schema`, `be/14-audit-trail`, `be/21-api-module-architecture-refactor`, `be/23-versioned-openapi-swagger`, `be/25-authenticated-rbac-context`, `be/38-authenticated-first-login-password-change` |
@@ -287,7 +287,7 @@ Expected paths are guidance; agent must inspect repository before finalizing cha
 
 ## 21. Open Points
 
-None. Human decisions recorded during task planning: add `displayName` as the only editable profile field; it is required on PATCH, outer whitespace is trimmed, length is 1–80 characters; existing users may have null until they set it; email remains read-only; the DOWN migration may delete values introduced after UP.
+Human decisions recorded during task planning: add `displayName` as the only editable profile field; it is required on PATCH, outer whitespace is trimmed, length is 1–80 characters; existing users may have null until they set it; email remains read-only; the DOWN migration may delete values introduced after UP. Validation blocker: the local Docker daemon is unavailable, so isolated PostgreSQL tests and migration UP/DOWN/re-apply evidence remain outstanding.
 
 ## 22. Definition Of Done
 

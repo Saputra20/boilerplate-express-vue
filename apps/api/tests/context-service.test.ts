@@ -8,9 +8,11 @@ describe('authenticated context service', () => {
       findActiveUser: async () => ({
         id: 'user-id',
         email: 'user@example.com',
+        displayName: null,
         mustChangePassword: true,
         roles: ['editor', 'viewer'],
       }),
+      updateDisplayName: async () => 'updated',
     };
     const permissionService: PermissionService = {
       authorize: async () => 'denied',
@@ -20,7 +22,12 @@ describe('authenticated context service', () => {
     const service = createAuthenticatedContextService(userRepository, permissionService);
 
     await expect(service.getContext('user-id')).resolves.toEqual({
-      user: { id: 'user-id', email: 'user@example.com', mustChangePassword: true },
+      user: {
+        id: 'user-id',
+        email: 'user@example.com',
+        displayName: null,
+        mustChangePassword: true,
+      },
       roles: ['editor', 'viewer'],
       permissions: ['content.read', 'content.write'],
     });
@@ -29,6 +36,7 @@ describe('authenticated context service', () => {
   it('returns no context when authenticated user lookup fails', async () => {
     const userRepository: AuthenticatedUserRepository = {
       findActiveUser: async () => null,
+      updateDisplayName: async () => 'invalid_authentication',
     };
     const permissionService: PermissionService = {
       authorize: async () => 'denied',
@@ -47,9 +55,11 @@ describe('authenticated context service', () => {
       findActiveUser: async () => ({
         id: 'user-id',
         email: 'user@example.com',
+        displayName: null,
         mustChangePassword: false,
         roles: [],
       }),
+      updateDisplayName: async () => 'updated',
     };
     const permissionService: PermissionService = {
       authorize: async () => 'denied',

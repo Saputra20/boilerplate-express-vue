@@ -6,6 +6,7 @@ schemas:
     required:
       - id
       - email
+      - displayName
       - mustChangePassword
     additionalProperties: false
     properties:
@@ -15,6 +16,9 @@ schemas:
       email:
         type: string
         format: email
+      displayName:
+        type: string
+        nullable: true
       mustChangePassword:
         type: boolean
   MeV1Response:
@@ -52,6 +56,47 @@ paths:
                 $ref: '#/components/schemas/MeV1Response'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      tags:
+        - Me
+      operationId: updateCurrentUserProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [displayName]
+              properties:
+                displayName:
+                  type: string
+                  description: Trimmed before storage; the resulting value must contain 1–80 Unicode code points.
+      responses:
+        '200':
+          description: Updated canonical authenticated identity and RBAC context.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeV1Response'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Password change is required before profile mutation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthV1PasswordChangeRequired'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
         '429':

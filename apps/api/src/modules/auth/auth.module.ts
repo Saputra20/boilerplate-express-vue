@@ -47,11 +47,11 @@ export function createAuthModule({
   const accessAuthService = createAccessAuthService(createAccessAuthRepository(db), jwt);
   const logoutService = createLogoutService(createLogoutRepository(db));
   const permissionService = createPermissionService(createPermissionRepository(db));
+  const auditService = createAuditService(createAuditRepository(db), logger);
   const contextService = createAuthenticatedContextService(
-    createAuthenticatedUserRepository(db),
+    createAuthenticatedUserRepository(db, auditService),
     permissionService,
   );
-  const auditService = createAuditService(createAuditRepository(db), logger);
   const passwordChangeService = createPasswordChangeService(
     createPasswordChangeRepository(db, auditService),
   );

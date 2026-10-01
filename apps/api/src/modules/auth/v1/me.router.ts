@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { createAccessAuthMiddleware } from '../../../middleware/authentication.middleware.js';
 import type { AccessAuthService } from '../services/access-auth.service.js';
 import type { AuthenticatedContextService } from '../services/context.service.js';
-import { createMeController } from './controllers/me.controller.js';
+import { createMeController, createUpdateMeController } from './controllers/me.controller.js';
 
 export type MeRouterDependencies = {
   accessAuthService: AccessAuthService;
@@ -15,6 +15,11 @@ export function createMeRouter({ accessAuthService, contextService }: MeRouterDe
     '/me',
     createAccessAuthMiddleware(accessAuthService, { allowMustChangePassword: true }),
     createMeController(contextService),
+  );
+  router.patch(
+    '/me',
+    createAccessAuthMiddleware(accessAuthService),
+    createUpdateMeController(contextService),
   );
   return router;
 }

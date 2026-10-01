@@ -11,7 +11,9 @@ import {
   loginTokenResponseSchema,
   refreshTokenResponseSchema,
   authenticatedContextSchema,
+  updateCurrentProfileRequestSchema,
   type AuthenticatedContext,
+  type UpdateCurrentProfileRequest,
   type LoginRequest,
   passwordRecoveryRequestSchema,
   passwordRecoveryResponseSchema,
@@ -95,6 +97,10 @@ export type ApiClient = {
   ): Promise<void>;
   refresh(input: RefreshRequest): Promise<TokenResponse>;
   me(accessToken?: string): Promise<AuthenticatedContext>;
+  updateCurrentUserProfile(
+    input: UpdateCurrentProfileRequest,
+    accessToken?: string,
+  ): Promise<AuthenticatedContext>;
   logout(accessToken?: string): Promise<void>;
   logoutAll(accessToken?: string): Promise<void>;
   listCategories(input: {
@@ -231,6 +237,17 @@ export function createApiClient(
       const response = await request<unknown>({
         method: 'GET',
         url: '/api/v1/me',
+        accessToken,
+      });
+      const result = authenticatedContextSchema.safeParse(response);
+      if (!result.success) throw new ApiError('Invalid API response', 'invalid-response');
+      return result.data;
+    },
+    async updateCurrentUserProfile(input, accessToken) {
+      const response = await request<unknown>({
+        method: 'PATCH',
+        url: '/api/v1/me',
+        data: updateCurrentProfileRequestSchema.parse(input),
         accessToken,
       });
       const result = authenticatedContextSchema.safeParse(response);

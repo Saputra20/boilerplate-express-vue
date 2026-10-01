@@ -15,6 +15,7 @@ import RoleView from '../views/RoleView.vue';
 import RoleFormView from '../views/RoleFormView.vue';
 import UserView from '../views/UserView.vue';
 import UserFormView from '../views/UserFormView.vue';
+import ProfileView from '../views/ProfileView.vue';
 import { sanitizeReturnTo } from './return-to';
 
 declare module 'vue-router' {
@@ -48,6 +49,12 @@ export const routes = [
           title: 'Overview',
           requiredPermission: 'dashboard.read',
         },
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: ProfileView,
+        meta: { title: 'Profile' },
       },
       { path: 'forbidden', name: 'denied', component: DeniedView },
       {

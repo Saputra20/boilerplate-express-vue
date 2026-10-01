@@ -10,7 +10,7 @@
 | Workstream      | Frontend                                                                                                                                                                         |
 | Task Category   | Authenticated profile/API integration                                                                                                                                            |
 | Repository/App  | `apps/cms`                                                                                                                                                                       |
-| Status          | BLOCKED - waiting for BE-40 authenticated self-profile implementation                                                                                                            |
+| Status          | BLOCKED - BE-40 implementation and required validation evidence are not yet complete                                                                                             |
 | Priority        | Normal                                                                                                                                                                           |
 | Suggested Size  | Medium                                                                                                                                                                           |
 | Depends On      | `fe/04-theme-design-system`, `fe/06-auth-state`, `fe/11-frontend-testing`, `fe/13-tailadmin-ui-foundation`, `be/40-authenticated-self-profile` (implementation must be complete) |
@@ -23,7 +23,7 @@ An authenticated CMS user can view their backend-approved profile attributes and
 
 ## 3. Context
 
-- `apps/api/src/modules/me/v1/me.openapi.yaml` currently defines `GET /api/v1/me` with `user.id`, `user.email`, `user.mustChangePassword`, `roles`, and `permissions`. It contains no name, display name, phone, avatar, or profile update operation.
+- BE-40 source changes define nullable `user.displayName` on `GET /api/v1/me` and `PATCH /api/v1/me` for that field. BE-40 remains incomplete until all runtime and migration validation passes.
 - `apps/api/src/modules/user/v1/user.openapi.yaml` and `user.router.ts` define user-management operations by user ID; they are not a self-service current-user profile contract and must not be repurposed as one.
 - `apps/cms/src/stores/auth.ts` hydrates current identity from `/api/v1/me`. `apps/cms/src/api/{client.ts,types.ts}` own typed API boundaries.
 - `apps/cms/src/router/index.ts` currently has no `/profile` route. `apps/cms/src/components/CmsProfileMenu.vue` provides the user menu but has no account navigation contract.
@@ -32,7 +32,7 @@ An authenticated CMS user can view their backend-approved profile attributes and
 
 ## 4. Dependencies
 
-- **Blocking backend dependency:** [`be/40-authenticated-self-profile`](../../be/40-authenticated-self-profile/technical.md) defines the approved self-profile contract and is ready for implementation. FE-26 remains blocked until its API, migration, audit behavior, tests, and OpenAPI are implemented and validated.
+- **Blocking backend dependency:** [`be/40-authenticated-self-profile`](../../be/40-authenticated-self-profile/technical.md) defines the approved self-profile contract. FE-26 remains blocked until its API, migration, audit behavior, tests, and OpenAPI are implemented and validated.
 - `GET /api/v1/me` exists and may populate current identity only for fields it actually returns. Current roles and permissions are read-only authorization context.
 - FE-04, FE-06, FE-11, and FE-13 are implementation foundations to inspect; there is no required dependency on FE-24.
 - No new infrastructure or external service is in scope.
@@ -65,7 +65,7 @@ An authenticated CMS user can view their backend-approved profile attributes and
 - `apps/cms/src/stores/auth.ts`: canonical auth identity state and `/me` hydration.
 - `apps/cms/src/api/{client.ts,types.ts}`: authenticated API client and schemas.
 - `apps/cms/src/router/index.ts`, `navigation.ts`, `components/CmsProfileMenu.vue`, `AppShell.vue`, and `components/ui/`: current routing/menu/shell patterns.
-- No self-profile route or frontend self-profile API operation exists. Current `/me` exposes ID, email, and mandatory password flag; roles and permissions are top-level read-only context.
+- No self-profile page or frontend self-profile API operation exists. Backend source now includes the approved `displayName` read/update contract; roles and permissions remain top-level read-only context.
 
 ## 8. Implementation Requirements
 
@@ -85,11 +85,11 @@ An authenticated CMS user can view their backend-approved profile attributes and
 
 **Current API Contract**
 
-| Method | Path         | Auth   | Request | Response / limits                                                                                               |
-| ------ | ------------ | ------ | ------- | --------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/v1/me` | Bearer | None    | `user: { id, email, mustChangePassword }`, `roles: string[]`, `permissions: string[]`; no profile update fields |
+| Method | Path         | Auth   | Request | Response / limits                       |
+| ------ | ------------ | ------ | ------- | --------------------------------------- |
+| GET    | `/api/v1/me` | Bearer | None    | `user: { id, email, displayName: string | null, mustChangePassword }`, `roles: string[]`, `permissions: string[]` |
 
-**Profile Update API:** Runtime implementation remains blocked. BE-40 defines `GET /api/v1/me` with `user.displayName: string | null` and strict `PATCH /api/v1/me` accepting `{ displayName: string }`; display names are trimmed and limited to 1–80 Unicode code points. Email remains read-only; roles, permissions, status, password, and avatar are not editable. Implement against runtime only after BE-40 completion and OpenAPI validation.
+**Profile Update API:** BE-40 defines `GET /api/v1/me` with `user.displayName: string | null` and strict `PATCH /api/v1/me` accepting `{ displayName: string }`; display names are trimmed and limited to 1–80 Unicode code points. Email remains read-only; roles, permissions, status, password, and avatar are not editable. FE implementation is still gated on BE-40 completion and OpenAPI/runtime validation.
 
 **UI Contract:** Authenticated `/profile`; fields and editable controls are limited to the completed backend contract. Roles/permissions are read-only. Email is read-only unless its complete lifecycle is approved. No avatar upload without backend support.
 

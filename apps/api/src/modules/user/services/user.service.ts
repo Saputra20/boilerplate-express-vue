@@ -38,6 +38,7 @@ export type User = {
   updatedAt: Date;
   deletedAt: Date | null;
   role: { id: string; code: string; name: string } | null;
+  mustChangePassword: boolean;
 };
 export type UserList = {
   items: User[];

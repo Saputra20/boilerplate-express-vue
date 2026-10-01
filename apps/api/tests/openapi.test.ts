@@ -67,6 +67,11 @@ describe('OpenAPI infrastructure', () => {
               security?: Array<Record<string, string[]>>;
               responses?: Record<string, unknown>;
             };
+            patch?: {
+              operationId?: string;
+              security?: Array<Record<string, string[]>>;
+              responses?: Record<string, unknown>;
+            };
             delete?: {
               security?: Array<Record<string, string[]>>;
               responses?: Record<string, unknown>;
@@ -176,6 +181,19 @@ describe('OpenAPI infrastructure', () => {
         'mustChangePassword',
       );
       expect(document.paths['/api/v1/me']?.get?.security).toEqual([{ bearerAuth: [] }]);
+      expect(document.paths['/api/v1/me']?.patch).toMatchObject({
+        operationId: 'updateCurrentUserProfile',
+        security: [{ bearerAuth: [] }],
+        responses: expect.objectContaining({
+          '200': expect.any(Object),
+          '400': expect.any(Object),
+          '401': expect.any(Object),
+          '403': expect.any(Object),
+          '413': expect.any(Object),
+          '429': expect.any(Object),
+          '500': expect.any(Object),
+        }),
+      });
       expect(document.paths['/api/v1/dashboard/summary']?.get?.security).toEqual([
         { bearerAuth: [] },
       ]);
@@ -192,7 +210,9 @@ describe('OpenAPI infrastructure', () => {
         properties?: Record<string, unknown>;
       };
       expect(meUser.required).toContain('mustChangePassword');
+      expect(meUser.required).toContain('displayName');
       expect(meUser.properties).toHaveProperty('mustChangePassword');
+      expect(meUser.properties).toHaveProperty('displayName');
       const protectedPaths = [
         '/api/v1/categories',
         '/api/v1/categories/{id}',

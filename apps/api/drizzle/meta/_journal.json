@@ -141,6 +141,13 @@
       "when": 1790503561903,
       "tag": "0019_extend-auth-challenge-purpose-for-password-reset",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790845101974,
+      "tag": "0020_add-display-name-to-users",
+      "breakpoints": true
     }
   ]
 }

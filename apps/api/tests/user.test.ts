@@ -1,3 +1,5 @@
+import express from 'express';
+import request from 'supertest';
 import {
   createUserSchema,
   createUserService,
@@ -5,6 +7,7 @@ import {
   UserNotFoundError,
   updateUserSchema,
 } from '../src/modules/user/services/user.service.js';
+import { createUserController } from '../src/modules/user/v1/controllers/user.controller.js';
 const user = {
   id: '11111111-1111-4111-8111-111111111111',
   email: 'user@example.com',
@@ -15,6 +18,7 @@ const user = {
   updatedAt: new Date(),
   deletedAt: null,
   role: { id: '22222222-2222-4222-8222-222222222222', code: 'editor', name: 'Editor' },
+  mustChangePassword: true,
 };
 const audit = {
   actorUserId: '33333333-3333-4333-8333-333333333333',
@@ -41,6 +45,38 @@ function repository() {
   };
 }
 describe('user contract', () => {
+  it('includes mustChangePassword in managed-user list responses', async () => {
+    const service = {
+      create: async () => user,
+      list: async () => ({
+        items: [user],
+        pagination: { page: 1, limit: 20, total: 1, totalPages: 1 },
+      }),
+      get: async () => user,
+      update: async () => user,
+      remove: async () => undefined,
+    };
+    const app = express();
+    app.use((req, res, next) => {
+      req.id = 'request-id';
+      res.locals.authPrincipal = {
+        sub: '33333333-3333-4333-8333-333333333333',
+        sid: '44444444-4444-4444-8444-444444444444',
+        jti: '55555555-5555-4555-8555-555555555555',
+        exp: 1,
+        revoked: false,
+        mustChangePassword: false,
+      };
+      next();
+    });
+    app.get('/users', createUserController(service).list);
+
+    const response = await request(app).get('/users');
+
+    expect(response.status).toBe(200);
+    expect(response.body.items[0]).toMatchObject({ mustChangePassword: true });
+  });
+
   it('normalizes email and rejects unknown fields', () => {
     expect(createUserSchema.parse({ email: 'USER@example.com', roleId: user.role.id }).email).toBe(
       'user@example.com',

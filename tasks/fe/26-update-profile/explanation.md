@@ -6,11 +6,11 @@ Task ini merencanakan halaman `/profile` untuk pengguna CMS yang sudah login. Ha
 
 ## Kenapa dibuat?
 
-CMS belum memiliki halaman profil mandiri. `/api/v1/me` saat ini mengembalikan ID, email, dan status wajib ganti password; belum ada endpoint update profil pengguna sendiri.
+CMS belum memiliki halaman profil mandiri. Perubahan kode BE-40 menambahkan `displayName` pada `/api/v1/me` dan menyediakan `PATCH /api/v1/me`; BE-40 masih menunggu validasi PostgreSQL, migrasi, dan tes runtime lainnya.
 
 ## Apa yang berubah?
 
-Task FE-26 kini mereferensikan BE-40. Kontrak menetapkan `/api/v1/me`, `PATCH /api/v1/me`, serta `displayName` sebagai satu-satunya field yang dapat diedit. Implementasi UI menunggu endpoint backend selesai.
+Task FE-26 kini mereferensikan kontrak BE-40: `/api/v1/me`, `PATCH /api/v1/me`, serta `displayName` sebagai satu-satunya field yang dapat diedit. Implementasi UI menunggu BE-40 lulus seluruh validasi.
 
 ## Apa yang tidak berubah?
 
@@ -34,4 +34,4 @@ Reviewer perlu memastikan FE hanya mengedit `displayName` sesuai BE-40, memuat u
 
 ## Apa yang belum dikerjakan?
 
-Kontrak backend sudah direncanakan pada BE-40, tetapi implementasi API, migrasi, audit, tes, dan OpenAPI belum selesai. Halaman FE-26 belum diimplementasikan. Email tetap read-only; tidak ada upload avatar.
+Kode API, migrasi, audit, dan OpenAPI BE-40 sudah ditambahkan, tetapi validasi PostgreSQL dan sebagian tes runtime belum dapat dijalankan karena layanan lokal tidak tersedia. Halaman FE-26 belum dibuat. Email tetap hanya-baca; tidak ada unggah avatar.

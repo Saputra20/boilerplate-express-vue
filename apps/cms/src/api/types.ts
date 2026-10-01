@@ -42,11 +42,24 @@ export const authenticatedContextSchema = z.object({
   user: z.object({
     id: z.uuid(),
     email: z.email(),
+    displayName: z.string().nullable(),
     mustChangePassword: z.boolean(),
   }),
   roles: z.array(z.string()),
   permissions: z.array(z.string()),
 });
+
+const displayNameSchema = z
+  .string()
+  .transform((value) => value.trim())
+  .refine((value) => {
+    const length = Array.from(value).length;
+    return length >= 1 && length <= 80;
+  }, 'Use between 1 and 80 characters.');
+
+export const updateCurrentProfileRequestSchema = z
+  .object({ displayName: displayNameSchema })
+  .strict();
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
 export type PasswordRecoveryRequest = z.infer<typeof passwordRecoveryRequestSchema>;
@@ -60,6 +73,7 @@ export type SelfServicePasswordChangeRequest = z.infer<
   typeof selfServicePasswordChangeRequestSchema
 >;
 export type AuthenticatedContext = z.infer<typeof authenticatedContextSchema>;
+export type UpdateCurrentProfileRequest = z.input<typeof updateCurrentProfileRequestSchema>;
 
 const categorySchema = z.object({
   id: z.uuid(),

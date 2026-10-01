@@ -94,7 +94,7 @@ integrationDescribe('authenticated first-login password change PostgreSQL integr
     const other = await createSession(userId);
     const accessRepository = createAccessAuthRepository(database.db);
     const contextService = createAuthenticatedContextService(
-      createAuthenticatedUserRepository(database.db),
+      createAuthenticatedUserRepository(database.db, audit),
       createPermissionService(createPermissionRepository(database.db)),
     );
     const accessInput = { sub: userId, sid: current.id, jti: randomUUID(), allowRevoked: false };

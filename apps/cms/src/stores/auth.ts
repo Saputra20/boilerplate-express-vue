@@ -14,6 +14,7 @@ export type AuthStatus = 'restoring' | 'authenticated' | 'unauthenticated';
 export type AuthIdentity = {
   userId: string;
   email: string;
+  displayName: string | null;
   roles: readonly string[];
   effectivePermissions: readonly string[];
   mustChangePassword: boolean;
@@ -78,6 +79,7 @@ export function createAuthStore(apiClient: ApiClient) {
       identity.value = {
         userId: context.user.id,
         email: context.user.email,
+        displayName: context.user.displayName,
         roles: context.roles,
         effectivePermissions: context.permissions,
         mustChangePassword: context.user.mustChangePassword,
@@ -97,6 +99,11 @@ export function createAuthStore(apiClient: ApiClient) {
       newPassword: string;
     }) {
       await apiClient.changeCurrentUserPassword(input, accessToken.value ?? undefined);
+    }
+
+    async function updateCurrentUserProfile(input: { displayName: string }): Promise<void> {
+      await apiClient.updateCurrentUserProfile(input, accessToken.value ?? undefined);
+      await hydrateIdentity();
     }
 
     async function refreshSession(): Promise<boolean> {
@@ -194,6 +201,7 @@ export function createAuthStore(apiClient: ApiClient) {
       logoutAll,
       changePassword,
       changeCurrentUserPassword,
+      updateCurrentUserProfile,
       reloadIdentity: hydrateIdentity,
       clearSession,
     };

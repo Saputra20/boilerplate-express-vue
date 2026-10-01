@@ -9,6 +9,7 @@ export const users = pgTable(
   {
     id: uuid('id').defaultRandom().primaryKey(),
     email: lowercaseText('email').notNull().unique(),
+    displayName: text('display_name'),
     passwordHash: text('password_hash').notNull(),
     mustChangePassword: boolean('must_change_password').default(false).notNull(),
     status: userStatus('status').notNull(),

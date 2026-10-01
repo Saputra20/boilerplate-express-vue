@@ -14,25 +14,32 @@ export function createUserController(service: UserService) {
   return {
     create: handler(async (req, res) => {
       const p = principal(res);
-      res.status(201).json(await service.create(createUserSchema.parse(req.body), context(req, p)));
+      res
+        .status(201)
+        .json(
+          serializeUser(await service.create(createUserSchema.parse(req.body), context(req, p))),
+        );
     }),
     list: handler(async (req, res) => {
       principal(res);
-      res.status(200).json(await service.list(listUserSchema.parse(req.query)));
+      const result = await service.list(listUserSchema.parse(req.query));
+      res.status(200).json({ ...result, items: result.items.map(serializeUser) });
     }),
     get: handler(async (req, res) => {
       principal(res);
-      res.status(200).json(await service.get(userIdSchema.parse(req.params.id)));
+      res.status(200).json(serializeUser(await service.get(userIdSchema.parse(req.params.id))));
     }),
     update: handler(async (req, res) => {
       const p = principal(res);
       res
         .status(200)
         .json(
-          await service.update(
-            userIdSchema.parse(req.params.id),
-            updateUserSchema.parse(req.body),
-            context(req, p),
+          serializeUser(
+            await service.update(
+              userIdSchema.parse(req.params.id),
+              updateUserSchema.parse(req.body),
+              context(req, p),
+            ),
           ),
         );
     }),
@@ -68,4 +75,19 @@ function principal(res: Parameters<RequestHandler>[1]) {
 function context(req: Parameters<RequestHandler>[0], p: ReturnType<typeof getAccessPrincipal>) {
   if (!p || typeof req.id !== 'string') throw new Error('Invalid authentication');
   return { actorUserId: p.sub, sessionId: p.sid, requestId: req.id };
+}
+
+function serializeUser(user: import('../../services/user.service.js').User) {
+  return {
+    id: user.id,
+    email: user.email,
+    status: user.status,
+    emailVerifiedAt: user.emailVerifiedAt,
+    lastLoginAt: user.lastLoginAt,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    deletedAt: user.deletedAt,
+    role: user.role,
+    mustChangePassword: user.mustChangePassword,
+  };
 }
