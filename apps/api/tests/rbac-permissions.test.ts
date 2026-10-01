@@ -18,7 +18,7 @@ import { createLogging } from '../src/config/logger/logger.js';
 
 class MemoryAccessAuthRepository implements AccessAuthRepository {
   async findPrincipal({ sub, sid, jti }: Parameters<AccessAuthRepository['findPrincipal']>[0]) {
-    return { sub, sid, jti, revoked: false };
+    return { sub, sid, jti, revoked: false, mustChangePassword: false };
   }
 }
 

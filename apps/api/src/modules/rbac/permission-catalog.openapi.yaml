@@ -24,4 +24,5 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/PermissionCatalogItem' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '500': { $ref: '#/components/responses/InternalServerError' }

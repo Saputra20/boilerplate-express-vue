@@ -30,14 +30,22 @@ function openMenuFromKeyboard(event: KeyboardEvent): void {
   if (event.key !== 'ArrowDown') return;
   event.preventDefault();
   open.value = true;
-  void nextTick(() => menu.value?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus());
+  void nextTick(() => menu.value?.querySelector<HTMLElement>('[role="menuitem"]')?.focus());
 }
 
 function handleMenuKeydown(event: KeyboardEvent): void {
-  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-    event.preventDefault();
-    menu.value?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
-  }
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+  const items = Array.from(menu.value?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+  if (items.length === 0) return;
+  event.preventDefault();
+  const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+  const nextIndex =
+    currentIndex < 0
+      ? event.key === 'ArrowDown'
+        ? 0
+        : items.length - 1
+      : (currentIndex + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+  items[nextIndex]?.focus();
 }
 
 async function logout(): Promise<void> {
@@ -100,9 +108,17 @@ onBeforeUnmount(() => {
           {{ auth.identity?.roles.join(', ') || 'Authenticated account' }}
         </p>
       </div>
+      <RouterLink
+        to="/settings/change-password"
+        class="mt-3 flex min-h-10 w-full items-center rounded-lg px-3 text-sm font-medium text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
+        role="menuitem"
+        @click="close"
+      >
+        Change password
+      </RouterLink>
       <button
         type="button"
-        class="mt-3 flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
+        class="mt-1 flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
         role="menuitem"
         @click="logout"
       >

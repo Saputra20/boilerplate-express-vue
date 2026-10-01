@@ -18,6 +18,7 @@ function createAuthService(): AccessAuthService {
           jti: 'jti-id',
           exp: Math.floor(Date.now() / 1000) + 900,
           revoked: false,
+          mustChangePassword: true,
         };
       }
       throw new Error('Invalid authentication');
@@ -31,7 +32,7 @@ function createContextService(context: AuthenticatedContext | null): Authenticat
 
 function createApp(
   context: AuthenticatedContext | null = {
-    user: { id: 'user-id', email: 'user@example.com' },
+    user: { id: 'user-id', email: 'user@example.com', mustChangePassword: true },
     roles: ['editor', 'viewer'],
     permissions: ['content.read', 'content.write'],
   },
@@ -39,7 +40,7 @@ function createApp(
   const app = express();
   app.get(
     '/api/v1/me',
-    createAccessAuthMiddleware(createAuthService()),
+    createAccessAuthMiddleware(createAuthService(), { allowMustChangePassword: true }),
     createMeController(createContextService(context)),
   );
   return app;
@@ -53,7 +54,7 @@ describe('GET /api/v1/me', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      user: { id: 'user-id', email: 'user@example.com' },
+      user: { id: 'user-id', email: 'user@example.com', mustChangePassword: true },
       roles: ['editor', 'viewer'],
       permissions: ['content.read', 'content.write'],
     });
@@ -68,7 +69,7 @@ describe('GET /api/v1/me', () => {
     const app = express();
     app.get(
       '/api/v1/me',
-      createAccessAuthMiddleware(createAuthService()),
+      createAccessAuthMiddleware(createAuthService(), { allowMustChangePassword: true }),
       createMeController(contextService),
     );
 

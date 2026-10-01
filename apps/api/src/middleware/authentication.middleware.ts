@@ -7,7 +7,7 @@ import {
 
 export function createAccessAuthMiddleware(
   service: AccessAuthService,
-  options?: { allowRevoked?: boolean },
+  options?: { allowRevoked?: boolean; allowMustChangePassword?: boolean },
 ): RequestHandler {
   return async (request, response, next) => {
     const token = bearerToken(request.header('authorization'));
@@ -17,7 +17,15 @@ export function createAccessAuthMiddleware(
     }
 
     try {
-      response.locals.authPrincipal = await service.authenticate(token, options);
+      const principal = await service.authenticate(token, options);
+      if (principal.mustChangePassword && !options?.allowMustChangePassword) {
+        response.status(403).json({
+          message: 'Password change required',
+          code: 'password_change_required',
+        });
+        return;
+      }
+      response.locals.authPrincipal = principal;
       next();
     } catch (error) {
       if (error instanceof AccessAuthError) {
@@ -50,7 +58,9 @@ export function getAccessPrincipal(response: {
     !('exp' in value) ||
     typeof value.exp !== 'number' ||
     !('revoked' in value) ||
-    typeof value.revoked !== 'boolean'
+    typeof value.revoked !== 'boolean' ||
+    !('mustChangePassword' in value) ||
+    typeof value.mustChangePassword !== 'boolean'
   ) {
     return null;
   }
@@ -61,5 +71,6 @@ export function getAccessPrincipal(response: {
     jti: value.jti,
     exp: value.exp,
     revoked: value.revoked,
+    mustChangePassword: value.mustChangePassword,
   };
 }

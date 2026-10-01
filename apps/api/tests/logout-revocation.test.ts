@@ -18,6 +18,7 @@ import { createLogging } from '../src/config/logger/logger.js';
 
 class MemoryAccessAuthRepository implements AccessAuthRepository {
   revoked = false;
+  mustChangePassword = false;
 
   async findPrincipal({
     sub,
@@ -26,7 +27,7 @@ class MemoryAccessAuthRepository implements AccessAuthRepository {
     allowRevoked,
   }: Parameters<AccessAuthRepository['findPrincipal']>[0]) {
     if (this.revoked && !allowRevoked) return null;
-    return { sub, sid, jti, revoked: this.revoked };
+    return { sub, sid, jti, revoked: this.revoked, mustChangePassword: this.mustChangePassword };
   }
 }
 
@@ -171,6 +172,50 @@ describe('logout and revocation routes', () => {
 
       expect(active.status).toBe(204);
       expect(revoked.status).toBe(401);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('blocks ordinary authenticated routes and keeps explicit auth exemptions available', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'api-password-required-test-'));
+    const jwt = createJwtService(directory);
+    const authRepository = new MemoryAccessAuthRepository();
+    authRepository.mustChangePassword = true;
+    const userId = randomUUID();
+    const sessionId = randomUUID();
+    const logoutRepository = new MemoryLogoutRepository();
+    const app = express();
+    app.get(
+      '/protected',
+      createAccessAuthMiddleware(createAccessAuthService(authRepository, jwt)),
+      (_request, response) => response.status(204).end(),
+    );
+    const router = createAuthRouter({
+      accessAuthService: createAccessAuthService(authRepository, jwt),
+      logoutService: createLogoutService(logoutRepository),
+    });
+    app.use('/api/v1/auth', router);
+    const token = jwt.issueToken({ sub: userId, sid: sessionId, typ: 'access' });
+
+    try {
+      const blocked = await request(app).get('/protected').set('Authorization', `Bearer ${token}`);
+      const logout = await request(app)
+        .post('/api/v1/auth/logout')
+        .set('Authorization', `Bearer ${token}`);
+      const logoutAll = await request(app)
+        .post('/api/v1/auth/logout-all')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(blocked.status).toBe(403);
+      expect(blocked.body).toEqual({
+        message: 'Password change required',
+        code: 'password_change_required',
+      });
+      expect(logout.status).toBe(204);
+      expect(logoutAll.status).toBe(204);
+      expect(logoutRepository.currentCalls).toEqual([sessionId]);
+      expect(logoutRepository.allCalls).toEqual([userId]);
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }

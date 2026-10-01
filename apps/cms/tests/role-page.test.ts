@@ -58,6 +58,7 @@ async function mountRolePage(path: string) {
     restore: async () => true,
     isAuthenticated: () => true,
     can: (permission) => ['role.read', 'role.create', 'role.update'].includes(permission),
+    isPasswordChangeRequired: () => false,
   });
   await router.push(path);
   await router.isReady();

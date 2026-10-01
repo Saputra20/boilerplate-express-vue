@@ -5,6 +5,7 @@ export type AuthenticatedContext = {
   user: {
     id: string;
     email: string;
+    mustChangePassword: boolean;
   };
   roles: readonly string[];
   permissions: readonly string[];
@@ -24,7 +25,11 @@ export function createAuthenticatedContextService(
       if (identity === null) return null;
 
       return {
-        user: { id: identity.id, email: identity.email },
+        user: {
+          id: identity.id,
+          email: identity.email,
+          mustChangePassword: identity.mustChangePassword,
+        },
         roles: identity.roles,
         permissions: await permissionService.listEffectivePermissions({ userId }),
       };

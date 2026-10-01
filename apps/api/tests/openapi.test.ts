@@ -59,9 +59,18 @@ describe('OpenAPI infrastructure', () => {
         paths: Record<
           string,
           {
-            get?: { security?: Array<Record<string, string[]>> };
-            post?: { security?: Array<Record<string, string[]>> };
-            delete?: { security?: Array<Record<string, string[]>> };
+            get?: {
+              security?: Array<Record<string, string[]>>;
+              responses?: Record<string, unknown>;
+            };
+            post?: {
+              security?: Array<Record<string, string[]>>;
+              responses?: Record<string, unknown>;
+            };
+            delete?: {
+              security?: Array<Record<string, string[]>>;
+              responses?: Record<string, unknown>;
+            };
           }
         >;
         components: {
@@ -80,7 +89,12 @@ describe('OpenAPI infrastructure', () => {
       });
       expect(document.components.schemas.AuthV1LoginRequest).toBeDefined();
       expect(document.components.schemas.AuthV1RefreshRequest).toBeDefined();
-      expect(document.components.schemas.AuthV1TokenResponse).toBeDefined();
+      expect(document.components.schemas.AuthV1LoginResponse).toBeDefined();
+      expect(document.components.schemas.AuthV1RefreshResponse).toBeDefined();
+      expect(document.components.schemas.AuthV1PasswordChangeRequest).toBeDefined();
+      expect(document.components.schemas.AuthV1SelfServicePasswordChangeRequest).toBeDefined();
+      expect(document.components.schemas.AuthV1PasswordChangeRequired).toBeDefined();
+      expect(document.components.schemas.AuthV1TokenResponse).toBeUndefined();
       expect(document.components.schemas.MeV1User).toBeDefined();
       expect(document.components.schemas.MeV1Response).toBeDefined();
       expect(document.components.schemas.CategoryV1).toBeDefined();
@@ -92,6 +106,8 @@ describe('OpenAPI infrastructure', () => {
       expect(Object.keys(document.paths).sort()).toEqual(
         [
           '/api/v1/auth/login',
+          '/api/v1/auth/change-password',
+          '/api/v1/auth/change-password/self-service',
           '/api/v1/auth/password-reset/request',
           '/api/v1/auth/password-reset/confirm',
           '/api/v1/auth/email-verification/request',
@@ -129,6 +145,36 @@ describe('OpenAPI infrastructure', () => {
       expect(document.paths['/api/v1/auth/logout-all']?.post?.security).toEqual([
         { bearerAuth: [] },
       ]);
+      expect(document.paths['/api/v1/auth/change-password']?.post?.security).toEqual([
+        { bearerAuth: [] },
+      ]);
+      expect(document.paths['/api/v1/auth/change-password/self-service']?.post?.security).toEqual([
+        { bearerAuth: [] },
+      ]);
+      expect(document.paths['/api/v1/auth/change-password/self-service']?.post).toMatchObject({
+        operationId: 'changeCurrentUserPassword',
+        responses: expect.objectContaining({
+          '204': expect.any(Object),
+          '400': expect.any(Object),
+          '401': expect.any(Object),
+          '403': expect.any(Object),
+          '413': expect.any(Object),
+          '429': expect.any(Object),
+          '500': expect.any(Object),
+        }),
+      });
+      const loginResponse = document.paths['/api/v1/auth/login']?.post?.responses?.['200'] as {
+        content?: { 'application/json'?: { schema?: { properties?: Record<string, unknown> } } };
+      };
+      const refreshResponse = document.paths['/api/v1/auth/refresh']?.post?.responses?.['200'] as {
+        content?: { 'application/json'?: { schema?: { properties?: Record<string, unknown> } } };
+      };
+      expect(loginResponse.content?.['application/json']?.schema?.properties).toHaveProperty(
+        'mustChangePassword',
+      );
+      expect(refreshResponse.content?.['application/json']?.schema?.properties).not.toHaveProperty(
+        'mustChangePassword',
+      );
       expect(document.paths['/api/v1/me']?.get?.security).toEqual([{ bearerAuth: [] }]);
       expect(document.paths['/api/v1/dashboard/summary']?.get?.security).toEqual([
         { bearerAuth: [] },
@@ -140,6 +186,33 @@ describe('OpenAPI infrastructure', () => {
       expect(document.paths['/api/v1/categories/{id}']?.delete?.security).toEqual([
         { bearerAuth: [] },
       ]);
+      expect(document.paths['/api/v1/misc/permissions']?.get?.responses).toHaveProperty('403');
+      const meUser = document.components.schemas.MeV1User as {
+        required?: string[];
+        properties?: Record<string, unknown>;
+      };
+      expect(meUser.required).toContain('mustChangePassword');
+      expect(meUser.properties).toHaveProperty('mustChangePassword');
+      const protectedPaths = [
+        '/api/v1/categories',
+        '/api/v1/categories/{id}',
+        '/api/v1/dashboard/summary',
+        '/api/v1/roles',
+        '/api/v1/roles/{id}',
+        '/api/v1/users',
+        '/api/v1/users/{id}',
+        '/api/v1/misc/permissions',
+      ];
+      for (const path of protectedPaths) {
+        const operations = document.paths[path] as Record<
+          string,
+          { security?: unknown; responses?: Record<string, unknown> }
+        >;
+        for (const operation of Object.values(operations)) {
+          if (!operation || typeof operation !== 'object' || !('security' in operation)) continue;
+          expect(operation.responses).toHaveProperty('403');
+        }
+      }
       expect(document.paths['/health']?.get?.security).toBeUndefined();
       expect(document.paths['/ready']?.get?.security).toBeUndefined();
       expect(document.paths['/ops/queues']).toBeUndefined();

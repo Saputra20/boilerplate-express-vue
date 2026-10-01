@@ -11,6 +11,7 @@ defineProps<{
   errorId?: string;
   disabled?: boolean;
   ariaDescribedby?: string;
+  autocomplete?: 'current-password' | 'new-password' | 'off';
 }>();
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
 const visible = ref(false);
@@ -27,7 +28,7 @@ const visible = ref(false);
         :value="modelValue"
         :name="name"
         :type="visible ? 'text' : 'password'"
-        autocomplete="current-password"
+        :autocomplete="autocomplete ?? 'current-password'"
         :disabled="disabled"
         :aria-invalid="Boolean(error)"
         :aria-describedby="
@@ -39,7 +40,7 @@ const visible = ref(false);
       />
       <button
         type="button"
-        class="absolute inset-y-0 right-1 my-auto grid size-9 place-items-center rounded-lg text-cms-muted outline-none hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
+        class="absolute inset-y-0 right-1 my-auto grid size-11 place-items-center rounded-lg text-cms-muted outline-none hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
         :aria-label="visible ? 'Hide password' : 'Show password'"
         @click="visible = !visible"
       >

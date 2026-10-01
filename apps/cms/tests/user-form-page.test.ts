@@ -63,6 +63,7 @@ async function mountUserPage(
     restore: async () => true,
     isAuthenticated: () => true,
     can: (permission) => permissions.includes(permission),
+    isPasswordChangeRequired: () => false,
   });
   auth.can.mockImplementation((permission: string) => permissions.includes(permission));
   await router.push(path);

@@ -13,7 +13,7 @@ export function createMeRouter({ accessAuthService, contextService }: MeRouterDe
   const router = Router();
   router.get(
     '/me',
-    createAccessAuthMiddleware(accessAuthService),
+    createAccessAuthMiddleware(accessAuthService, { allowMustChangePassword: true }),
     createMeController(contextService),
   );
   return router;

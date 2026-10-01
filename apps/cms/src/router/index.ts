@@ -2,6 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteLocationNormalized, Router } from 'vue-router';
 import AppShell from '../components/AppShell.vue';
 import HomeView from '../views/HomeView.vue';
+import ForgotPasswordView from '../views/ForgotPasswordView.vue';
+import ResetPasswordView from '../views/ResetPasswordView.vue';
+import VerifyEmailView from '../views/VerifyEmailView.vue';
+import ChangePasswordView from '../views/ChangePasswordView.vue';
+import SelfServiceChangePasswordView from '../views/SelfServiceChangePasswordView.vue';
 import LoginView from '../views/LoginView.vue';
 import NotFoundView from '../views/NotFoundView.vue';
 import DeniedView from '../views/DeniedView.vue';
@@ -17,6 +22,7 @@ declare module 'vue-router' {
     requiresAuth?: boolean;
     requiredPermission?: string;
     public?: boolean;
+    skipAuthRestore?: boolean;
     title?: string;
   }
 }
@@ -25,6 +31,7 @@ type AuthRouterState = {
   restore: () => Promise<boolean>;
   isAuthenticated: () => boolean;
   can: (permission: string) => boolean;
+  isPasswordChangeRequired: () => boolean;
 };
 
 export const routes = [
@@ -51,6 +58,12 @@ export const routes = [
           title: 'Categories',
           requiredPermission: 'category.read',
         },
+      },
+      {
+        path: 'settings/change-password',
+        name: 'self-service-change-password',
+        component: SelfServiceChangePasswordView,
+        meta: { title: 'Change password' },
       },
       {
         path: 'roles/create',
@@ -118,7 +131,31 @@ export const routes = [
       },
     ],
   },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: ForgotPasswordView,
+    meta: { public: true },
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: ResetPasswordView,
+    meta: { public: true },
+  },
+  {
+    path: '/verify-email',
+    name: 'verify-email',
+    component: VerifyEmailView,
+    meta: { public: true, skipAuthRestore: true },
+  },
   { path: '/login', name: 'login', component: LoginView, meta: { public: true } },
+  {
+    path: '/change-password',
+    name: 'change-password',
+    component: ChangePasswordView,
+    meta: { requiresAuth: true },
+  },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
 ];
 
@@ -129,11 +166,24 @@ export const router = createRouter({
 
 export function installAuthGuard(targetRouter: Router, auth: AuthRouterState): void {
   targetRouter.beforeEach(async (to) => {
-    await auth.restore();
+    if (to.meta.skipAuthRestore !== true) await auth.restore();
 
     if (to.name === 'login') {
-      return auth.isAuthenticated() ? { path: '/' } : true;
+      return auth.isAuthenticated()
+        ? { path: auth.isPasswordChangeRequired() ? '/change-password' : '/' }
+        : true;
     }
+
+    if (auth.isAuthenticated() && auth.isPasswordChangeRequired()) {
+      return to.name === 'change-password'
+        ? true
+        : {
+            name: 'change-password',
+            query: { returnTo: sanitizeReturnTo(to.fullPath) },
+          };
+    }
+
+    if (to.name === 'change-password' && auth.isAuthenticated()) return { path: '/' };
 
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth === true);
     if (!requiresAuth || auth.isAuthenticated()) {

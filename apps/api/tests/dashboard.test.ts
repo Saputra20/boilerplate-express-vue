@@ -37,6 +37,7 @@ describe('dashboard summary', () => {
           jti: 'token-id',
           exp: 1,
           revoked: false,
+          mustChangePassword: false,
         }),
       },
       permissionService: {

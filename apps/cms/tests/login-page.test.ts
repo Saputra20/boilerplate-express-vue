@@ -50,6 +50,7 @@ describe('LoginView', () => {
     expect(wrapper.find('[aria-label="CMS sign in"]').exists()).toBe(false);
     expect(wrapper.find('a[href="/signup"]').exists()).toBe(false);
     expect(wrapper.find('a[href="/reset-password"]').exists()).toBe(false);
+    expect(wrapper.get('a[href="/forgot-password"]').text()).toBe('Forgot password?');
   });
 
   it('validates email and password before submission', async () => {

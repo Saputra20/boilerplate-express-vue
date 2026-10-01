@@ -161,6 +161,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
           required: ['message'],
           properties: {
             message: { type: 'string' },
+            code: { type: 'string' },
           },
         },
         ...auth.schemas,
@@ -175,7 +176,9 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
       responses: {
         BadRequest: errorResponse('Bad request'),
         Unauthorized: errorResponse('Unauthorized'),
-        Forbidden: errorResponse('Forbidden'),
+        Forbidden: errorResponse(
+          'Forbidden; code=password_change_required when the first-login password change is pending',
+        ),
         PayloadTooLarge: errorResponse('Payload too large'),
         TooManyRequests: errorResponse('Too many requests'),
         InternalServerError: errorResponse('Internal server error'),
@@ -242,6 +245,8 @@ function validateOpenApiDocument(document: OpenApiDocument): void {
     '/api/v1/auth/refresh',
     '/api/v1/auth/logout',
     '/api/v1/auth/logout-all',
+    '/api/v1/auth/change-password',
+    '/api/v1/auth/change-password/self-service',
     '/api/v1/me',
     '/health',
     '/ready',

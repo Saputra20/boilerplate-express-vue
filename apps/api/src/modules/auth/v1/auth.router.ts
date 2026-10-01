@@ -16,15 +16,17 @@ import type { LoginService } from '../services/login.service.js';
 import type { LogoutService } from '../services/logout.service.js';
 import type { RefreshService } from '../services/refresh-token.service.js';
 import type { EmailVerificationService } from '../services/email-verification.service.js';
-import {
-  createPasswordResetAttemptLimiter,
-  createPasswordRecoveryRequestLimiters,
-} from './password-recovery-rate-limit.js';
+import { createPasswordRecoveryRequestLimiters } from './password-recovery-rate-limit.js';
+import { createPasswordAttemptLimiter } from './password-attempt-rate-limit.js';
 import {
   createPasswordRecoveryRequestController,
   createPasswordResetConfirmController,
 } from './controllers/password-recovery.controller.js';
 import type { PasswordRecoveryService } from '../services/password-recovery.service.js';
+import type { PasswordChangeService } from '../services/password-change.service.js';
+import { createPasswordChangeController } from './controllers/password-change.controller.js';
+import type { SelfServicePasswordChangeService } from '../services/self-service-password-change.service.js';
+import { createSelfServicePasswordChangeController } from './controllers/self-service-password-change.controller.js';
 
 export type AuthRouterDependencies = {
   loginService?: LoginService;
@@ -33,6 +35,8 @@ export type AuthRouterDependencies = {
   logoutService?: LogoutService;
   emailVerificationService?: EmailVerificationService;
   passwordRecoveryService?: PasswordRecoveryService;
+  passwordChangeService?: PasswordChangeService;
+  selfServicePasswordChangeService?: SelfServicePasswordChangeService;
 };
 
 export function createAuthRouter({
@@ -42,6 +46,8 @@ export function createAuthRouter({
   logoutService,
   emailVerificationService,
   passwordRecoveryService,
+  passwordChangeService,
+  selfServicePasswordChangeService,
 }: AuthRouterDependencies) {
   const router = Router();
 
@@ -67,13 +73,30 @@ export function createAuthRouter({
     );
     router.post(
       '/password-reset/confirm',
-      createPasswordResetAttemptLimiter(),
+      createPasswordAttemptLimiter(),
       createPasswordResetConfirmController(passwordRecoveryService),
+    );
+  }
+  if (accessAuthService && passwordChangeService) {
+    router.post(
+      '/change-password',
+      createAccessAuthMiddleware(accessAuthService, { allowMustChangePassword: true }),
+      createPasswordAttemptLimiter(),
+      createPasswordChangeController(passwordChangeService),
+    );
+  }
+  if (accessAuthService && selfServicePasswordChangeService) {
+    router.post(
+      '/change-password/self-service',
+      createAccessAuthMiddleware(accessAuthService),
+      createPasswordAttemptLimiter(),
+      createSelfServicePasswordChangeController(selfServicePasswordChangeService),
     );
   }
   if (accessAuthService && logoutService) {
     const authenticateLogout = createAccessAuthMiddleware(accessAuthService, {
       allowRevoked: true,
+      allowMustChangePassword: true,
     });
     router.post('/logout', authenticateLogout, createLogoutController(logoutService, 'current'));
     router.post('/logout-all', authenticateLogout, createLogoutController(logoutService, 'all'));

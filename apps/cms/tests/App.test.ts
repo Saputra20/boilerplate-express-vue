@@ -34,6 +34,7 @@ async function mountApp(path: string) {
     email: 'admin@example.com',
     roles: ['admin'],
     effectivePermissions: ['dashboard.read'],
+    mustChangePassword: false,
   };
 
   const wrapper = mount(App, {

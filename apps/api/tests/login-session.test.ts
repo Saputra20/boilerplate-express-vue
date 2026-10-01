@@ -167,6 +167,25 @@ describe('login and session', () => {
     }
   });
 
+  it('preserves the optional top-level first-login requirement only when it is true', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'api-login-password-change-'));
+    const jwt = createJwtService(directory);
+    const user = { ...(await createActiveUser()), mustChangePassword: true };
+    const loginService = createLoginService(new MemoryLoginRepository(user), jwt);
+
+    try {
+      const result = await loginService.login({
+        email: 'user@example.com',
+        password,
+        requestId: randomUUID(),
+      });
+      expect(result.mustChangePassword).toBe(true);
+      expect(Object.keys(result)).toContain('mustChangePassword');
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it.each(authenticationFailureCases)(
     'returns the same public 401 for %s',
     async (_scenario, status, reason) => {

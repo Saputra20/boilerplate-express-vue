@@ -17,6 +17,7 @@ export function createAccessAuthRepository(database: Database): AccessAuthReposi
           revokedAt: authSessions.revokedAt,
           status: users.status,
           deletedAt: users.deletedAt,
+          mustChangePassword: users.mustChangePassword,
         })
         .from(authSessions)
         .innerJoin(users, eq(authSessions.userId, users.id))
@@ -45,6 +46,7 @@ export function createAccessAuthRepository(database: Database): AccessAuthReposi
         sid: session.sessionId,
         jti,
         revoked,
+        mustChangePassword: session.mustChangePassword,
       };
     },
   };

@@ -3,11 +3,10 @@ import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { z } from 'zod';
 import { ApiError } from '../api/client';
+import AuthLayout from '../components/AuthLayout.vue';
 import FeedbackState from '../components/FeedbackState.vue';
 import { sanitizeReturnTo } from '../router/return-to';
 import { useAuthStore } from '../stores/auth';
-import CmsIcon from '../components/CmsIcon.vue';
-import { useTheme } from '../composables/useTheme';
 import CmsButton from '../components/ui/CmsButton.vue';
 import CmsInput from '../components/ui/CmsInput.vue';
 import CmsPasswordInput from '../components/ui/CmsPasswordInput.vue';
@@ -23,7 +22,6 @@ type FormErrors = Partial<Record<FieldName, string>>;
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
-const { theme, toggleTheme } = useTheme();
 const form = reactive({ email: '', password: '' });
 const errors = reactive<FormErrors>({});
 const formError = ref<string | null>(null);
@@ -96,86 +94,53 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-cms-shell-surface lg:flex">
-    <section class="flex min-h-screen w-full flex-col px-6 py-6 sm:px-10 lg:w-1/2 lg:px-12">
-      <header class="flex justify-end">
-        <button
-          type="button"
-          class="grid size-10 place-items-center rounded-lg text-cms-muted outline-none transition-colors hover:bg-cms-muted-surface focus-visible:ring-2 focus-visible:ring-cms-focus"
-          :aria-label="theme === 'dark' ? 'Use light theme' : 'Use dark theme'"
-          @click="toggleTheme"
-        >
-          <CmsIcon :name="theme === 'dark' ? 'sun' : 'moon'" />
-        </button>
-      </header>
+  <AuthLayout title-id="login-title">
+    <div class="mb-8">
+      <h1 id="login-title" class="mb-2 text-3xl font-semibold text-cms-foreground sm:text-4xl">
+        Sign in
+      </h1>
+      <p class="text-sm text-cms-muted">Enter your email and password to sign in.</p>
+    </div>
 
-      <section aria-labelledby="login-title" class="flex flex-1 items-center justify-center py-12">
-        <div class="w-full max-w-md">
-          <div class="mb-8">
-            <h1
-              id="login-title"
-              class="mb-2 text-3xl font-semibold text-cms-foreground sm:text-4xl"
-            >
-              Sign in
-            </h1>
-            <p class="text-sm text-cms-muted">Enter your email and password to sign in.</p>
-          </div>
+    <FeedbackState v-if="formError" class="mb-5" :kind="formErrorKind" :message="formError" />
 
-          <FeedbackState v-if="formError" class="mb-5" :kind="formErrorKind" :message="formError" />
-
-          <form class="space-y-5" novalidate @submit.prevent="submit">
-            <CmsInput
-              id="login-email"
-              v-model="form.email"
-              label="Email"
-              name="email"
-              type="email"
-              placeholder="name@example.com"
-              error-id="login-email-error"
-              :error="errors.email"
-              :disabled="isSubmitting"
-            />
-            <CmsPasswordInput
-              id="login-password"
-              v-model="form.password"
-              label="Password"
-              name="password"
-              placeholder="Enter your password"
-              error-id="login-password-error"
-              :error="errors.password"
-              :disabled="isSubmitting"
-            />
-            <CmsButton
-              type="submit"
-              class="min-h-12 w-full py-3 font-medium shadow-cms-card"
-              :loading="isSubmitting"
-            >
-              {{ isSubmitting ? 'Signing in…' : 'Sign in' }}
-            </CmsButton>
-          </form>
-        </div>
-      </section>
-    </section>
-
-    <aside
-      class="relative hidden min-h-screen w-1/2 place-items-center overflow-hidden bg-[#161950] px-10 text-white dark:bg-white/[0.05] lg:grid"
-      aria-label="CMS branding"
-    >
-      <div
-        aria-hidden="true"
-        class="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(255,255,255,.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.35)_1px,transparent_1px)] [background-size:48px_48px]"
+    <form class="space-y-5" novalidate @submit.prevent="submit">
+      <CmsInput
+        id="login-email"
+        v-model="form.email"
+        label="Email"
+        name="email"
+        type="email"
+        placeholder="name@example.com"
+        error-id="login-email-error"
+        :error="errors.email"
+        :disabled="isSubmitting"
       />
-      <div class="relative z-10 flex max-w-sm flex-col items-center text-center">
-        <span
-          class="mb-6 grid size-16 place-items-center rounded-2xl border border-white/15 bg-white/10 text-2xl font-semibold text-white"
-          aria-hidden="true"
-          >C</span
+      <CmsPasswordInput
+        id="login-password"
+        v-model="form.password"
+        label="Password"
+        name="password"
+        placeholder="Enter your password"
+        error-id="login-password-error"
+        :error="errors.password"
+        :disabled="isSubmitting"
+      />
+      <div class="flex justify-end">
+        <RouterLink
+          to="/forgot-password"
+          class="inline-flex min-h-11 items-center px-1 text-sm font-medium text-cms-primary underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-cms-focus"
         >
-        <p class="text-2xl font-semibold">Content management</p>
-        <p class="mt-3 text-sm leading-6 text-white/60">
-          A clear workspace for managing your content and access.
-        </p>
+          Forgot password?
+        </RouterLink>
       </div>
-    </aside>
-  </main>
+      <CmsButton
+        type="submit"
+        class="min-h-12 w-full py-3 font-medium shadow-cms-card"
+        :loading="isSubmitting"
+      >
+        {{ isSubmitting ? 'Signing in…' : 'Sign in' }}
+      </CmsButton>
+    </form>
+  </AuthLayout>
 </template>

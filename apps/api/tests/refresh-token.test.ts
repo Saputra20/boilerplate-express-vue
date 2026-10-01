@@ -121,6 +121,9 @@ describe('refresh token rotation', () => {
       const refreshClaims = jwt.verifyToken(result.refreshToken, 'refresh');
 
       expect(result).toMatchObject({ tokenType: 'Bearer', expiresIn: 900 });
+      expect(Object.keys(result).sort()).toEqual(
+        ['accessToken', 'refreshToken', 'tokenType', 'expiresIn'].sort(),
+      );
       expect(accessClaims).toMatchObject({ sub, sid, typ: 'access' });
       expect(refreshClaims).toMatchObject({ sub, sid, typ: 'refresh' });
       expect(accessClaims.jti).not.toBe(oldClaims.jti);

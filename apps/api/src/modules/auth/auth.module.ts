@@ -22,6 +22,10 @@ import { createPasswordRecoveryRepository } from './repositories/password-recove
 import { createPasswordRecoveryService } from './services/password-recovery.service.js';
 import type { EmailDeliveryService } from '../notification/email/delivery.service.js';
 import type { Logger } from 'pino';
+import { createPasswordChangeRepository } from './repositories/password-change.repository.js';
+import { createPasswordChangeService } from './services/password-change.service.js';
+import { createSelfServicePasswordChangeRepository } from './repositories/self-service-password-change.repository.js';
+import { createSelfServicePasswordChangeService } from './services/self-service-password-change.service.js';
 
 export type AuthModuleDependencies = {
   db: Database;
@@ -48,6 +52,12 @@ export function createAuthModule({
     permissionService,
   );
   const auditService = createAuditService(createAuditRepository(db), logger);
+  const passwordChangeService = createPasswordChangeService(
+    createPasswordChangeRepository(db, auditService),
+  );
+  const selfServicePasswordChangeService = createSelfServicePasswordChangeService(
+    createSelfServicePasswordChangeRepository(db, auditService),
+  );
   const emailVerificationService = createEmailVerificationService({
     repository: createEmailVerificationRepository(db, auditService),
     delivery: emailDeliveryService,
@@ -75,6 +85,8 @@ export function createAuthModule({
         logoutService,
         emailVerificationService,
         passwordRecoveryService,
+        passwordChangeService,
+        selfServicePasswordChangeService,
       }),
       meRouter: createMeRouter({ accessAuthService, contextService }),
     },

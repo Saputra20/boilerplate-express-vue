@@ -6,6 +6,7 @@ schemas:
     required:
       - id
       - email
+      - mustChangePassword
     additionalProperties: false
     properties:
       id:
@@ -14,6 +15,8 @@ schemas:
       email:
         type: string
         format: email
+      mustChangePassword:
+        type: boolean
   MeV1Response:
     type: object
     required:
@@ -42,7 +45,7 @@ paths:
         - bearerAuth: []
       responses:
         '200':
-          description: Authenticated user and effective RBAC context
+          description: Current authenticated user and effective RBAC context, including database-backed password-change requirement.
           content:
             application/json:
               schema:

@@ -5,29 +5,60 @@ export const loginRequestSchema = z.object({
   password: z.string(),
 });
 
+export const passwordRecoveryRequestSchema = z.object({ email: z.email() }).strict();
+export const passwordRecoveryResponseSchema = z.object({ message: z.string().min(1) });
+export const emailVerificationTokenRequestSchema = z
+  .object({ token: z.string().min(1).max(128) })
+  .strict();
+export const emailVerificationResponseSchema = z
+  .object({ message: z.literal('Email verified') })
+  .strict();
+export const passwordResetConfirmRequestSchema = z
+  .object({ token: z.string(), password: z.string() })
+  .strict();
+
 export const refreshRequestSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
-export const tokenResponseSchema = z.object({
+const baseTokenResponseSchema = z.object({
   accessToken: z.string().min(1),
   refreshToken: z.string().min(1),
   tokenType: z.literal('Bearer'),
   expiresIn: z.number().int().nonnegative(),
 });
 
+export const loginTokenResponseSchema = baseTokenResponseSchema.extend({
+  mustChangePassword: z.literal(true).optional(),
+});
+export const refreshTokenResponseSchema = baseTokenResponseSchema;
+
+export const changePasswordRequestSchema = z
+  .object({ currentPassword: z.string(), newPassword: z.string() })
+  .strict();
+export const selfServicePasswordChangeRequestSchema = changePasswordRequestSchema;
+
 export const authenticatedContextSchema = z.object({
   user: z.object({
     id: z.uuid(),
     email: z.email(),
+    mustChangePassword: z.boolean(),
   }),
   roles: z.array(z.string()),
   permissions: z.array(z.string()),
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
+export type PasswordRecoveryRequest = z.infer<typeof passwordRecoveryRequestSchema>;
+export type EmailVerificationTokenRequest = z.infer<typeof emailVerificationTokenRequestSchema>;
+export type PasswordResetConfirmRequest = z.infer<typeof passwordResetConfirmRequestSchema>;
 export type RefreshRequest = z.infer<typeof refreshRequestSchema>;
-export type TokenResponse = z.infer<typeof tokenResponseSchema>;
+export type LoginTokenResponse = z.infer<typeof loginTokenResponseSchema>;
+export type TokenResponse = z.infer<typeof refreshTokenResponseSchema>;
+export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
+export type SelfServicePasswordChangeRequest = z.infer<
+  typeof selfServicePasswordChangeRequestSchema
+>;
 export type AuthenticatedContext = z.infer<typeof authenticatedContextSchema>;
 
 const categorySchema = z.object({

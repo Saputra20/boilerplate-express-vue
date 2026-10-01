@@ -8,12 +8,26 @@ import { z } from 'zod';
 import {
   loginRequestSchema,
   refreshRequestSchema,
-  tokenResponseSchema,
+  loginTokenResponseSchema,
+  refreshTokenResponseSchema,
   authenticatedContextSchema,
   type AuthenticatedContext,
   type LoginRequest,
+  passwordRecoveryRequestSchema,
+  passwordRecoveryResponseSchema,
+  emailVerificationTokenRequestSchema,
+  emailVerificationResponseSchema,
+  passwordResetConfirmRequestSchema,
+  changePasswordRequestSchema,
+  type PasswordRecoveryRequest,
+  type EmailVerificationTokenRequest,
+  type PasswordResetConfirmRequest,
+  type ChangePasswordRequest,
+  selfServicePasswordChangeRequestSchema,
+  type SelfServicePasswordChangeRequest,
   type RefreshRequest,
   type TokenResponse,
+  type LoginTokenResponse,
   categoryListResponseSchema,
   createCategoryRequestSchema,
   updateCategoryRequestSchema,
@@ -43,7 +57,7 @@ import {
 
 export const API_TIMEOUT_MS = 10_000;
 
-const errorResponseSchema = z.object({ message: z.string().min(1) });
+const errorResponseSchema = z.object({ message: z.string().min(1), code: z.string().optional() });
 
 export type ApiErrorKind = 'http' | 'timeout' | 'network' | 'invalid-response' | 'unknown';
 
@@ -52,6 +66,7 @@ export class ApiError extends Error {
     message: string,
     readonly kind: ApiErrorKind,
     readonly status?: number,
+    readonly code?: string,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -69,7 +84,15 @@ export type ApiTransport = Pick<AxiosInstance, 'request'>;
 
 export type ApiClient = {
   request<T>(config: ApiRequestConfig): Promise<T>;
-  login(input: LoginRequest): Promise<TokenResponse>;
+  login(input: LoginRequest): Promise<LoginTokenResponse>;
+  requestPasswordReset(input: PasswordRecoveryRequest): Promise<void>;
+  verifyEmail(input: EmailVerificationTokenRequest): Promise<void>;
+  confirmPasswordReset(input: PasswordResetConfirmRequest): Promise<void>;
+  changePassword(input: ChangePasswordRequest, accessToken?: string): Promise<void>;
+  changeCurrentUserPassword(
+    input: SelfServicePasswordChangeRequest,
+    accessToken?: string,
+  ): Promise<void>;
   refresh(input: RefreshRequest): Promise<TokenResponse>;
   me(accessToken?: string): Promise<AuthenticatedContext>;
   logout(accessToken?: string): Promise<void>;
@@ -150,7 +173,51 @@ export function createApiClient(
         url: '/api/v1/auth/login',
         data: loginRequestSchema.parse(input),
       });
-      return parseTokenResponse(response);
+      return parseTokenResponse(response, loginTokenResponseSchema);
+    },
+    async requestPasswordReset(input) {
+      const response = await request<unknown>({
+        method: 'POST',
+        url: '/api/v1/auth/password-reset/request',
+        data: passwordRecoveryRequestSchema.parse(input),
+        accessToken: '',
+      });
+      const result = passwordRecoveryResponseSchema.safeParse(response);
+      if (!result.success) throw new ApiError('Invalid API response', 'invalid-response');
+    },
+    async verifyEmail(input) {
+      const response = await request<unknown>({
+        method: 'POST',
+        url: '/api/v1/auth/email-verification/verify',
+        data: emailVerificationTokenRequestSchema.parse(input),
+        accessToken: '',
+      });
+      const result = emailVerificationResponseSchema.safeParse(response);
+      if (!result.success) throw new ApiError('Invalid API response', 'invalid-response');
+    },
+    async confirmPasswordReset(input) {
+      await request<void>({
+        method: 'POST',
+        url: '/api/v1/auth/password-reset/confirm',
+        data: passwordResetConfirmRequestSchema.parse(input),
+        accessToken: '',
+      });
+    },
+    async changePassword(input, accessToken) {
+      await request<void>({
+        method: 'POST',
+        url: '/api/v1/auth/change-password',
+        data: changePasswordRequestSchema.parse(input),
+        accessToken,
+      });
+    },
+    async changeCurrentUserPassword(input, accessToken) {
+      await request<void>({
+        method: 'POST',
+        url: '/api/v1/auth/change-password/self-service',
+        data: selfServicePasswordChangeRequestSchema.parse(input),
+        accessToken,
+      });
     },
     async refresh(input) {
       const response = await request<unknown>({
@@ -158,7 +225,7 @@ export function createApiClient(
         url: '/api/v1/auth/refresh',
         data: refreshRequestSchema.parse(input),
       });
-      return parseTokenResponse(response);
+      return parseTokenResponse(response, refreshTokenResponseSchema);
     },
     async me(accessToken) {
       const response = await request<unknown>({
@@ -308,14 +375,18 @@ export function normalizeApiError(error: unknown): ApiError {
       parsed.success ? parsed.data.message : safeStatusMessage(status),
       'http',
       status,
+      parsed.success ? parsed.data.code : undefined,
     );
   }
 
   return new ApiError('Unexpected API error', 'unknown');
 }
 
-function parseTokenResponse(response: unknown): TokenResponse {
-  const result = tokenResponseSchema.safeParse(response);
+function parseTokenResponse<T extends TokenResponse | LoginTokenResponse>(
+  response: unknown,
+  schema: z.ZodType<T>,
+): T {
+  const result = schema.safeParse(response);
   if (!result.success) throw new ApiError('Invalid API response', 'invalid-response');
   return result.data;
 }

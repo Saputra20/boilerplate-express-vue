@@ -6,6 +6,7 @@ export type AccessPrincipal = {
   jti: string;
   exp: number;
   revoked: boolean;
+  mustChangePassword: boolean;
 };
 
 type StoredAccessPrincipal = Omit<AccessPrincipal, 'exp'>;

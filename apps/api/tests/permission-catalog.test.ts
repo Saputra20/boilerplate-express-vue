@@ -13,6 +13,7 @@ describe('permission catalog route', () => {
           jti: 'token-id',
           exp: 1,
           revoked: false,
+          mustChangePassword: false,
         }),
       },
       permissionService: {

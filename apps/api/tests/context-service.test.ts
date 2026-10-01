@@ -8,6 +8,7 @@ describe('authenticated context service', () => {
       findActiveUser: async () => ({
         id: 'user-id',
         email: 'user@example.com',
+        mustChangePassword: true,
         roles: ['editor', 'viewer'],
       }),
     };
@@ -19,7 +20,7 @@ describe('authenticated context service', () => {
     const service = createAuthenticatedContextService(userRepository, permissionService);
 
     await expect(service.getContext('user-id')).resolves.toEqual({
-      user: { id: 'user-id', email: 'user@example.com' },
+      user: { id: 'user-id', email: 'user@example.com', mustChangePassword: true },
       roles: ['editor', 'viewer'],
       permissions: ['content.read', 'content.write'],
     });
@@ -39,5 +40,26 @@ describe('authenticated context service', () => {
     const service = createAuthenticatedContextService(userRepository, permissionService);
 
     await expect(service.getContext('missing-user')).resolves.toBeNull();
+  });
+
+  it('returns the cleared database requirement as false', async () => {
+    const userRepository: AuthenticatedUserRepository = {
+      findActiveUser: async () => ({
+        id: 'user-id',
+        email: 'user@example.com',
+        mustChangePassword: false,
+        roles: [],
+      }),
+    };
+    const permissionService: PermissionService = {
+      authorize: async () => 'denied',
+      listEffectivePermissions: async () => [],
+      listCatalog: async () => [],
+    };
+    const context = await createAuthenticatedContextService(
+      userRepository,
+      permissionService,
+    ).getContext('user-id');
+    expect(context?.user.mustChangePassword).toBe(false);
   });
 });

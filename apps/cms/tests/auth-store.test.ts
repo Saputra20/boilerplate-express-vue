@@ -11,7 +11,11 @@ const tokenResponse = {
 };
 
 const contextResponse = {
-  user: { id: '00000000-0000-4000-8000-000000000001', email: 'user@example.com' },
+  user: {
+    id: '00000000-0000-4000-8000-000000000001',
+    email: 'user@example.com',
+    mustChangePassword: false,
+  },
   roles: ['editor'],
   permissions: ['content.read'],
 };
@@ -20,6 +24,11 @@ function createApiMock(): ApiClient {
   return {
     request: vi.fn(),
     login: vi.fn(),
+    requestPasswordReset: vi.fn(),
+    verifyEmail: vi.fn(),
+    confirmPasswordReset: vi.fn(),
+    changePassword: vi.fn(),
+    changeCurrentUserPassword: vi.fn(),
     refresh: vi.fn(),
     me: vi.fn(),
     logout: vi.fn(),
@@ -67,8 +76,29 @@ describe('auth store', () => {
       email: contextResponse.user.email,
       roles: contextResponse.roles,
       effectivePermissions: contextResponse.permissions,
+      mustChangePassword: false,
     });
     expect(api.me).toHaveBeenCalledWith('access-token');
+    expect(store.isAuthenticated()).toBe(true);
+  });
+
+  it('sends a voluntary password change with the active access token', async () => {
+    const api = createApiMock();
+    vi.mocked(api.changeCurrentUserPassword).mockResolvedValue(undefined);
+    vi.mocked(api.login).mockResolvedValue(tokenResponse);
+    vi.mocked(api.me).mockResolvedValue(contextResponse);
+    const store = createAuthStore(api)();
+    await store.login({ email: 'user@example.com', password: 'secret' });
+
+    await store.changeCurrentUserPassword({
+      currentPassword: 'current password',
+      newPassword: 'replacement password',
+    });
+
+    expect(api.changeCurrentUserPassword).toHaveBeenCalledWith(
+      { currentPassword: 'current password', newPassword: 'replacement password' },
+      'access-token',
+    );
     expect(store.isAuthenticated()).toBe(true);
   });
 
@@ -109,6 +139,22 @@ describe('auth store', () => {
     expect(store.accessToken).toBe('access-token');
     expect(store.identity?.effectivePermissions).toEqual(['content.read']);
     expect(sessionStorage.getItem(REFRESH_TOKEN_STORAGE_KEY)).toBe('refresh-token');
+  });
+
+  it('rehydrates the mandatory-change state from /me after refresh', async () => {
+    const api = createApiMock();
+    vi.mocked(api.refresh).mockResolvedValue(tokenResponse);
+    vi.mocked(api.me).mockResolvedValue({
+      ...contextResponse,
+      user: { ...contextResponse.user, mustChangePassword: true },
+    });
+    sessionStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, 'old-refresh-token');
+    const store = createAuthStore(api)();
+
+    await expect(store.restore()).resolves.toBe(true);
+
+    expect(store.isPasswordChangeRequired()).toBe(true);
+    expect(api.me).toHaveBeenCalledWith('access-token');
   });
 
   it('shares one refresh operation across concurrent callers', async () => {

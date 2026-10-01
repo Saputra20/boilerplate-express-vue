@@ -25,6 +25,7 @@ describe('navigation active route styling', () => {
       email: 'fixture@example.com',
       roles: ['admin'],
       effectivePermissions: ['dashboard.read', 'role.read'],
+      mustChangePassword: false,
     };
 
     const wrapper = mount(AppNavigation, { global: { plugins: [router, pinia] } });

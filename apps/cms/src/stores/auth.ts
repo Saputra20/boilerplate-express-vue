@@ -16,6 +16,7 @@ export type AuthIdentity = {
   email: string;
   roles: readonly string[];
   effectivePermissions: readonly string[];
+  mustChangePassword: boolean;
 };
 
 export function createAuthStore(apiClient: ApiClient) {
@@ -79,11 +80,23 @@ export function createAuthStore(apiClient: ApiClient) {
         email: context.user.email,
         roles: context.roles,
         effectivePermissions: context.permissions,
+        mustChangePassword: context.user.mustChangePassword,
       };
     }
 
     async function hydrateIdentity(): Promise<void> {
       applyContext(await apiClient.me(accessToken.value ?? undefined));
+    }
+
+    async function changePassword(input: { currentPassword: string; newPassword: string }) {
+      await apiClient.changePassword(input, accessToken.value ?? undefined);
+    }
+
+    async function changeCurrentUserPassword(input: {
+      currentPassword: string;
+      newPassword: string;
+    }) {
+      await apiClient.changeCurrentUserPassword(input, accessToken.value ?? undefined);
     }
 
     async function refreshSession(): Promise<boolean> {
@@ -171,6 +184,7 @@ export function createAuthStore(apiClient: ApiClient) {
       can: (permission: string) =>
         status.value === 'authenticated' &&
         identity.value?.effectivePermissions.includes(permission) === true,
+      isPasswordChangeRequired: () => identity.value?.mustChangePassword === true,
       isRestoring: () => status.value === 'restoring',
       isAuthenticated: () => status.value === 'authenticated' && accessToken.value !== null,
       login,
@@ -178,6 +192,9 @@ export function createAuthStore(apiClient: ApiClient) {
       refreshSession,
       logout,
       logoutAll,
+      changePassword,
+      changeCurrentUserPassword,
+      reloadIdentity: hydrateIdentity,
       clearSession,
     };
   });

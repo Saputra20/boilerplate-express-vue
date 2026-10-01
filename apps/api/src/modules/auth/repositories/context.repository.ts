@@ -7,6 +7,7 @@ type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/ind
 export type AuthenticatedUserRecord = {
   id: string;
   email: string;
+  mustChangePassword: boolean;
   roles: readonly string[];
 };
 
@@ -18,7 +19,12 @@ export function createAuthenticatedUserRepository(database: Database): Authentic
   return {
     async findActiveUser({ userId }) {
       const rows = await database
-        .select({ id: users.id, email: users.email, roleCode: roles.code })
+        .select({
+          id: users.id,
+          email: users.email,
+          mustChangePassword: users.mustChangePassword,
+          roleCode: roles.code,
+        })
         .from(users)
         .leftJoin(userRoles, eq(userRoles.userId, users.id))
         .leftJoin(roles, eq(roles.id, userRoles.roleId))
@@ -30,6 +36,7 @@ export function createAuthenticatedUserRepository(database: Database): Authentic
       return {
         id: first.id,
         email: first.email,
+        mustChangePassword: first.mustChangePassword,
         roles: [
           ...new Set(rows.flatMap((row) => (row.roleCode === null ? [] : [row.roleCode]))),
         ].sort(),

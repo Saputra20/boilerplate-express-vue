@@ -41,6 +41,7 @@ describe('CMS UI primitives', () => {
     });
 
     expect(password.get('input').attributes('aria-describedby')).toBe('password-error');
+    expect(password.get('button').classes()).toContain('size-11');
     expect(select.get('select').attributes('aria-describedby')).toBe('role-error');
   });
 
