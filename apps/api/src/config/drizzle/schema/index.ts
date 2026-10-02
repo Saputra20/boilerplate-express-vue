@@ -10,4 +10,4 @@ export * from './token-revocations.schema.js';
 export * from './auth-audit-events.schema.js';
 export * from './audit-events.schema.js';
 export * from './categories.schema.js';
-export * from '../../../modules/notification/schema/email-deliveries.schema.js';
+export * from './email-deliveries.schema.js';

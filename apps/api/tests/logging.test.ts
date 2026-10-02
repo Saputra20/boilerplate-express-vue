@@ -113,6 +113,33 @@ describe('logging foundation', () => {
     logging.close();
   });
 
+  it('pretty prints API access records in development and keeps JSON in the access file', async () => {
+    const directory = createDirectory();
+    const stderr = new MemoryStream();
+    const logging = createLogging({ directory, stderr, nodeEnv: 'development' });
+    const app = express();
+
+    app.use(logging.requestLogger);
+    app.use(logging.accessLogger);
+    app.get('/api/v1/me', (_request, response) => response.status(200).json({ ok: true }));
+
+    const response = await request(app).get('/api/v1/me?accessToken=do-not-log');
+    const accessLog = readFileSync(join(directory, 'access.log'), 'utf8');
+
+    expect(response.status).toBe(200);
+    expect(stderr.output).toContain('INFO');
+    expect(stderr.output).toContain('API request');
+    expect(stderr.output).toContain('method: "GET"');
+    expect(stderr.output).toContain('path: "/api/v1/me"');
+    expect(stderr.output).toContain('status: 200');
+    expect(stderr.output).toContain('durationMs:');
+    expect(stderr.output).toContain('requestId: "');
+    expect(stderr.output).not.toContain('do-not-log');
+    expect(JSON.parse(accessLog)).toMatchObject({ method: 'GET', path: '/api/v1/me', status: 200 });
+
+    logging.close();
+  });
+
   it('rotates bounded application logs and removes expired rotated files', () => {
     const directory = createDirectory();
     const now = new Date('2026-09-23T00:00:00.000Z');

@@ -229,6 +229,8 @@ export function createLogging({
     onFileFailure,
   );
   const terminalStream = createTerminalStream(stderr, nodeEnv);
+  const accessTerminalLogger =
+    nodeEnv === 'development' && terminalStream ? pino({}, terminalStream) : undefined;
   const destinations = [
     ...(terminalStream ? [{ stream: terminalStream }] : []),
     ...(applicationStream.isHealthy() ? [{ stream: applicationStream }] : []),
@@ -294,7 +296,19 @@ export function createLogging({
         status: Number(tokens.status(request, response)),
         durationMs: Number(tokens['response-time'](request, response, 3)),
       }),
-    { stream: accessStream },
+    {
+      stream: {
+        write(message) {
+          accessStream.write(message);
+          if (accessTerminalLogger) {
+            accessTerminalLogger.info(
+              JSON.parse(message) as Record<string, unknown>,
+              'API request',
+            );
+          }
+        },
+      },
+    },
   );
 
   return {
