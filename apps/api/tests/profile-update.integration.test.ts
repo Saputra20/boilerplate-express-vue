@@ -82,7 +82,55 @@ integrationDescribe('self-profile PostgreSQL integration', () => {
       );
     expect(user?.displayName).toBe('Ada Lovelace');
     expect(events).toHaveLength(1);
-    expect(events[0]?.metadata).toEqual({ changedFields: ['displayName'] });
+    expect(events[0]).toMatchObject({
+      actorSnapshotId: userId,
+      actorSnapshotDisplayName: 'Ada Lovelace',
+      actorSnapshotEmail: expect.stringContaining('@example.test'),
+      metadata: {
+        before: { displayName: null },
+        after: { displayName: 'Ada Lovelace' },
+      },
+    });
+  });
+
+  it('keeps owner mutation successful when post-commit audit append fails', async () => {
+    const { userId, sessionId } = await createAccount();
+    const failingAudit = createAuditService<Pick<typeof database.db, 'delete' | 'insert'>>(
+      {
+        append: async () => {
+          throw new Error('audit unavailable');
+        },
+        cleanupBefore: async () => 0,
+      },
+      { error: () => undefined },
+    );
+    const repository = createAuthenticatedUserRepository(database.db, failingAudit);
+
+    await expect(
+      repository.updateDisplayName({
+        userId,
+        displayName: 'Grace Hopper',
+        requestId: randomUUID(),
+        sessionId,
+        ipAddress: null,
+        userAgent: null,
+      }),
+    ).resolves.toBe('updated');
+
+    const [user, events] = await Promise.all([
+      database.db.query.users.findFirst({ where: eq(users.id, userId) }),
+      database.db
+        .select({ id: auditEvents.id })
+        .from(auditEvents)
+        .where(
+          and(
+            eq(auditEvents.resourceId, userId),
+            eq(auditEvents.eventType, 'user.profile_updated'),
+          ),
+        ),
+    ]);
+    expect(user?.displayName).toBe('Grace Hopper');
+    expect(events).toHaveLength(0);
   });
 
   it('rechecks mandatory password change under the user lock before mutation', async () => {

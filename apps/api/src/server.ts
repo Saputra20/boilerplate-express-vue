@@ -18,6 +18,10 @@ import { createCategoryModule } from './modules/category/category.module.js';
 import { createRoleModule } from './modules/role/role.module.js';
 import { createUserModule } from './modules/user/user.module.js';
 import { createDashboardModule } from './modules/dashboard/dashboard.module.js';
+import { createAuditModule } from './modules/audit/audit.module.js';
+import { createAuditRetentionRepository } from './modules/audit/repositories/audit-retention.repository.js';
+import { createAuditRetentionScheduler } from './modules/audit/services/audit-retention.scheduler.js';
+import { createAuditRetentionService } from './modules/audit/services/audit-retention.service.js';
 import { createPermissionCatalogRouter } from './modules/rbac/permission-catalog.router.js';
 import { createEmailDeliveryRepository } from './modules/notification/repositories/email-delivery.repository.js';
 import {
@@ -112,6 +116,20 @@ export async function startServer(): Promise<void> {
       accessAuthService: authModule.accessAuthService,
       permissionService: authModule.permissionService,
     });
+    const auditModule = createAuditModule({
+      db: database.db,
+      accessAuthService: authModule.accessAuthService,
+      permissionService: authModule.permissionService,
+      logger: logging.logger,
+    });
+    const auditRetentionService = createAuditRetentionService(
+      createAuditRetentionRepository(database.db),
+      logging.logger,
+    );
+    await createAuditRetentionScheduler({
+      queues,
+      service: auditRetentionService,
+    }).start();
     app = createApp({
       logging,
       security: { corsOrigins: env.CORS_ORIGINS },
@@ -122,6 +140,7 @@ export async function startServer(): Promise<void> {
         roleV1: roleModule.v1.router,
         userV1: userModule.v1.router,
         dashboardV1: dashboardModule.v1.router,
+        auditV1: auditModule.v1.router,
         miscV1: createPermissionCatalogRouter({
           accessAuthService: authModule.accessAuthService,
           permissionService: authModule.permissionService,

@@ -6,6 +6,7 @@ withDefaults(
       | 'folder'
       | 'shield'
       | 'users'
+      | 'history'
       | 'menu'
       | 'sun'
       | 'moon'
@@ -47,6 +48,7 @@ withDefaults(
       v-else-if="name === 'users'"
       d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m16 0v-2a4 4 0 0 0-3-3.87M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7-7.87a4 4 0 0 1 0 7.75"
     />
+    <path v-else-if="name === 'history'" d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5m4-1v4l3 2" />
     <path v-else-if="name === 'menu'" d="M4 6h16M4 12h16M4 18h16" />
     <path
       v-else-if="name === 'sun'"

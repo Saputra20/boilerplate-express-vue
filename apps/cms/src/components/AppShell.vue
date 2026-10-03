@@ -83,7 +83,7 @@ onBeforeUnmount(() => {
 
     <div
       id="application-content"
-      class="min-h-screen flex-1 transition-[margin] duration-300 ease-in-out"
+      class="min-h-screen min-w-0 flex-1 transition-[margin] duration-300 ease-in-out"
       :class="sidebarExpanded() ? 'xl:ml-[18.125rem]' : 'xl:ml-[5.625rem]'"
       :inert="mobileNavigationOpen ? 'true' : undefined"
     >

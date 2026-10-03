@@ -19,7 +19,7 @@ const title = computed(() => {
 
 const toneClasses = computed(() => {
   if (props.kind === 'denied') {
-    return 'border-cms-warning/30 bg-amber-50 text-cms-warning dark:bg-amber-950/30';
+    return 'border-cms-warning/30 bg-amber-50 text-cms-warning-strong dark:bg-amber-950/30 dark:text-cms-warning-light';
   }
   if (props.kind === 'unavailable') {
     return 'border-cms-border bg-cms-muted-surface text-cms-muted';

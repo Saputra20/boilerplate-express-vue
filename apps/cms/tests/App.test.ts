@@ -32,6 +32,7 @@ async function mountApp(path: string) {
   auth.identity = {
     userId: '00000000-0000-4000-8000-000000000001',
     email: 'admin@example.com',
+    displayName: null,
     roles: ['admin'],
     effectivePermissions: ['dashboard.read'],
     mustChangePassword: false,

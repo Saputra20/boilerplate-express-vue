@@ -23,6 +23,7 @@ describe('navigation active route styling', () => {
     auth.identity = {
       userId: '00000000-0000-4000-8000-000000000001',
       email: 'fixture@example.com',
+      displayName: null,
       roles: ['admin'],
       effectivePermissions: ['dashboard.read', 'role.read'],
       mustChangePassword: false,

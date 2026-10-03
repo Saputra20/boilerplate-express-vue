@@ -14,6 +14,7 @@ const contextResponse = {
   user: {
     id: '00000000-0000-4000-8000-000000000001',
     email: 'user@example.com',
+    displayName: null,
     mustChangePassword: false,
   },
   roles: ['editor'],
@@ -49,6 +50,10 @@ function createApiMock(): ApiClient {
     updateUser: vi.fn(),
     deleteUser: vi.fn(),
     getDashboardSummary: vi.fn(),
+    updateCurrentUserProfile: vi.fn(),
+    listAuditEvents: vi.fn(),
+    getAuditEvent: vi.fn(),
+    exportAuditEvents: vi.fn(),
   };
 }
 
@@ -74,6 +79,7 @@ describe('auth store', () => {
     expect(store.identity).toEqual({
       userId: contextResponse.user.id,
       email: contextResponse.user.email,
+      displayName: contextResponse.user.displayName,
       roles: contextResponse.roles,
       effectivePermissions: contextResponse.permissions,
       mustChangePassword: false,

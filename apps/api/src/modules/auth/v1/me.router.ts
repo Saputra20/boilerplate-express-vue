@@ -18,7 +18,7 @@ export function createMeRouter({ accessAuthService, contextService }: MeRouterDe
   );
   router.patch(
     '/me',
-    createAccessAuthMiddleware(accessAuthService),
+    createAccessAuthMiddleware(accessAuthService, { allowMustChangePassword: true }),
     createUpdateMeController(contextService),
   );
   return router;

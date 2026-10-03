@@ -26,6 +26,9 @@ const auditEventSchema = z
   .object({
     eventType: z.string().regex(eventTypePattern),
     actorUserId: z.uuid().nullable().optional(),
+    actorSnapshotId: z.uuid().nullable().optional(),
+    actorSnapshotDisplayName: z.string().max(255).nullable().optional(),
+    actorSnapshotEmail: z.email().max(255).nullable().optional(),
     actorType: z.enum(['user', 'system']),
     resourceType: z.string().regex(identifierPattern).nullable().optional(),
     resourceId: z.string().min(1).max(255).nullable().optional(),

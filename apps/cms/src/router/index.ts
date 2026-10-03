@@ -16,6 +16,8 @@ import RoleFormView from '../views/RoleFormView.vue';
 import UserView from '../views/UserView.vue';
 import UserFormView from '../views/UserFormView.vue';
 import ProfileView from '../views/ProfileView.vue';
+import AuditTrailView from '../views/AuditTrailView.vue';
+import AuditEventDetailView from '../views/AuditEventDetailView.vue';
 import { sanitizeReturnTo } from './return-to';
 
 declare module 'vue-router' {
@@ -134,6 +136,24 @@ export const routes = [
         meta: {
           title: 'Users',
           requiredPermission: 'user.read',
+        },
+      },
+      {
+        path: 'audit-trail',
+        name: 'audit-trail',
+        component: AuditTrailView,
+        meta: {
+          title: 'Audit Trail',
+          requiredPermission: 'audit.read',
+        },
+      },
+      {
+        path: 'audit-trail/:id',
+        name: 'audit-event',
+        component: AuditEventDetailView,
+        meta: {
+          title: 'Audit Event',
+          requiredPermission: 'audit.read',
         },
       },
     ],

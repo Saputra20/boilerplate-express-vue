@@ -1,7 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { roles, userRoles, users } from '../../../config/drizzle/schema/index.js';
-import type { AuditService } from '../../audit/services/audit.service.js';
+import type { AuditEvent, AuditService } from '../../audit/services/audit.service.js';
 
 type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 
@@ -60,10 +60,11 @@ export function createAuthenticatedUserRepository(
       };
     },
     async updateDisplayName(input) {
-      return database.transaction(async (tx) => {
+      const result = await database.transaction(async (tx) => {
         const [user] = await tx
           .select({
             id: users.id,
+            email: users.email,
             displayName: users.displayName,
             status: users.status,
             deletedAt: users.deletedAt,
@@ -74,31 +75,39 @@ export function createAuthenticatedUserRepository(
           .for('update')
           .limit(1);
         if (!user || user.status !== 'active' || user.deletedAt !== null)
-          return 'invalid_authentication';
-        if (user.mustChangePassword) return 'password_change_required';
-        if (user.displayName === input.displayName) return 'unchanged';
+          return 'invalid_authentication' as const;
+        if (user.mustChangePassword) return 'password_change_required' as const;
+        if (user.displayName === input.displayName) return 'unchanged' as const;
         await tx
           .update(users)
           .set({ displayName: input.displayName })
           .where(eq(users.id, input.userId));
-        await audit.recordRequired(
-          {
-            eventType: 'user.profile_updated',
-            actorType: 'user',
+        return {
+          status: 'updated' as const,
+          audit: {
+            eventType: 'user.profile_updated' as const,
+            actorType: 'user' as const,
             actorUserId: input.userId,
-            resourceType: 'user',
+            actorSnapshotId: user.id,
+            actorSnapshotDisplayName: input.displayName,
+            actorSnapshotEmail: user.email,
+            resourceType: 'user' as const,
             resourceId: input.userId,
-            outcome: 'success',
+            outcome: 'success' as const,
             requestId: input.requestId,
             sessionId: input.sessionId,
             ipAddress: input.ipAddress,
             userAgent: input.userAgent,
-            metadata: { changedFields: ['displayName'] },
-          },
-          tx,
-        );
-        return 'updated';
+            metadata: {
+              before: { displayName: user.displayName },
+              after: { displayName: input.displayName },
+            },
+          } satisfies AuditEvent,
+        };
       });
+      if (typeof result === 'string') return result;
+      await audit.recordInformational(result.audit);
+      return result.status;
     },
   };
 }

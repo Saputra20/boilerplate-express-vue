@@ -17,11 +17,14 @@ export const seedPermissionCodes = [
   'user.update',
   'user.delete',
   'dashboard.read',
+  'audit.read',
+  'audit.export',
 ] as const;
 
 function permissionDescription(code: string): string {
   if (code === 'system.access') return 'Foundation access permission';
   if (code.startsWith('role.')) return 'Role management permission';
+  if (code.startsWith('audit.')) return 'Audit trail permission';
   return 'Category management permission';
 }
 

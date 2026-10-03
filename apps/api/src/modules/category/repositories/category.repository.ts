@@ -1,12 +1,23 @@
 import { and, asc, count, desc, eq, ilike, isNull, or } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { categories } from '../../../config/drizzle/schema/index.js';
+import { categories, users } from '../../../config/drizzle/schema/index.js';
 import type { AuditEvent, AuditService } from '../../audit/services/audit.service.js';
 import type { CategoryList, CategoryRepository } from '../services/category.service.js';
 
 type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 
 type AuditExecutor = Pick<Database, 'insert'>;
+type Category = typeof categories.$inferSelect;
+type CategoryAuditValues = Pick<Category, 'name' | 'slug' | 'description' | 'isActive'>;
+type CategoryAuditMetadata = {
+  before: Partial<CategoryAuditValues> | null;
+  after: Partial<CategoryAuditValues> | null;
+};
+type ActorSnapshot = {
+  actorSnapshotId: string;
+  actorSnapshotDisplayName: string | null;
+  actorSnapshotEmail: string | null;
+};
 
 export function createCategoryRepository(
   database: Database,
@@ -14,7 +25,7 @@ export function createCategoryRepository(
 ): CategoryRepository {
   return {
     async create(input, audit) {
-      return database.transaction(async (transaction) => {
+      const result = await database.transaction(async (transaction) => {
         const [category] = await transaction
           .insert(categories)
           .values({
@@ -25,9 +36,19 @@ export function createCategoryRepository(
           })
           .returning();
         if (!category) throw new Error('Category insert returned no row');
-        await auditService.recordRequired(withResourceId(audit, category.id), transaction);
-        return category;
+        return {
+          category,
+          audit: createAuditEvent(
+            'category.created',
+            audit,
+            await actorSnapshot(transaction, audit.actorUserId),
+            category.id,
+            { before: null, after: categoryValues(category) },
+          ),
+        };
       });
+      await auditService.recordInformational(result.audit);
+      return result.category;
     },
     async list(input): Promise<CategoryList> {
       const filters = [isNull(categories.deletedAt)];
@@ -83,32 +104,135 @@ export function createCategoryRepository(
       return category ?? null;
     },
     async update(id, input, audit) {
-      return database.transaction(async (transaction) => {
+      const result = await database.transaction(async (transaction) => {
+        const [before] = await transaction
+          .select()
+          .from(categories)
+          .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
+          .for('update')
+          .limit(1);
+        if (!before) return null;
         const [category] = await transaction
           .update(categories)
           .set(input)
           .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
           .returning();
-        if (category)
-          await auditService.recordRequired(withResourceId(audit, category.id), transaction);
-        return category ?? null;
+        if (!category) return null;
+        return {
+          category,
+          audit: createAuditEvent(
+            'category.updated',
+            audit,
+            await actorSnapshot(transaction, audit.actorUserId),
+            category.id,
+            categoryChanges(categoryValues(before), categoryValues(category)),
+          ),
+        };
       });
+      if (!result) return null;
+      await auditService.recordInformational(result.audit);
+      return result.category;
     },
     async softDelete(id, audit) {
-      return database.transaction(async (transaction) => {
-        const result = await transaction
+      const result = await database.transaction(async (transaction) => {
+        const [before] = await transaction
+          .select()
+          .from(categories)
+          .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
+          .for('update')
+          .limit(1);
+        if (!before) return false;
+        const deleted = await transaction
           .update(categories)
           .set({ deletedAt: new Date() })
           .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
           .returning({ id: categories.id });
-        if (result.length === 0) return false;
-        await auditService.recordRequired(withResourceId(audit, id), transaction);
-        return true;
+        if (deleted.length === 0) return false;
+        return {
+          audit: createAuditEvent(
+            'category.deleted',
+            audit,
+            await actorSnapshot(transaction, audit.actorUserId),
+            id,
+            { before: categoryValues(before), after: null },
+          ),
+        };
       });
+      if (!result) return false;
+      await auditService.recordInformational(result.audit);
+      return true;
     },
   };
 }
 
-function withResourceId(audit: AuditEvent, resourceId: string): AuditEvent {
-  return { ...audit, resourceId };
+async function actorSnapshot(
+  transaction: Pick<Database, 'select'>,
+  actorUserId: string | null | undefined,
+): Promise<ActorSnapshot> {
+  if (!actorUserId) throw new Error('Audit actor missing');
+  const [actor] = await transaction
+    .select({ id: users.id, displayName: users.displayName, email: users.email })
+    .from(users)
+    .where(eq(users.id, actorUserId))
+    .limit(1);
+  return {
+    actorSnapshotId: actorUserId,
+    actorSnapshotDisplayName: actor?.displayName ?? null,
+    actorSnapshotEmail: actor?.email ?? null,
+  };
+}
+
+function createAuditEvent(
+  eventType: AuditEvent['eventType'],
+  context: Pick<AuditEvent, 'requestId' | 'sessionId'>,
+  actor: ActorSnapshot,
+  resourceId: string,
+  metadata: CategoryAuditMetadata,
+) {
+  return {
+    eventType,
+    actorType: 'user' as const,
+    actorUserId: actor.actorSnapshotId,
+    ...actor,
+    resourceType: 'category',
+    resourceId,
+    outcome: 'success' as const,
+    requestId: context.requestId,
+    sessionId: context.sessionId,
+    metadata,
+  };
+}
+
+function categoryValues(category: Category): CategoryAuditValues {
+  return {
+    name: category.name,
+    slug: category.slug,
+    description: category.description,
+    isActive: category.isActive,
+  };
+}
+
+function categoryChanges(
+  before: CategoryAuditValues,
+  after: CategoryAuditValues,
+): CategoryAuditMetadata {
+  const beforeChanges: Partial<CategoryAuditValues> = {};
+  const afterChanges: Partial<CategoryAuditValues> = {};
+  if (before.name !== after.name) {
+    beforeChanges.name = before.name;
+    afterChanges.name = after.name;
+  }
+  if (before.slug !== after.slug) {
+    beforeChanges.slug = before.slug;
+    afterChanges.slug = after.slug;
+  }
+  if (before.description !== after.description) {
+    beforeChanges.description = before.description;
+    afterChanges.description = after.description;
+  }
+  if (before.isActive !== after.isActive) {
+    beforeChanges.isActive = before.isActive;
+    afterChanges.isActive = after.isActive;
+  }
+  return { before: beforeChanges, after: afterChanges };
 }

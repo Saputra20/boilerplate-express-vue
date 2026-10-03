@@ -158,11 +158,15 @@ describe('PATCH /api/v1/me', () => {
     };
     const context: AuthenticatedContextService = {
       getContext: async () => null,
-      updateDisplayName: async () => 'updated',
+      updateDisplayName: async () => 'password_change_required',
     };
     const app = express();
     app.use(express.json());
-    app.patch('/api/v1/me', createAccessAuthMiddleware(access), createUpdateMeController(context));
+    app.patch(
+      '/api/v1/me',
+      createAccessAuthMiddleware(access, { allowMustChangePassword: true }),
+      createUpdateMeController(context),
+    );
     const auth = { Authorization: 'Bearer valid-token' };
 
     const unsupported = await request(app)

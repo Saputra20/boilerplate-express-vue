@@ -1,7 +1,7 @@
 export type NavigationItem = {
   label: string;
   to: string;
-  icon?: 'home' | 'folder' | 'shield' | 'users';
+  icon?: 'home' | 'folder' | 'shield' | 'users' | 'history';
   permission?: string;
 };
 
@@ -10,6 +10,7 @@ export const navigationItems: readonly NavigationItem[] = [
   { label: 'Categories', to: '/categories', icon: 'folder', permission: 'category.read' },
   { label: 'Roles', to: '/roles', icon: 'shield', permission: 'role.read' },
   { label: 'Users', to: '/users', icon: 'users', permission: 'user.read' },
+  { label: 'Audit Trail', to: '/audit-trail', icon: 'history', permission: 'audit.read' },
 ];
 
 export function filterNavigationItems(

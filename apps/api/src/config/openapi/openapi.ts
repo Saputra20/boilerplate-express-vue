@@ -38,6 +38,7 @@ const dashboardSpecUrl = new URL(
   '../../modules/dashboard/v1/dashboard.openapi.yaml',
   import.meta.url,
 );
+const auditSpecUrl = new URL('../../modules/audit/v1/audit.openapi.yaml', import.meta.url);
 const permissionCatalogSpecUrl = new URL(
   '../../modules/rbac/permission-catalog.openapi.yaml',
   import.meta.url,
@@ -84,6 +85,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
   const role = loadModuleDocument(roleSpecUrl);
   const user = loadModuleDocument(userSpecUrl);
   const dashboard = loadModuleDocument(dashboardSpecUrl);
+  const audit = loadModuleDocument(auditSpecUrl);
   const permissionCatalog = loadModuleDocument(permissionCatalogSpecUrl);
   const document = {
     openapi: OPENAPI_VERSION,
@@ -101,6 +103,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
       ...role.tags,
       ...user.tags,
       ...dashboard.tags,
+      ...audit.tags,
       ...permissionCatalog.tags,
     ],
     paths: {
@@ -145,6 +148,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
       ...role.paths,
       ...user.paths,
       ...dashboard.paths,
+      ...audit.paths,
       ...permissionCatalog.paths,
     },
     components: {
@@ -171,6 +175,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
         ...role.schemas,
         ...user.schemas,
         ...dashboard.schemas,
+        ...audit.schemas,
         ...permissionCatalog.schemas,
       },
       responses: {
@@ -179,6 +184,7 @@ async function loadOpenApiDocument(): Promise<OpenApiDocument> {
         Forbidden: errorResponse(
           'Forbidden; code=password_change_required when the first-login password change is pending',
         ),
+        NotFound: errorResponse('Not found'),
         PayloadTooLarge: errorResponse('Payload too large'),
         TooManyRequests: errorResponse('Too many requests'),
         InternalServerError: errorResponse('Internal server error'),
@@ -257,6 +263,9 @@ function validateOpenApiDocument(document: OpenApiDocument): void {
     '/api/v1/users',
     '/api/v1/users/{id}',
     '/api/v1/dashboard/summary',
+    '/api/v1/audit-events',
+    '/api/v1/audit-events/{id}',
+    '/api/v1/audit-events/export',
     '/api/v1/misc/permissions',
   ];
   if (!samePaths(Object.keys(document.paths), expectedPaths)) {

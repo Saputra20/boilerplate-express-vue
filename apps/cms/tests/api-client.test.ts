@@ -390,6 +390,71 @@ describe('API client', () => {
     });
   });
 
+  it('loads audit list/detail data and requests the protected CSV export', async () => {
+    const transport = createTransport();
+    const eventId = '00000000-0000-4000-8000-000000000010';
+    const actorId = '00000000-0000-4000-8000-000000000011';
+    const detail = {
+      id: eventId,
+      eventType: 'category.updated',
+      label: 'Category updated',
+      actor: {
+        type: 'user',
+        available: true,
+        id: actorId,
+        displayName: 'Ada Lovelace',
+        email: 'ada@example.com',
+      },
+      resource: { type: 'category', id: '00000000-0000-4000-8000-000000000012' },
+      outcome: 'success',
+      createdAt: '2026-01-31T12:00:00.000Z',
+    };
+    transport.request
+      .mockResolvedValueOnce(
+        createResponse({ items: [detail], pagination: { limit: 20, nextCursor: null } }),
+      )
+      .mockResolvedValueOnce(createResponse({ ...detail, requestId: null }))
+      .mockResolvedValueOnce(createResponse(new Blob(['id,eventType\n'], { type: 'text/csv' })));
+    const client = createApiClient('http://localhost:3000', () => 'access-token', transport);
+
+    await expect(client.listAuditEvents({ limit: 20 })).resolves.toMatchObject({
+      items: [{ id: eventId, eventType: 'category.updated' }],
+    });
+    await expect(client.getAuditEvent(eventId)).resolves.toMatchObject({
+      id: eventId,
+      requestId: null,
+    });
+    await expect(
+      client.exportAuditEvents({ action: 'category.updated', q: 'Ada' }),
+    ).resolves.toBeInstanceOf(Blob);
+    await expect(client.getAuditEvent('not-an-id')).rejects.toMatchObject({
+      kind: 'http',
+      status: 400,
+      message: 'Invalid audit event',
+    });
+
+    expect(transport.request.mock.calls.map(([config]) => [config.method, config.url])).toEqual([
+      ['GET', '/api/v1/audit-events'],
+      ['GET', `/api/v1/audit-events/${eventId}`],
+      ['GET', '/api/v1/audit-events/export'],
+    ]);
+    expect(transport.request.mock.calls[2]?.[0]).toMatchObject({
+      params: { action: 'category.updated', q: 'Ada' },
+      responseType: 'blob',
+    });
+  });
+
+  it('rejects malformed audit query input before sending a request', async () => {
+    const transport = createTransport();
+    const client = createApiClient('http://localhost:3000', undefined, transport);
+
+    await expect(client.listAuditEvents({ actorId: 'not-a-uuid' })).rejects.toThrow();
+    expect(transport.request).not.toHaveBeenCalled();
+
+    await expect(client.exportAuditEvents({ q: 'x' })).rejects.toThrow();
+    expect(transport.request).not.toHaveBeenCalled();
+  });
+
   it('uses the configured base URL and ten-second timeout for public JSON requests', async () => {
     const transport = createTransport();
     transport.request.mockResolvedValue(createResponse(tokenResponse));
@@ -446,6 +511,7 @@ describe('API client', () => {
         user: {
           id: '00000000-0000-4000-8000-000000000001',
           email: 'user@example.com',
+          displayName: null,
           mustChangePassword: true,
         },
         roles: ['editor'],
@@ -458,6 +524,7 @@ describe('API client', () => {
       user: {
         id: '00000000-0000-4000-8000-000000000001',
         email: 'user@example.com',
+        displayName: null,
         mustChangePassword: true,
       },
       roles: ['editor'],

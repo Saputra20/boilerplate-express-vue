@@ -61,6 +61,7 @@ describe('OpenAPI infrastructure', () => {
           {
             get?: {
               security?: Array<Record<string, string[]>>;
+              parameters?: Array<Record<string, unknown>>;
               responses?: Record<string, unknown>;
             };
             post?: {
@@ -108,6 +109,110 @@ describe('OpenAPI infrastructure', () => {
       expect(document.components.schemas.PermissionCatalogItem).toBeDefined();
       expect(document.components.schemas.HealthV1Status).toBeDefined();
       expect(document.components.schemas.HealthV1ReadinessStatus).toBeDefined();
+
+      const auditItem = document.components.schemas.AuditV1Item as {
+        properties?: Record<string, { enum?: string[] }>;
+      };
+      const auditChanges = document.components.schemas.AuditV1Changes as {
+        properties?: Record<
+          string,
+          { properties?: Record<string, unknown>; additionalProperties?: boolean }
+        >;
+      };
+      const auditExportFilters = document.components.schemas.AuditV1ExportFilters as {
+        properties?: Record<string, { enum?: string[]; pattern?: string; maxLength?: number }>;
+      };
+      const auditDetail = document.components.schemas.AuditV1Detail as {
+        allOf?: unknown;
+        additionalProperties?: boolean;
+      };
+      expect(auditItem.properties?.eventType?.enum).toEqual([
+        'category.created',
+        'category.updated',
+        'category.deleted',
+        'role.created',
+        'role.updated',
+        'role.deleted',
+        'user.created',
+        'user.updated',
+        'user.deleted',
+        'user.profile_updated',
+        'audit.exported',
+      ]);
+      expect(auditChanges.properties?.before?.additionalProperties).toBe(false);
+      expect(auditChanges.properties?.after?.additionalProperties).toBe(false);
+      expect(auditExportFilters.properties?.action?.enum).toEqual(
+        auditItem.properties?.eventType?.enum,
+      );
+      expect(auditExportFilters.properties?.resourceType).toMatchObject({
+        pattern: '^[a-z][a-z0-9_]*$',
+        maxLength: 64,
+      });
+      expect(auditExportFilters.properties?.resourceId?.maxLength).toBe(255);
+      expect(Object.keys(auditChanges.properties?.before?.properties ?? {}).sort()).toEqual([
+        'code',
+        'description',
+        'displayName',
+        'email',
+        'isActive',
+        'name',
+        'permissionCodes',
+        'roleId',
+        'slug',
+        'status',
+      ]);
+      expect(Object.keys(auditChanges.properties?.after?.properties ?? {}).sort()).toEqual([
+        'code',
+        'description',
+        'displayName',
+        'email',
+        'isActive',
+        'name',
+        'permissionCodes',
+        'roleId',
+        'slug',
+        'status',
+      ]);
+      expect(auditDetail.allOf).toBeUndefined();
+      expect(auditDetail.additionalProperties).toBe(false);
+      expect(document.paths['/api/v1/audit-events/{id}']?.get?.responses).toMatchObject({
+        '404': {
+          content: {
+            'application/json': {
+              schema: expect.objectContaining({
+                type: 'object',
+                required: ['message'],
+                properties: expect.objectContaining({ message: { type: 'string' } }),
+              }),
+            },
+          },
+        },
+      });
+      expect(document.paths['/api/v1/audit-events']?.get?.parameters).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: 'cursor',
+            description: expect.stringContaining('Opaque'),
+            schema: expect.objectContaining({ minLength: 1, maxLength: 512 }),
+          }),
+          expect.objectContaining({
+            name: 'action',
+            schema: expect.objectContaining({ enum: auditItem.properties?.eventType?.enum }),
+          }),
+          expect.objectContaining({
+            name: 'from',
+            description: expect.stringContaining('last 30 days'),
+          }),
+        ]),
+      );
+      expect(document.paths['/api/v1/audit-events/export']?.get?.parameters).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: 'to',
+            description: expect.stringContaining('31 days'),
+          }),
+        ]),
+      );
       expect(Object.keys(document.paths).sort()).toEqual(
         [
           '/api/v1/auth/login',
@@ -121,6 +226,9 @@ describe('OpenAPI infrastructure', () => {
           '/api/v1/auth/logout-all',
           '/api/v1/auth/refresh',
           '/api/v1/dashboard/summary',
+          '/api/v1/audit-events',
+          '/api/v1/audit-events/{id}',
+          '/api/v1/audit-events/export',
           '/api/v1/me',
           '/api/v1/categories',
           '/api/v1/categories/{id}',

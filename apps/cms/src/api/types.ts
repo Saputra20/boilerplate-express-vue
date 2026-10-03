@@ -195,3 +195,123 @@ export const dashboardSummarySchema = z.object({
   }),
 });
 export type DashboardSummary = z.infer<typeof dashboardSummarySchema>;
+
+export const auditEventTypeSchema = z.enum([
+  'category.created',
+  'category.updated',
+  'category.deleted',
+  'role.created',
+  'role.updated',
+  'role.deleted',
+  'user.created',
+  'user.updated',
+  'user.deleted',
+  'user.profile_updated',
+  'audit.exported',
+]);
+export type AuditEventType = z.infer<typeof auditEventTypeSchema>;
+
+export const auditEventLabels: Record<AuditEventType, string> = {
+  'category.created': 'Category created',
+  'category.updated': 'Category updated',
+  'category.deleted': 'Category deleted',
+  'role.created': 'Role created',
+  'role.updated': 'Role updated',
+  'role.deleted': 'Role deleted',
+  'user.created': 'User created',
+  'user.updated': 'User updated',
+  'user.deleted': 'User deleted',
+  'user.profile_updated': 'Profile updated',
+  'audit.exported': 'Audit trail exported',
+};
+
+const auditActorSchema = z.object({
+  type: z.enum(['user', 'system']),
+  available: z.boolean(),
+  id: z.uuid().nullable(),
+  displayName: z.string().nullable(),
+  email: z.email().nullable(),
+});
+const auditResourceSchema = z.object({
+  type: z.string().nullable(),
+  id: z.string().nullable(),
+});
+const auditItemSchema = z.object({
+  id: z.uuid(),
+  eventType: auditEventTypeSchema,
+  label: z.string(),
+  actor: auditActorSchema,
+  resource: auditResourceSchema,
+  outcome: z.enum(['success', 'failure']),
+  createdAt: z.coerce.date(),
+});
+const auditChangesSchema = z.object({
+  available: z.boolean(),
+  before: z.record(z.string(), z.unknown()).nullable(),
+  after: z.record(z.string(), z.unknown()).nullable(),
+});
+const auditExportSummarySchema = z.object({
+  rowCount: z.number().int().min(0).max(10_000),
+  from: z.coerce.date(),
+  to: z.coerce.date(),
+  filters: z.object({
+    action: auditEventTypeSchema.nullable(),
+    actorId: z.uuid().nullable(),
+    resourceType: z.string().nullable(),
+    resourceId: z.string().nullable(),
+    outcome: z.enum(['success', 'failure']).nullable(),
+  }),
+  searchApplied: z.boolean(),
+});
+
+export const auditListResponseSchema = z.object({
+  items: z.array(auditItemSchema),
+  pagination: z.object({
+    limit: z.union([z.literal(20), z.literal(50), z.literal(100)]),
+    nextCursor: z.string().nullable(),
+  }),
+});
+export const auditDetailSchema = auditItemSchema.extend({
+  requestId: z.uuid().nullable(),
+  changes: auditChangesSchema.optional(),
+  exportSummary: auditExportSummarySchema.optional(),
+});
+
+export type AuditListItem = z.infer<typeof auditItemSchema>;
+export type AuditListResponse = z.infer<typeof auditListResponseSchema>;
+export type AuditDetail = z.infer<typeof auditDetailSchema>;
+export type AuditEventQuery = {
+  from?: string;
+  to?: string;
+  actorId?: string;
+  action?: AuditEventType;
+  resourceType?: string;
+  resourceId?: string;
+  outcome?: 'success' | 'failure';
+  q?: string;
+  limit?: 20 | 50 | 100;
+  cursor?: string;
+};
+
+export const auditEventQuerySchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+  actorId: z.uuid().optional(),
+  action: auditEventTypeSchema.optional(),
+  resourceType: z
+    .string()
+    .regex(/^[a-z][a-z0-9_]*$/)
+    .max(64)
+    .optional(),
+  resourceId: z.string().min(1).max(255).optional(),
+  outcome: z.enum(['success', 'failure']).optional(),
+  q: z.string().trim().min(2).max(120).optional(),
+  limit: z.union([z.literal(20), z.literal(50), z.literal(100)]).optional(),
+  cursor: z.string().min(1).max(512).optional(),
+});
+
+export const auditEventExportQuerySchema = auditEventQuerySchema.omit({
+  limit: true,
+  cursor: true,
+});
+export type AuditEventExportQuery = Omit<AuditEventQuery, 'limit' | 'cursor'>;

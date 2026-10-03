@@ -5,13 +5,30 @@ import {
   rolePermissions,
   roles,
   userRoles,
+  users,
 } from '../../../config/drizzle/schema/index.js';
-import type { AuditService } from '../../audit/services/audit.service.js';
+import type { AuditEvent, AuditService } from '../../audit/services/audit.service.js';
 import type { RoleList, RoleRepository } from '../services/role.service.js';
 import { InvalidRolePermissionsError } from '../services/role.service.js';
 
 type Database = NodePgDatabase<typeof import('../../../config/drizzle/schema/index.js')>;
 type AuditExecutor = Pick<Database, 'insert'>;
+type Role = typeof roles.$inferSelect;
+type RoleAuditValues = {
+  code: Role['code'];
+  name: Role['name'];
+  description: Role['description'];
+  permissionCodes: string[];
+};
+type RoleAuditMetadata = {
+  before: Partial<RoleAuditValues> | null;
+  after: Partial<RoleAuditValues> | null;
+};
+type ActorSnapshot = {
+  actorSnapshotId: string;
+  actorSnapshotDisplayName: string | null;
+  actorSnapshotEmail: string | null;
+};
 
 export function createRoleRepository(
   database: Database,
@@ -19,7 +36,7 @@ export function createRoleRepository(
 ): RoleRepository {
   return {
     async create(input, audit) {
-      return database.transaction(async (transaction) => {
+      const result = await database.transaction(async (transaction) => {
         const [role] = await transaction
           .insert(roles)
           .values({
@@ -29,14 +46,15 @@ export function createRoleRepository(
           })
           .returning();
         if (!role) throw new Error('Role insert returned no row');
-        if (input.permissionCodes.length > 0) {
+        const permissionCodes = [...input.permissionCodes].sort();
+        if (permissionCodes.length > 0) {
           const available = await transaction
             .select({ id: permissions.id, code: permissions.code })
             .from(permissions);
           const selected = available.filter((permission) =>
-            input.permissionCodes.includes(permission.code),
+            permissionCodes.includes(permission.code),
           );
-          if (selected.length !== new Set(input.permissionCodes).size)
+          if (selected.length !== new Set(permissionCodes).size)
             throw new InvalidRolePermissionsError();
           await transaction
             .insert(rolePermissions)
@@ -44,9 +62,19 @@ export function createRoleRepository(
               selected.map((permission) => ({ roleId: role.id, permissionId: permission.id })),
             );
         }
-        await auditService.recordRequired({ ...audit, resourceId: role.id }, transaction);
-        return { ...role, permissionCodes: [...input.permissionCodes].sort() };
+        return {
+          role: { ...role, permissionCodes },
+          audit: createAuditEvent(
+            'role.created',
+            audit,
+            await actorSnapshot(transaction, audit.actorUserId),
+            role.id,
+            { before: null, after: roleValues(role, permissionCodes) },
+          ),
+        };
       });
+      await auditService.recordInformational(result.audit);
+      return result.role;
     },
     async list(input): Promise<RoleList> {
       const filters = input.search ? [ilike(roles.name, `%${input.search}%`)] : [sql`true`];
@@ -111,7 +139,15 @@ export function createRoleRepository(
         : null;
     },
     async update(id, input, audit) {
-      return database.transaction(async (transaction) => {
+      const result = await database.transaction(async (transaction) => {
+        const [beforeRole] = await transaction
+          .select()
+          .from(roles)
+          .where(eq(roles.id, id))
+          .for('update')
+          .limit(1);
+        if (!beforeRole) return null;
+        const beforePermissionCodes = await listRolePermissionCodes(transaction, id);
         const [role] = await transaction
           .update(roles)
           .set({ name: input.name, description: input.description })
@@ -139,35 +175,141 @@ export function createRoleRepository(
             .innerJoin(rolePermissions, eq(rolePermissions.permissionId, permissions.id))
             .where(eq(rolePermissions.roleId, id));
         }
-        await auditService.recordRequired({ ...audit, resourceId: role.id }, transaction);
-        return { ...role, permissionCodes: selected.map((permission) => permission.code).sort() };
+        const nextPermissionCodes = selected.map((permission) => permission.code).sort();
+        return {
+          role: { ...role, permissionCodes: nextPermissionCodes },
+          audit: createAuditEvent(
+            'role.updated',
+            audit,
+            await actorSnapshot(transaction, audit.actorUserId),
+            role.id,
+            roleChanges(
+              roleValues(beforeRole, beforePermissionCodes),
+              roleValues(role, nextPermissionCodes),
+            ),
+          ),
+        };
       });
+      if (!result) return null;
+      await auditService.recordInformational(result.audit);
+      return result.role;
     },
     async delete(id, audit) {
-      return database.transaction(async (transaction) => {
+      const result = await database.transaction(async (transaction) => {
+        const [beforeRole] = await transaction
+          .select()
+          .from(roles)
+          .where(eq(roles.id, id))
+          .for('update')
+          .limit(1);
+        if (!beforeRole) return 'missing' as const;
         const [assignment] = await transaction
           .select({ userId: userRoles.userId })
           .from(userRoles)
           .where(eq(userRoles.roleId, id))
           .limit(1);
-        if (assignment) return 'assigned';
+        if (assignment) return 'assigned' as const;
+        const permissionCodes = await listRolePermissionCodes(transaction, id);
         const deleted = await transaction
           .delete(roles)
           .where(eq(roles.id, id))
           .returning({ id: roles.id });
-        if (deleted.length === 0) return 'missing';
-        await auditService.recordRequired({ ...audit, resourceId: id }, transaction);
-        return 'deleted';
+        if (deleted.length === 0) return 'missing' as const;
+        return {
+          status: 'deleted' as const,
+          audit: createAuditEvent(
+            'role.deleted',
+            audit,
+            await actorSnapshot(transaction, audit.actorUserId),
+            id,
+            { before: roleValues(beforeRole, permissionCodes), after: null },
+          ),
+        };
       });
+      if (result === 'missing' || result === 'assigned') return result;
+      await auditService.recordInformational(result.audit);
+      return result.status;
     },
   };
 }
 
-async function listRolePermissionCodes(database: Database, roleId: string): Promise<string[]> {
+async function listRolePermissionCodes(
+  database: Pick<Database, 'select'>,
+  roleId: string,
+): Promise<string[]> {
   const rows = await database
     .select({ code: permissions.code })
     .from(rolePermissions)
     .innerJoin(permissions, eq(permissions.id, rolePermissions.permissionId))
     .where(eq(rolePermissions.roleId, roleId));
   return rows.map(({ code }) => code).sort();
+}
+
+async function actorSnapshot(
+  transaction: Pick<Database, 'select'>,
+  actorUserId: string | null | undefined,
+): Promise<ActorSnapshot> {
+  if (!actorUserId) throw new Error('Audit actor missing');
+  const [actor] = await transaction
+    .select({ id: users.id, displayName: users.displayName, email: users.email })
+    .from(users)
+    .where(eq(users.id, actorUserId))
+    .limit(1);
+  return {
+    actorSnapshotId: actorUserId,
+    actorSnapshotDisplayName: actor?.displayName ?? null,
+    actorSnapshotEmail: actor?.email ?? null,
+  };
+}
+
+function createAuditEvent(
+  eventType: AuditEvent['eventType'],
+  context: Pick<AuditEvent, 'requestId' | 'sessionId'>,
+  actor: ActorSnapshot,
+  resourceId: string,
+  metadata: RoleAuditMetadata,
+) {
+  return {
+    eventType,
+    actorType: 'user' as const,
+    actorUserId: actor.actorSnapshotId,
+    ...actor,
+    resourceType: 'role',
+    resourceId,
+    outcome: 'success' as const,
+    requestId: context.requestId,
+    sessionId: context.sessionId,
+    metadata,
+  };
+}
+
+function roleValues(role: Role, permissionCodes: string[]): RoleAuditValues {
+  return {
+    code: role.code,
+    name: role.name,
+    description: role.description,
+    permissionCodes: [...permissionCodes].sort(),
+  };
+}
+
+function roleChanges(before: RoleAuditValues, after: RoleAuditValues): RoleAuditMetadata {
+  const beforeChanges: Partial<RoleAuditValues> = {};
+  const afterChanges: Partial<RoleAuditValues> = {};
+  if (before.code !== after.code) {
+    beforeChanges.code = before.code;
+    afterChanges.code = after.code;
+  }
+  if (before.name !== after.name) {
+    beforeChanges.name = before.name;
+    afterChanges.name = after.name;
+  }
+  if (before.description !== after.description) {
+    beforeChanges.description = before.description;
+    afterChanges.description = after.description;
+  }
+  if (JSON.stringify(before.permissionCodes) !== JSON.stringify(after.permissionCodes)) {
+    beforeChanges.permissionCodes = before.permissionCodes;
+    afterChanges.permissionCodes = after.permissionCodes;
+  }
+  return { before: beforeChanges, after: afterChanges };
 }

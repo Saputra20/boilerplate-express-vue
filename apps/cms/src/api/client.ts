@@ -6,6 +6,8 @@ import axios, {
 } from 'axios';
 import { z } from 'zod';
 import {
+  auditEventExportQuerySchema,
+  auditEventQuerySchema,
   loginRequestSchema,
   refreshRequestSchema,
   loginTokenResponseSchema,
@@ -54,6 +56,12 @@ import {
   type CreateUserRequest,
   type UpdateUserRequest,
   dashboardSummarySchema,
+  auditDetailSchema,
+  auditListResponseSchema,
+  type AuditDetail,
+  type AuditEventExportQuery,
+  type AuditEventQuery,
+  type AuditListResponse,
   type DashboardSummary,
 } from './types';
 
@@ -136,6 +144,9 @@ export type ApiClient = {
   updateUser(id: string, input: UpdateUserRequest): Promise<ManagedUser>;
   deleteUser(id: string): Promise<void>;
   getDashboardSummary(): Promise<DashboardSummary>;
+  listAuditEvents(input: AuditEventQuery): Promise<AuditListResponse>;
+  getAuditEvent(id: string): Promise<AuditDetail>;
+  exportAuditEvents(input: AuditEventExportQuery): Promise<Blob>;
 };
 
 export function createApiClient(
@@ -372,6 +383,38 @@ export function createApiClient(
       );
       if (!result.success) throw new ApiError('Invalid API response', 'invalid-response');
       return result.data;
+    },
+    async listAuditEvents(input) {
+      const result = auditListResponseSchema.safeParse(
+        await request<unknown>({
+          method: 'GET',
+          url: '/api/v1/audit-events',
+          params: auditEventQuerySchema.parse(input),
+        }),
+      );
+      if (!result.success) throw new ApiError('Invalid API response', 'invalid-response');
+      return result.data;
+    },
+    async getAuditEvent(id) {
+      if (!z.uuid().safeParse(id).success) {
+        throw new ApiError('Invalid audit event', 'http', 400);
+      }
+      const result = auditDetailSchema.safeParse(
+        await request<unknown>({ method: 'GET', url: `/api/v1/audit-events/${id}` }),
+      );
+      if (!result.success) throw new ApiError('Invalid API response', 'invalid-response');
+      return result.data;
+    },
+    async exportAuditEvents(input) {
+      const response = await request<unknown>({
+        method: 'GET',
+        url: '/api/v1/audit-events/export',
+        params: auditEventExportQuerySchema.parse(input),
+        responseType: 'blob',
+      });
+      if (!(response instanceof Blob))
+        throw new ApiError('Invalid API response', 'invalid-response');
+      return response;
     },
   };
 }

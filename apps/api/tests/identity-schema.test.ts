@@ -80,6 +80,7 @@ describe('identity schema', () => {
     expect(tableColumns(users)).toEqual([
       'id',
       'email',
+      'displayName',
       'passwordHash',
       'mustChangePassword',
       'status',
@@ -140,6 +141,9 @@ describe('identity schema', () => {
       'id',
       'eventType',
       'actorUserId',
+      'actorSnapshotId',
+      'actorSnapshotDisplayName',
+      'actorSnapshotEmail',
       'actorType',
       'resourceType',
       'resourceId',
@@ -192,6 +196,8 @@ describe('identity schema', () => {
     const migrations = await readRollbackMigrations(migrationsDirectory);
 
     expect(migrations.map((migration) => migration.tag)).toEqual([
+      '0021_add-audit-event-reader-fields',
+      '0020_add-display-name-to-users',
       '0019_extend-auth-challenge-purpose-for-password-reset',
       '0018_remove-plaintext-email-delivery-recipient',
       '0017_add-encrypted-email-recipient-fields',
@@ -214,6 +220,22 @@ describe('identity schema', () => {
       '0000_create-users-table',
     ]);
     expect(migrations[0]).toEqual({
+      tag: '0021_add-audit-event-reader-fields',
+      when: expect.any(Number),
+      statements: [
+        'DROP INDEX "audit_events_actor_snapshot_id_index";',
+        'DROP INDEX "audit_events_created_at_id_index";',
+        'ALTER TABLE "audit_events" DROP COLUMN "actor_snapshot_email";',
+        'ALTER TABLE "audit_events" DROP COLUMN "actor_snapshot_display_name";',
+        'ALTER TABLE "audit_events" DROP COLUMN "actor_snapshot_id";',
+      ],
+    });
+    expect(migrations[1]).toEqual({
+      tag: '0020_add-display-name-to-users',
+      when: expect.any(Number),
+      statements: ['ALTER TABLE "users" DROP COLUMN "display_name";'],
+    });
+    expect(migrations[2]).toEqual({
       tag: '0019_extend-auth-challenge-purpose-for-password-reset',
       when: expect.any(Number),
       statements: [
@@ -222,14 +244,14 @@ describe('identity schema', () => {
         'ALTER TABLE "auth_challenges" ADD CONSTRAINT "auth_challenges_purpose_check"\n  CHECK ("auth_challenges"."purpose" IN (\'email_verification\'));',
       ],
     });
-    expect(migrations[1]).toEqual({
+    expect(migrations[3]).toEqual({
       tag: '0018_remove-plaintext-email-delivery-recipient',
       when: expect.any(Number),
       statements: [
         "DO $$\nBEGIN\n  RAISE EXCEPTION 'Migration 0018 is intentionally irreversible: reverting would restore plaintext recipient PII';\nEND $$;",
       ],
     });
-    expect(migrations.flatMap((migration) => migration.statements).slice(4, 16)).toEqual([
+    expect(migrations.flatMap((migration) => migration.statements).slice(10, 22)).toEqual([
       'ALTER TABLE "email_deliveries" DROP CONSTRAINT "email_deliveries_recipient_encryption_fields_check";',
       'ALTER TABLE "email_deliveries" DROP COLUMN "recipient_key_version";',
       'ALTER TABLE "email_deliveries" DROP COLUMN "recipient_auth_tag";',
@@ -244,7 +266,7 @@ describe('identity schema', () => {
       'DROP INDEX "categories_active_slug_unique";',
     ]);
 
-    expect(migrations.flatMap((migration) => migration.statements).slice(16)).toEqual([
+    expect(migrations.flatMap((migration) => migration.statements).slice(22)).toEqual([
       'DROP TABLE "categories";',
       'DROP TABLE "audit_events";',
       'ALTER TABLE "auth_audit_events" DROP CONSTRAINT "auth_audit_events_event_type_check";',

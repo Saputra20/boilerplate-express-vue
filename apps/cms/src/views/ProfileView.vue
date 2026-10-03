@@ -78,10 +78,13 @@ async function submit(): Promise<void> {
   try {
     await auth.updateCurrentUserProfile({ displayName: result.data.displayName });
     originalDisplayName.value = auth.identity?.displayName ?? result.data.displayName;
-    form.displayName = originalDisplayName.value;
+    form.displayName = originalDisplayName.value ?? '';
     success.value = true;
   } catch (error) {
-    await handleFailure(error, 'We could not save your profile. Check your connection and try again.');
+    await handleFailure(
+      error,
+      'We could not save your profile. Check your connection and try again.',
+    );
   } finally {
     isSubmitting.value = false;
   }
@@ -92,14 +95,12 @@ onMounted(() => void loadProfile());
 
 <template>
   <section class="w-full max-w-3xl">
-    <p v-if="isLoading" class="py-4 text-sm text-cms-muted" role="status">
-      Loading your profile…
-    </p>
+    <p v-if="isLoading" class="py-4 text-sm text-cms-muted" role="status">Loading your profile…</p>
     <FeedbackState
       v-else-if="loadFailed"
       class="mb-5"
       kind="error"
-      :message="formError"
+      :message="formError ?? 'We could not load your profile. Try again.'"
       retryable
       @retry="loadProfile"
     />
