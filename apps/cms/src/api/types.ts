@@ -267,8 +267,10 @@ const auditExportSummarySchema = z.object({
 export const auditListResponseSchema = z.object({
   items: z.array(auditItemSchema),
   pagination: z.object({
+    page: z.number().int().min(1),
     limit: z.union([z.literal(10), z.literal(20), z.literal(50), z.literal(100)]),
-    nextCursor: z.string().nullable(),
+    total: z.number().int().min(0),
+    totalPages: z.number().int().min(0),
   }),
 });
 export const auditDetailSchema = auditItemSchema.extend({
@@ -290,7 +292,7 @@ export type AuditEventQuery = {
   outcome?: 'success' | 'failure';
   q?: string;
   limit?: 10 | 20 | 50 | 100;
-  cursor?: string;
+  page?: number;
 };
 
 export const auditEventQuerySchema = z.object({
@@ -307,11 +309,11 @@ export const auditEventQuerySchema = z.object({
   outcome: z.enum(['success', 'failure']).optional(),
   q: z.string().trim().min(2).max(120).optional(),
   limit: z.union([z.literal(10), z.literal(20), z.literal(50), z.literal(100)]).optional(),
-  cursor: z.string().min(1).max(512).optional(),
+  page: z.number().int().min(1).optional(),
 });
 
 export const auditEventExportQuerySchema = auditEventQuerySchema.omit({
   limit: true,
-  cursor: true,
+  page: true,
 });
-export type AuditEventExportQuery = Omit<AuditEventQuery, 'limit' | 'cursor'>;
+export type AuditEventExportQuery = Omit<AuditEventQuery, 'limit' | 'page'>;

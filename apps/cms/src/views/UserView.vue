@@ -29,7 +29,6 @@ const statusDraft = ref(statusFilter.value);
 const sort = ref<'email.asc' | 'email.desc' | 'createdAt.asc' | 'createdAt.desc'>('createdAt.desc');
 const loading = ref(true);
 const error = ref<string | null>(null);
-const detailOpen = ref(false);
 const deleteOpen = ref(false);
 const deleting = ref(false);
 const deleteError = ref<string | null>(null);
@@ -59,15 +58,6 @@ async function loadUsers(): Promise<void> {
     error.value = cause instanceof ApiError ? cause.message : 'Unable to load users.';
   } finally {
     loading.value = false;
-  }
-}
-
-async function openDetails(user: ManagedUser): Promise<void> {
-  try {
-    selected.value = await cmsApiClient.getUser(user.id);
-    detailOpen.value = true;
-  } catch (cause) {
-    error.value = cause instanceof ApiError ? cause.message : 'Unable to load user details.';
   }
 }
 
@@ -205,13 +195,12 @@ onMounted(() => void loadUsers());
       <tbody class="divide-y divide-cms-border">
         <tr v-for="user in users" :key="user.id">
           <td class="px-5 py-4">
-            <button
-              type="button"
-              class="block max-w-full break-all text-left font-medium text-cms-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cms-focus"
-              @click="openDetails(user)"
+            <RouterLink
+              :to="{ name: 'user-detail', params: { id: user.id } }"
+              class="inline-flex min-h-11 max-w-full items-center break-all text-left font-medium text-cms-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cms-focus"
             >
               {{ user.email }}
-            </button>
+            </RouterLink>
             <p class="mt-1 text-xs text-cms-muted">
               {{ user.emailVerifiedAt ? 'Email verified' : 'Email not verified' }}
             </p>
@@ -228,15 +217,13 @@ onMounted(() => void loadUsers());
           <td class="px-5 py-4 text-sm text-cms-muted">{{ formatDate(user.createdAt) }}</td>
           <td class="px-5 py-4">
             <div class="flex justify-end gap-1">
-              <button
-                v-if="canDelete"
-                type="button"
-                class="grid min-h-11 min-w-11 place-items-center rounded-lg text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-destructive focus-visible:ring-2 focus-visible:ring-cms-focus"
-                :aria-label="`Delete user ${user.email}`"
-                @click="openDelete(user)"
+              <RouterLink
+                :to="{ name: 'user-detail', params: { id: user.id } }"
+                class="grid min-h-11 min-w-11 place-items-center rounded-lg text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
+                :aria-label="`View details for user ${user.email}`"
               >
-                <CmsIcon name="trash" />
-              </button>
+                <CmsIcon name="eye" />
+              </RouterLink>
               <button
                 v-if="canUpdate"
                 type="button"
@@ -246,6 +233,15 @@ onMounted(() => void loadUsers());
               >
                 <CmsIcon name="edit" />
               </button>
+              <button
+                v-if="canDelete"
+                type="button"
+                class="grid min-h-11 min-w-11 place-items-center rounded-lg text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-destructive focus-visible:ring-2 focus-visible:ring-cms-focus"
+                :aria-label="`Delete user ${user.email}`"
+                @click="openDelete(user)"
+              >
+                <CmsIcon name="trash" />
+              </button>
             </div>
           </td>
         </tr>
@@ -254,45 +250,6 @@ onMounted(() => void loadUsers());
         <CmsPagination :page="page" :total-pages="totalPages" @change="changePage" />
       </template>
     </CmsTable>
-
-    <CmsModal :open="detailOpen" title="User details" @close="detailOpen = false"
-      ><dl v-if="selected" class="grid gap-4 sm:grid-cols-2">
-        <div>
-          <dt class="text-xs font-semibold uppercase text-cms-muted">Email</dt>
-          <dd class="mt-1 break-all text-sm text-cms-foreground">{{ selected.email }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs font-semibold uppercase text-cms-muted">Status</dt>
-          <dd class="mt-1 text-sm text-cms-foreground">
-            {{ selected.status === 'active' ? 'Active' : 'Disabled' }}
-          </dd>
-        </div>
-        <div>
-          <dt class="text-xs font-semibold uppercase text-cms-muted">Role</dt>
-          <dd class="mt-1 text-sm text-cms-foreground">{{ selected.role?.name ?? 'No role' }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs font-semibold uppercase text-cms-muted">Email verification</dt>
-          <dd class="mt-1 text-sm text-cms-foreground">
-            {{ formatDate(selected.emailVerifiedAt) }}
-          </dd>
-        </div>
-        <div>
-          <dt class="text-xs font-semibold uppercase text-cms-muted">Last login</dt>
-          <dd class="mt-1 text-sm text-cms-foreground">{{ formatDate(selected.lastLoginAt) }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs font-semibold uppercase text-cms-muted">Created</dt>
-          <dd class="mt-1 text-sm text-cms-foreground">{{ formatDate(selected.createdAt) }}</dd>
-        </div>
-        <p v-if="selected.mustChangePassword" class="sm:col-span-2 text-sm text-cms-muted">
-          Password change is required at first login.
-        </p>
-      </dl>
-      <template #footer
-        ><CmsButton variant="outline" @click="detailOpen = false">Close</CmsButton></template
-      ></CmsModal
-    >
 
     <CmsModal :open="deleteOpen" title="Delete user" @close="deleteOpen = false">
       <p class="text-sm leading-6 text-cms-muted">

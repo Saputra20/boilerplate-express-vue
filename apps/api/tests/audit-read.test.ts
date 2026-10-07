@@ -3,7 +3,6 @@ import express from 'express';
 import request from 'supertest';
 import {
   createAuditReadService,
-  encodeCursor,
   parseExportQuery,
   parseListQuery,
   type AuditEventRow,
@@ -44,11 +43,13 @@ function eventRow(overrides: Partial<AuditEventRow> = {}): AuditEventRow {
 function repository({
   rows = [eventRow()],
   hasMore = false,
+  total = rows.length,
   actor = { id: actorId, displayName: 'Ada Lovelace', email: 'ada@example.com' },
   onList,
 }: {
   rows?: AuditEventRow[];
   hasMore?: boolean;
+  total?: number;
   actor?: { id: string; displayName: string | null; email: string };
   onList?: (filters: AuditReadFilters) => void;
 } = {}): AuditReadRepository {
@@ -56,6 +57,10 @@ function repository({
     async list(filters) {
       onList?.(filters);
       return { rows, hasMore };
+    },
+    async listPage(filters) {
+      onList?.(filters);
+      return { rows, total };
     },
     async findVisible(id) {
       return rows.find((row) => row.id === id) ?? null;
@@ -67,16 +72,12 @@ function repository({
 }
 
 describe('audit read service', () => {
-  it('uses bounded cursor queries and redacts stored fields from detail output', async () => {
+  it('uses bounded page queries and redacts stored fields from detail output', async () => {
     let received: AuditReadFilters | undefined;
     const row = eventRow();
     const service = createAuditReadService(
-      repository({ rows: [row], hasMore: true, onList: (filters) => (received = filters) }),
+      repository({ rows: [row], total: 51, onList: (filters) => (received = filters) }),
     );
-    const cursor = encodeCursor({
-      id: '66666666-6666-4666-8666-666666666666',
-      createdAt: new Date('2026-01-29T12:00:00.000Z'),
-    });
 
     const list = await service.list(
       {
@@ -84,7 +85,7 @@ describe('audit read service', () => {
         to: '2026-01-31T00:00:00.000Z',
         action: 'category.updated',
         limit: '50',
-        cursor,
+        page: '2',
       },
       now,
     );
@@ -95,12 +96,9 @@ describe('audit read service', () => {
       to: new Date('2026-01-31T00:00:00.000Z'),
       eventType: 'category.updated',
       limit: 50,
-      cursor: {
-        id: '66666666-6666-4666-8666-666666666666',
-        createdAt: new Date('2026-01-29T12:00:00.000Z'),
-      },
+      page: 2,
     });
-    expect(list.pagination.nextCursor).toBeTruthy();
+    expect(list.pagination).toEqual({ page: 2, limit: 50, total: 51, totalPages: 2 });
     expect(detail).toMatchObject({
       id: eventId,
       requestId,
@@ -181,10 +179,15 @@ describe('audit read service', () => {
     const dateRange = { from: '2026-01-01T00:00:00.000Z', to: '2026-01-31T00:00:00.000Z' };
 
     expect(parseListQuery(dateRange, now).limit).toBe(10);
+    expect(parseListQuery(dateRange, now).page).toBe(1);
     for (const limit of [10, 20, 50, 100]) {
       expect(parseListQuery({ ...dateRange, limit: String(limit) }, now).limit).toBe(limit);
     }
     expect(() => parseListQuery({ ...dateRange, limit: '15' }, now)).toThrow('Invalid audit query');
+    expect(() => parseListQuery({ ...dateRange, page: '0' }, now)).toThrow('Invalid audit query');
+    expect(() => parseListQuery({ ...dateRange, cursor: 'old' }, now)).toThrow(
+      'Invalid audit query',
+    );
     expect(() =>
       parseListQuery({ from: '2025-01-01T00:00:00.000Z', to: '2026-01-01T00:00:00.000Z' }, now),
     ).toThrow('Invalid audit query');

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import CmsIcon from './CmsIcon.vue';
 import { useTheme } from '../composables/useTheme';
+import gecLogo from '../assets/gec-logo.png';
 
 defineProps<{ titleId: string }>();
 
@@ -36,16 +37,14 @@ const { theme, toggleTheme } = useTheme();
         aria-hidden="true"
         class="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(255,255,255,.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.35)_1px,transparent_1px)] [background-size:48px_48px]"
       />
-      <div class="relative z-10 flex max-w-sm flex-col items-center text-center">
-        <span
-          class="mb-6 grid size-16 place-items-center rounded-2xl border border-white/15 bg-white/10 text-2xl font-semibold text-white"
-          aria-hidden="true"
-          >C</span
-        >
-        <p class="text-2xl font-semibold">Content management</p>
-        <p class="mt-3 text-sm leading-6 text-white/60">
-          A clear workspace for managing your content and access.
-        </p>
+      <div class="relative z-10 flex max-w-lg items-center justify-center">
+        <div class="overflow-hidden rounded-lg bg-white shadow-cms-card">
+          <img
+            :src="gecLogo"
+            alt="Geotechnical Engineering Consultant"
+            class="block h-auto w-full"
+          />
+        </div>
       </div>
     </aside>
   </main>

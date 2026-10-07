@@ -411,7 +411,10 @@ describe('API client', () => {
     };
     transport.request
       .mockResolvedValueOnce(
-        createResponse({ items: [detail], pagination: { limit: 10, nextCursor: null } }),
+        createResponse({
+          items: [detail],
+          pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
+        }),
       )
       .mockResolvedValueOnce(createResponse({ ...detail, requestId: null }))
       .mockResolvedValueOnce(createResponse(new Blob(['id,eventType\n'], { type: 'text/csv' })));

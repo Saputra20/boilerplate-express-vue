@@ -95,9 +95,14 @@ onBeforeUnmount(() => {
 
       <main
         id="main-content"
-        class="mx-auto min-h-[calc(100vh-4rem)] w-full max-w-[1536px] px-4 pb-20 pt-4 md:px-6 md:pb-6 md:pt-6"
+        class="mx-auto min-h-[calc(100vh-4rem)] w-full px-4 pb-20 pt-4 md:px-6 md:pb-6 md:pt-6"
+        :class="route.meta.fullWidthPage ? 'max-w-none' : 'max-w-[1536px]'"
       >
-        <CmsPageHeader v-if="route.meta.title" :title="route.meta.title" />
+        <CmsPageHeader
+          v-if="route.meta.title && route.meta.showPageHeader !== false"
+          :title="route.meta.title"
+          :show-title="route.meta.showPageTitle !== false"
+        />
         <RouterView />
       </main>
     </div>

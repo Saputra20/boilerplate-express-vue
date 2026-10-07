@@ -195,9 +195,9 @@ describe('OpenAPI infrastructure', () => {
             schema: expect.objectContaining({ enum: [10, 20, 50, 100], default: 10 }),
           }),
           expect.objectContaining({
-            name: 'cursor',
-            description: expect.stringContaining('Opaque'),
-            schema: expect.objectContaining({ minLength: 1, maxLength: 512 }),
+            name: 'page',
+            description: expect.stringContaining('One-based'),
+            schema: expect.objectContaining({ minimum: 1, default: 1 }),
           }),
           expect.objectContaining({
             name: 'action',

@@ -137,7 +137,7 @@ onMounted(() => void load());
             @sort="toggleSort('name')"
           />
           <th scope="col" class="px-5 py-3 text-left text-sm font-medium text-cms-muted sm:px-6">
-            Permission codes
+            Permissions
           </th>
           <th scope="col" class="px-5 py-3 text-right text-sm font-medium text-cms-muted sm:px-6">
             Actions
@@ -147,47 +147,72 @@ onMounted(() => void load());
       <tbody class="divide-y divide-cms-border">
         <tr v-for="role in roles" :key="role.id">
           <td class="px-5 py-4">
-            <p class="font-medium text-cms-foreground">{{ role.name }}</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <RouterLink
+                :to="{ name: 'role-detail', params: { id: role.id } }"
+                class="inline-flex min-h-11 items-center font-medium text-cms-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cms-focus dark:text-cms-focus"
+              >
+                {{ role.name }}
+              </RouterLink>
+              <CmsBadge v-if="role.code === 'admin'">Protected role</CmsBadge>
+            </div>
             <p class="mt-1 font-mono text-xs text-cms-muted">{{ role.code }}</p>
             <p v-if="role.description" class="mt-1 text-xs text-cms-muted">
               {{ role.description }}
             </p>
           </td>
           <td class="px-5 py-4">
-            <div class="flex max-w-xl flex-wrap gap-1.5">
-              <span
-                v-for="code in role.permissionCodes"
-                :key="code"
-                class="max-w-full break-all rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-600 dark:bg-white/[0.03] dark:text-gray-400"
-                >{{ code }}</span
-              ><span v-if="!role.permissionCodes.length" class="text-xs text-cms-muted"
-                >No permissions assigned</span
+            <details v-if="role.permissionCodes.length" class="group">
+              <summary
+                class="inline-flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-lg text-sm text-cms-foreground hover:text-cms-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cms-focus [&::-webkit-details-marker]:hidden"
               >
-            </div>
+                {{ role.permissionCodes.length }}
+                {{ role.permissionCodes.length === 1 ? 'permission' : 'permissions' }}
+                <CmsIcon
+                  name="chevron-down"
+                  :size="16"
+                  class="text-cms-muted transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <ul class="grid max-w-xl grid-cols-1 gap-x-4 gap-y-1 pb-1 pt-2 sm:grid-cols-2">
+                <li
+                  v-for="code in role.permissionCodes"
+                  :key="code"
+                  class="break-all font-mono text-xs text-cms-muted"
+                >
+                  {{ code }}
+                </li>
+              </ul>
+            </details>
+            <span v-else class="text-sm text-cms-muted">No permissions assigned</span>
           </td>
           <td class="px-5 py-4">
             <div class="flex justify-end gap-1">
-              <CmsBadge v-if="role.code === 'admin'">Protected role</CmsBadge>
-              <template v-else>
-                <button
-                  v-if="canDelete"
-                  type="button"
-                  class="grid min-h-11 min-w-11 place-items-center rounded-lg text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-destructive focus-visible:ring-2 focus-visible:ring-cms-focus"
-                  :aria-label="`Delete role ${role.name}`"
-                  @click="openDelete(role)"
-                >
-                  <CmsIcon name="trash" />
-                </button>
-                <button
-                  v-if="canUpdate"
-                  type="button"
-                  class="grid min-h-11 min-w-11 place-items-center rounded-lg text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
-                  :aria-label="`Edit role ${role.name}`"
-                  @click="router.push(`/roles/${role.id}/edit`)"
-                >
-                  <CmsIcon name="edit" />
-                </button>
-              </template>
+              <RouterLink
+                :to="{ name: 'role-detail', params: { id: role.id } }"
+                class="grid min-h-11 min-w-11 place-items-center rounded-lg text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
+                :aria-label="`View details for role ${role.name}`"
+              >
+                <CmsIcon name="eye" />
+              </RouterLink>
+              <button
+                v-if="canUpdate && role.code !== 'admin'"
+                type="button"
+                class="grid min-h-11 min-w-11 place-items-center rounded-lg text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
+                :aria-label="`Edit role ${role.name}`"
+                @click="router.push(`/roles/${role.id}/edit`)"
+              >
+                <CmsIcon name="edit" />
+              </button>
+              <button
+                v-if="canDelete && role.code !== 'admin'"
+                type="button"
+                class="grid min-h-11 min-w-11 place-items-center rounded-lg text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-destructive focus-visible:ring-2 focus-visible:ring-cms-focus"
+                :aria-label="`Delete role ${role.name}`"
+                @click="openDelete(role)"
+              >
+                <CmsIcon name="trash" />
+              </button>
             </div>
           </td>
         </tr>

@@ -1,4 +1,3 @@
-import { Buffer } from 'node:buffer';
 import { z } from 'zod';
 import type { AuditLogger } from './audit.service.js';
 
@@ -49,14 +48,14 @@ export type AuditReadFilters = {
   outcome?: 'success' | 'failure';
   search?: string;
   limit: number;
-  cursor?: AuditCursor;
+  page?: number;
 };
 
-export type AuditExportFilters = Omit<AuditReadFilters, 'limit' | 'cursor'>;
-export type AuditCursor = { createdAt: Date; id: string };
+export type AuditExportFilters = Omit<AuditReadFilters, 'limit' | 'page'>;
 
 export type AuditReadRepository = {
   list(filters: AuditReadFilters): Promise<{ rows: AuditEventRow[]; hasMore: boolean }>;
+  listPage(filters: AuditReadFilters): Promise<{ rows: AuditEventRow[]; total: number }>;
   findVisible(id: string): Promise<AuditEventRow | null>;
   findActor(id: string): Promise<{
     id: string;
@@ -146,7 +145,7 @@ const listQuerySchema = querySchema.extend({
       message: 'Limit must be 10, 20, 50, or 100',
     })
     .default(10),
-  cursor: z.string().min(1).max(512).optional(),
+  page: z.coerce.number().int().min(1).default(1),
 });
 const exportQuerySchema = querySchema;
 
@@ -175,14 +174,15 @@ export function createAuditReadService(
   return {
     async list(input: unknown, now = new Date()) {
       const filters = parseListQuery(input, now);
-      const result = await repository.list(filters);
+      const result = await repository.listPage(filters);
       const items = result.rows.map(toListItem);
-      const last = items.at(-1);
       return {
         items,
         pagination: {
+          page: filters.page ?? 1,
           limit: filters.limit,
-          nextCursor: result.hasMore && last ? encodeCursor(result.rows.at(-1)!) : null,
+          total: result.total,
+          totalPages: Math.ceil(result.total / filters.limit),
         },
       };
     },
@@ -228,24 +228,6 @@ export function parseExportQuery(input: unknown, now: Date): AuditExportFilters 
   return normalizeFilters(parsed, now, MAX_EXPORT_RANGE_DAYS, false);
 }
 
-export function encodeCursor(cursor: AuditCursor | AuditEventRow): string {
-  const value = {
-    createdAt: cursor.createdAt.toISOString(),
-    id: cursor.id,
-  };
-  return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
-}
-
-export function decodeCursor(value: string): AuditCursor {
-  try {
-    const decoded = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')) as unknown;
-    const parsed = z.object({ createdAt: instantSchema, id: z.uuid() }).strict().parse(decoded);
-    return { createdAt: new Date(parsed.createdAt), id: parsed.id };
-  } catch {
-    throw new AuditQueryValidationError();
-  }
-}
-
 function normalizeFilters(
   parsed: {
     from?: string;
@@ -257,7 +239,7 @@ function normalizeFilters(
     outcome?: 'success' | 'failure';
     q?: string;
     limit?: number;
-    cursor?: string;
+    page?: number;
   },
   now: Date,
   maxRangeDays: number,
@@ -283,8 +265,8 @@ function normalizeFilters(
     outcome: parsed.outcome,
     search: parsed.q,
     limit: withPagination ? (parsed.limit ?? 20) : MAX_EXPORT_ROWS,
+    page: withPagination ? (parsed.page ?? 1) : undefined,
   };
-  if (withPagination && parsed.cursor) filters.cursor = decodeCursor(parsed.cursor);
   return filters;
 }
 

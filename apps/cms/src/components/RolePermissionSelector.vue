@@ -11,6 +11,7 @@ type PermissionGroup = {
 const props = defineProps<{
   catalog: PermissionCatalogItem[];
   modelValue: string[];
+  readOnly?: boolean;
 }>();
 const emit = defineEmits<{ 'update:modelValue': [codes: string[]] }>();
 
@@ -64,7 +65,11 @@ function toggleGroup(group: PermissionGroup): void {
 <template>
   <div class="space-y-6">
     <p class="text-sm text-cms-muted">
-      Choose the permissions this role can use. Permissions are grouped by their resource.
+      {{
+        readOnly
+          ? 'Assigned permissions are checked.'
+          : 'Choose the permissions this role can use. Permissions are grouped by their resource.'
+      }}
     </p>
 
     <div v-if="groups.length" class="space-y-5">
@@ -82,6 +87,7 @@ function toggleGroup(group: PermissionGroup): void {
             {{ group.label }}
           </h3>
           <button
+            v-if="!readOnly"
             type="button"
             class="min-h-11 rounded-lg px-3 text-sm font-medium text-cms-primary outline-none hover:bg-cms-primary-soft focus-visible:ring-2 focus-visible:ring-cms-focus dark:text-cms-primary-light dark:hover:bg-cms-muted-surface"
             :aria-label="`${groupSelected(group) ? 'Clear' : 'Select all'} ${group.label} permissions`"
@@ -95,13 +101,15 @@ function toggleGroup(group: PermissionGroup): void {
         <ul class="mt-2 grid min-w-0 gap-1 sm:grid-cols-2">
           <li v-for="permission in group.permissions" :key="permission.id" class="min-w-0">
             <label
-              class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-cms-foreground hover:bg-cms-muted-surface"
+              class="flex min-h-11 min-w-0 items-center gap-3 rounded-lg px-2 py-2 text-sm text-cms-foreground"
+              :class="readOnly ? '' : 'cursor-pointer hover:bg-cms-muted-surface'"
             >
               <input
                 type="checkbox"
-                class="size-5 shrink-0 rounded border border-cms-muted accent-cms-primary focus-visible:ring-2 focus-visible:ring-cms-focus dark:bg-cms-muted-surface"
+                class="size-5 shrink-0 rounded border border-cms-muted accent-cms-primary focus-visible:ring-2 focus-visible:ring-cms-focus disabled:opacity-100 dark:bg-cms-muted-surface"
                 :value="permission.code"
                 :checked="isSelected(permission.code)"
+                :disabled="readOnly"
                 @change="
                   togglePermission(permission.code, ($event.target as HTMLInputElement).checked)
                 "

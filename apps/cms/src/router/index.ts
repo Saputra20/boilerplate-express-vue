@@ -13,8 +13,10 @@ import DeniedView from '../views/DeniedView.vue';
 import CategoryView from '../views/CategoryView.vue';
 import RoleView from '../views/RoleView.vue';
 import RoleFormView from '../views/RoleFormView.vue';
+import RoleDetailView from '../views/RoleDetailView.vue';
 import UserView from '../views/UserView.vue';
 import UserFormView from '../views/UserFormView.vue';
+import UserDetailView from '../views/UserDetailView.vue';
 import ProfileView from '../views/ProfileView.vue';
 import AuditTrailView from '../views/AuditTrailView.vue';
 import AuditEventDetailView from '../views/AuditEventDetailView.vue';
@@ -27,6 +29,9 @@ declare module 'vue-router' {
     public?: boolean;
     skipAuthRestore?: boolean;
     title?: string;
+    showPageHeader?: boolean;
+    showPageTitle?: boolean;
+    fullWidthPage?: boolean;
   }
 }
 
@@ -98,6 +103,16 @@ export const routes = [
         },
       },
       {
+        path: 'roles/:id',
+        name: 'role-detail',
+        component: RoleDetailView,
+        props: (route: RouteLocationNormalized) => ({ roleId: String(route.params.id) }),
+        meta: {
+          title: 'Role details',
+          requiredPermission: 'role.read',
+        },
+      },
+      {
         path: 'roles',
         name: 'roles',
         component: RoleView,
@@ -130,6 +145,17 @@ export const routes = [
         },
       },
       {
+        path: 'users/:id',
+        name: 'user-detail',
+        component: UserDetailView,
+        props: (route: RouteLocationNormalized) => ({ userId: String(route.params.id) }),
+        meta: {
+          title: 'User details',
+          requiredPermission: 'user.read',
+          showPageHeader: false,
+        },
+      },
+      {
         path: 'users',
         name: 'users',
         component: UserView,
@@ -153,6 +179,8 @@ export const routes = [
         component: AuditEventDetailView,
         meta: {
           title: 'Audit Event',
+          showPageHeader: false,
+          fullWidthPage: true,
           requiredPermission: 'audit.read',
         },
       },

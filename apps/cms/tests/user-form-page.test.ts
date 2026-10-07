@@ -91,7 +91,7 @@ describe('User dedicated pages', () => {
     auth.can.mockReturnValue(true);
   });
 
-  it('navigates to dedicated forms and keeps details and delete on the list', async () => {
+  it('navigates to dedicated create, edit, and detail pages and keeps delete on the list', async () => {
     const { router, wrapper } = await mountUserPage('/users');
     await flushPromises();
 
@@ -115,12 +115,12 @@ describe('User dedicated pages', () => {
     await router.push('/users');
     await flushPromises();
 
-    await wrapper
-      .findAll('button')
-      .find((button) => button.text() === user.email)
-      ?.trigger('click');
+    await wrapper.get('[aria-label="View details for user member@example.com"]').trigger('click');
     await flushPromises();
-    expect(document.body.textContent).toContain('User details');
+    expect(router.currentRoute.value.path).toBe(`/users/${user.id}`);
+    expect(wrapper.text()).toContain('Password change is required at first login.');
+    await router.push('/users');
+    await flushPromises();
     await wrapper.get('[aria-label="Delete user member@example.com"]').trigger('click');
     expect(document.body.querySelector('[role="dialog"]')).not.toBeNull();
   });
@@ -231,5 +231,8 @@ describe('User dedicated pages', () => {
     expect(wrapper.text()).not.toContain('Add user');
     expect(wrapper.find('[aria-label="Edit user member@example.com"]').exists()).toBe(false);
     expect(wrapper.find('[aria-label="Delete user member@example.com"]').exists()).toBe(false);
+    expect(wrapper.find('[aria-label="View details for user member@example.com"]').exists()).toBe(
+      true,
+    );
   });
 });

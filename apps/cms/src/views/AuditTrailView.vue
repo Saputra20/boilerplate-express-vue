@@ -9,6 +9,7 @@ import {
   type AuditEventType,
   type AuditListItem,
 } from '../api/types';
+import CmsIcon from '../components/CmsIcon.vue';
 import FeedbackState from '../components/FeedbackState.vue';
 import CmsBadge from '../components/ui/CmsBadge.vue';
 import CmsButton from '../components/ui/CmsButton.vue';
@@ -27,9 +28,8 @@ const error = ref<{ kind: 'error' | 'unavailable' | 'denied'; message: string } 
 const exportError = ref<string | null>(null);
 const page = ref(1);
 const pageSize = ref<10 | 20 | 50 | 100>(10);
-const cursor = ref<string | undefined>();
-const nextCursor = ref<string | null>(null);
-const cursorHistory = ref<Array<string | undefined>>([]);
+const total = ref(0);
+const totalPages = ref(0);
 let requestGeneration = 0;
 
 const emptyFilters = () => ({
@@ -57,7 +57,7 @@ function toInstant(value: string, endOfDay = false): string | undefined {
   return new Date(`${value}${suffix}`).toISOString();
 }
 
-function buildQuery(withPagination: boolean, queryCursor?: string): AuditEventQuery {
+function buildQuery(withPagination: boolean, queryPage = 1): AuditEventQuery {
   const query: AuditEventQuery = {
     from: toInstant(filters.from),
     to: toInstant(filters.to, true),
@@ -70,7 +70,7 @@ function buildQuery(withPagination: boolean, queryCursor?: string): AuditEventQu
   };
   if (withPagination) {
     query.limit = pageSize.value;
-    query.cursor = queryCursor;
+    query.page = queryPage;
   }
   return query;
 }
@@ -88,22 +88,22 @@ function errorState(cause: unknown): { kind: 'error' | 'unavailable' | 'denied';
   return { kind: 'error', message: 'Unable to load the audit trail. Try again.' };
 }
 
-async function loadPage(
-  requestedCursor: string | undefined,
-  requestedPage: number,
-  requestedHistory: Array<string | undefined>,
-): Promise<void> {
+async function loadPage(requestedPage: number): Promise<void> {
   const generation = ++requestGeneration;
-  cursor.value = requestedCursor;
   page.value = requestedPage;
-  cursorHistory.value = requestedHistory;
   loading.value = true;
   error.value = null;
   try {
-    const response = await cmsApiClient.listAuditEvents(buildQuery(true, requestedCursor));
+    const response = await cmsApiClient.listAuditEvents(buildQuery(true, requestedPage));
     if (generation !== requestGeneration) return;
+    if (response.pagination.totalPages > 0 && requestedPage > response.pagination.totalPages) {
+      void loadPage(response.pagination.totalPages);
+      return;
+    }
     events.value = response.items;
-    nextCursor.value = response.pagination.nextCursor;
+    page.value = response.pagination.page;
+    total.value = response.pagination.total;
+    totalPages.value = response.pagination.totalPages;
   } catch (cause) {
     if (generation !== requestGeneration) return;
     error.value = errorState(cause);
@@ -113,7 +113,7 @@ async function loadPage(
 }
 
 function applyFilters(): void {
-  void loadPage(undefined, 1, []);
+  void loadPage(1);
 }
 
 function resetFilters(): void {
@@ -122,24 +122,20 @@ function resetFilters(): void {
 }
 
 function goNext(): void {
-  if (!nextCursor.value || loading.value) return;
-  void loadPage(nextCursor.value, page.value + 1, [...cursorHistory.value, cursor.value]);
+  if (page.value >= totalPages.value || loading.value) return;
+  void loadPage(page.value + 1);
 }
 
 function goPrevious(): void {
   if (page.value <= 1 || loading.value) return;
-  void loadPage(
-    cursorHistory.value[cursorHistory.value.length - 1],
-    page.value - 1,
-    cursorHistory.value.slice(0, -1),
-  );
+  void loadPage(page.value - 1);
 }
 
 function changePageSize(value: string): void {
   const nextSize = Number(value);
   if (nextSize !== 10 && nextSize !== 20 && nextSize !== 50 && nextSize !== 100) return;
   pageSize.value = nextSize as 10 | 20 | 50 | 100;
-  void loadPage(undefined, 1, []);
+  void loadPage(1);
 }
 
 function actorLabel(event: AuditListItem): string {
@@ -202,20 +198,13 @@ async function exportCsv(): Promise<void> {
   }
 }
 
-onMounted(() => void loadPage(undefined, 1, []));
+onMounted(() => void loadPage(1));
 </script>
 
 <template>
-  <section aria-labelledby="audit-trail-title" class="w-full space-y-5">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div class="min-w-0">
-        <h2 id="audit-trail-title" class="text-lg font-semibold text-cms-foreground">
-          Read-only history
-        </h2>
-        <p class="mt-1 max-w-2xl text-sm text-cms-muted">
-          Approved CMS changes from generic audit history. Times show WIB (UTC+07:00).
-        </p>
-      </div>
+  <section aria-label="Audit Trail" class="w-full space-y-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p class="text-sm text-cms-muted">Event times are shown in WIB (UTC+07:00).</p>
       <CmsButton v-if="canExport" :loading="exporting" :disabled="loading" @click="exportCsv">
         Export CSV
       </CmsButton>
@@ -223,51 +212,69 @@ onMounted(() => void loadPage(undefined, 1, []));
 
     <p v-if="exportError" class="text-sm text-cms-destructive" role="alert">{{ exportError }}</p>
 
-    <CmsCard title="Filter audit history" description="Dates use UTC boundaries.">
-      <form
-        class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
-        @submit.prevent="applyFilters"
-      >
-        <CmsInput v-model="filters.from" label="From date (UTC)" type="date" />
-        <CmsInput v-model="filters.to" label="To date (UTC)" type="date" />
-        <CmsInput v-model="filters.actorId" label="Actor ID" placeholder="User UUID" />
-        <CmsSelect v-model="filters.action" label="Action">
-          <option value="">All actions</option>
-          <option v-for="eventType in eventTypes" :key="eventType" :value="eventType">
-            {{ auditEventLabels[eventType] }}
-          </option>
-        </CmsSelect>
-        <CmsSelect v-model="filters.resourceType" label="Resource type">
-          <option value="">All resources</option>
-          <option v-for="resourceType in resourceTypes" :key="resourceType" :value="resourceType">
-            {{ resourceType }}
-          </option>
-        </CmsSelect>
-        <CmsInput v-model="filters.resourceId" label="Resource ID" />
-        <CmsSelect v-model="filters.outcome" label="Outcome">
-          <option value="">All outcomes</option>
-          <option value="success">Success</option>
-          <option value="failure">Failure</option>
-        </CmsSelect>
-        <CmsInput
-          v-model="filters.q"
-          label="Search actor or target"
-          placeholder="At least 2 characters"
-        />
-        <div class="flex flex-wrap items-end gap-3 md:col-span-2 xl:col-span-4">
+    <CmsCard>
+      <form class="space-y-4" @submit.prevent="applyFilters">
+        <h2 class="text-base font-medium text-cms-foreground">Filters</h2>
+        <fieldset>
+          <legend class="sr-only">Date range and search</legend>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <CmsInput v-model="filters.from" label="From date (UTC)" type="date" />
+            <CmsInput v-model="filters.to" label="To date (UTC)" type="date" />
+            <div class="xl:col-span-2">
+              <CmsInput
+                id="audit-search"
+                v-model="filters.q"
+                label="Search actor or target (2–120 characters)"
+                placeholder="Name, resource type, or ID"
+                :max-length="120"
+              />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="border-t border-cms-border pt-4">
+          <legend class="sr-only">Exact filters</legend>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <CmsInput v-model="filters.actorId" label="Actor ID" placeholder="User UUID" />
+            <CmsSelect v-model="filters.action" label="Action">
+              <option value="">All actions</option>
+              <option v-for="eventType in eventTypes" :key="eventType" :value="eventType">
+                {{ auditEventLabels[eventType] }}
+              </option>
+            </CmsSelect>
+            <CmsSelect v-model="filters.resourceType" label="Resource type">
+              <option value="">All resources</option>
+              <option
+                v-for="resourceType in resourceTypes"
+                :key="resourceType"
+                :value="resourceType"
+              >
+                {{ resourceType }}
+              </option>
+            </CmsSelect>
+            <CmsInput v-model="filters.resourceId" label="Resource ID" />
+            <CmsSelect v-model="filters.outcome" label="Outcome">
+              <option value="">All outcomes</option>
+              <option value="success">Success</option>
+              <option value="failure">Failure</option>
+            </CmsSelect>
+          </div>
+        </fieldset>
+
+        <div class="flex flex-wrap gap-3 pt-1 sm:justify-end">
           <CmsButton type="submit">Apply filters</CmsButton>
-          <CmsButton type="button" variant="outline" @click="resetFilters">Reset filters</CmsButton>
+          <CmsButton type="button" variant="outline" @click="resetFilters">Clear filters</CmsButton>
         </div>
       </form>
     </CmsCard>
 
-    <CmsCard title="Audit events">
+    <CmsCard title="Events">
       <FeedbackState
         v-if="error"
         :kind="error.kind"
         :message="error.message"
         :retryable="error.kind !== 'denied'"
-        @retry="loadPage(cursor, page, cursorHistory)"
+        @retry="loadPage(page)"
       />
       <CmsLoadingState v-else-if="loading" />
       <CmsEmptyState
@@ -276,79 +283,157 @@ onMounted(() => void loadPage(undefined, 1, []));
         title="No audit events found"
         message="Try different dates or filters."
       />
-      <div v-else class="overflow-x-auto">
-        <table class="w-full min-w-[64rem] border-collapse text-left text-sm">
-          <caption class="sr-only">
-            Audit event history
-          </caption>
-          <thead class="border-b border-cms-border">
-            <tr>
-              <th scope="col" class="px-4 py-3 font-medium text-cms-muted">Action</th>
-              <th scope="col" class="px-4 py-3 font-medium text-cms-muted">Actor</th>
-              <th scope="col" class="px-4 py-3 font-medium text-cms-muted">Target</th>
-              <th scope="col" class="px-4 py-3 font-medium text-cms-muted">Outcome</th>
-              <th scope="col" class="px-4 py-3 font-medium text-cms-muted">Occurred</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-cms-border">
-            <tr v-for="event in events" :key="event.id" class="hover:bg-cms-muted-surface">
-              <td class="max-w-[14rem] px-4 py-4 align-top">
-                <RouterLink
-                  :to="{ name: 'audit-event', params: { id: event.id } }"
-                  class="inline-flex min-h-11 items-center font-medium text-cms-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cms-focus dark:text-cms-focus sm:min-h-0"
+      <div v-else class="overflow-hidden rounded-2xl border border-cms-border">
+        <ul aria-label="Audit events" class="divide-y divide-cms-border px-4 sm:px-5 2xl:hidden">
+          <li v-for="event in events" :key="event.id" class="py-4">
+            <div class="flex items-start justify-between gap-3">
+              <RouterLink
+                :to="{ name: 'audit-event', params: { id: event.id } }"
+                class="inline-flex min-h-11 min-w-0 flex-col justify-center font-medium text-cms-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cms-focus dark:text-cms-focus"
+              >
+                <span>{{ event.label }}</span>
+                <span class="mt-0.5 break-words font-mono text-xs font-normal text-cms-muted">{{
+                  event.eventType
+                }}</span>
+              </RouterLink>
+              <CmsBadge class="shrink-0 capitalize" :variant="outcomeVariant(event.outcome)">
+                {{ event.outcome }}
+              </CmsBadge>
+            </div>
+            <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt class="text-xs font-medium text-cms-muted">Actor</dt>
+                <dd class="mt-1 min-w-0 break-words font-medium text-cms-foreground">
+                  {{ actorLabel(event) }}
+                </dd>
+                <dd
+                  v-if="actorEmail(event)"
+                  class="mt-0.5 [overflow-wrap:anywhere] text-xs text-cms-muted"
                 >
-                  {{ event.label }}
-                </RouterLink>
-                <p class="mt-1 break-all font-mono text-xs text-cms-muted">{{ event.eventType }}</p>
-              </td>
-              <td class="max-w-[16rem] px-4 py-4 align-top">
-                <p class="break-words font-medium text-cms-foreground">{{ actorLabel(event) }}</p>
-                <p v-if="actorEmail(event)" class="mt-1 break-all text-xs text-cms-muted">
                   {{ actorEmail(event) }}
-                </p>
-              </td>
-              <td class="max-w-[18rem] px-4 py-4 align-top break-words text-cms-muted">
-                {{ targetLabel(event) }}
-              </td>
-              <td class="px-4 py-4 align-top">
-                <CmsBadge :variant="outcomeVariant(event.outcome)">{{ event.outcome }}</CmsBadge>
-              </td>
-              <td class="min-w-[13rem] px-4 py-4 align-top whitespace-nowrap text-cms-muted">
-                {{ formatWib(event.createdAt) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div
-        v-if="!loading && error === null && events.length > 0"
-        class="mt-5 flex flex-col gap-3 border-t border-cms-border pt-4 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <p class="text-sm text-cms-muted" aria-live="polite">
-          Showing {{ firstRecord }} to {{ lastRecord }} events on page {{ page }}
-        </p>
-        <div class="flex flex-wrap items-center gap-2">
-          <label class="flex min-h-11 items-center gap-2 text-sm text-cms-muted">
-            <span>Rows per page</span>
-            <select
-              :value="pageSize"
-              aria-label="Rows per page"
-              class="h-11 rounded-lg border border-cms-border bg-cms-surface px-3 text-cms-foreground outline-none focus-visible:ring-2 focus-visible:ring-cms-focus"
-              @change="changePageSize(($event.target as HTMLSelectElement).value)"
+                </dd>
+              </div>
+              <div>
+                <dt class="text-xs font-medium text-cms-muted">Target</dt>
+                <dd class="mt-1 [overflow-wrap:anywhere] text-cms-foreground">
+                  {{ targetLabel(event) }}
+                </dd>
+              </div>
+              <div class="sm:col-span-2">
+                <dt class="text-xs font-medium text-cms-muted">Occurred</dt>
+                <dd class="mt-1 [overflow-wrap:anywhere] text-cms-foreground">
+                  {{ formatWib(event.createdAt) }}
+                </dd>
+              </div>
+            </dl>
+            <RouterLink
+              :to="{ name: 'audit-event', params: { id: event.id } }"
+              class="mt-3 inline-flex min-h-11 items-center rounded-lg text-sm font-medium text-cms-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cms-focus dark:text-cms-focus"
+              :aria-label="`View details for ${event.label}`"
             >
-              <option :value="10">10</option>
-              <option :value="20">20</option>
-              <option :value="50">50</option>
-              <option :value="100">100</option>
-            </select>
-          </label>
-          <CmsButton variant="outline" :disabled="page <= 1" @click="goPrevious"
-            >Previous</CmsButton
+              View details
+            </RouterLink>
+          </li>
+        </ul>
+        <div class="hidden overflow-x-auto 2xl:block">
+          <table
+            class="w-full min-w-[56rem] border-collapse text-left text-sm [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-cms-muted-surface [&_td]:align-middle [&_td+td]:border-l [&_td+td]:border-cms-border/60 [&_th]:whitespace-nowrap [&_th+th]:border-l [&_th+th]:border-cms-border/60"
           >
-          <CmsButton variant="outline" :disabled="nextCursor === null" @click="goNext"
-            >Next</CmsButton
-          >
+            <caption class="sr-only">
+              Audit event history
+            </caption>
+            <thead class="border-b border-cms-border">
+              <tr>
+                <th scope="col" class="px-5 py-3 font-medium text-cms-muted">Action</th>
+                <th scope="col" class="px-5 py-3 font-medium text-cms-muted">Actor</th>
+                <th scope="col" class="px-5 py-3 font-medium text-cms-muted">Target</th>
+                <th scope="col" class="px-5 py-3 font-medium text-cms-muted">Outcome</th>
+                <th scope="col" class="px-5 py-3 font-medium text-cms-muted">Occurred</th>
+                <th scope="col" class="px-5 py-3 text-right font-medium text-cms-muted">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-cms-border">
+              <tr v-for="event in events" :key="event.id">
+                <td class="max-w-[14rem] px-5 py-4">
+                  <RouterLink
+                    :to="{ name: 'audit-event', params: { id: event.id } }"
+                    class="inline-flex min-h-11 items-center font-medium text-cms-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cms-focus dark:text-cms-focus sm:min-h-0"
+                  >
+                    {{ event.label }}
+                  </RouterLink>
+                  <p class="mt-1 break-all font-mono text-xs text-cms-muted">
+                    {{ event.eventType }}
+                  </p>
+                </td>
+                <td class="max-w-[16rem] px-5 py-4">
+                  <p class="break-words font-medium text-cms-foreground">{{ actorLabel(event) }}</p>
+                  <p v-if="actorEmail(event)" class="mt-1 break-all text-xs text-cms-muted">
+                    {{ actorEmail(event) }}
+                  </p>
+                </td>
+                <td class="max-w-[18rem] break-words px-5 py-4 text-cms-muted">
+                  {{ targetLabel(event) }}
+                </td>
+                <td class="px-5 py-4">
+                  <CmsBadge :variant="outcomeVariant(event.outcome)">{{ event.outcome }}</CmsBadge>
+                </td>
+                <td class="min-w-[13rem] whitespace-nowrap px-5 py-4 text-cms-muted">
+                  {{ formatWib(event.createdAt) }}
+                </td>
+                <td class="px-5 py-4">
+                  <RouterLink
+                    :to="{ name: 'audit-event', params: { id: event.id } }"
+                    class="ml-auto flex h-11 w-11 items-center justify-center rounded-lg text-cms-muted outline-none hover:bg-cms-muted-surface hover:text-cms-foreground focus-visible:ring-2 focus-visible:ring-cms-focus"
+                    :aria-label="`View details for ${event.label}`"
+                  >
+                    <CmsIcon name="eye" />
+                  </RouterLink>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+        <footer
+          class="flex flex-col gap-3 border-t border-cms-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+        >
+          <p class="text-sm text-cms-muted" aria-live="polite">
+            Showing {{ firstRecord }} to {{ lastRecord }} of {{ total }} events
+          </p>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <label
+              class="flex min-h-11 items-center justify-between gap-2 text-sm text-cms-muted sm:justify-start"
+            >
+              <span>Rows per page</span>
+              <select
+                :value="pageSize"
+                aria-label="Rows per page"
+                class="h-11 rounded-lg border border-cms-border bg-cms-surface px-3 text-cms-foreground outline-none focus-visible:ring-2 focus-visible:ring-cms-focus"
+                @change="changePageSize(($event.target as HTMLSelectElement).value)"
+              >
+                <option :value="10">10</option>
+                <option :value="20">20</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+              </select>
+            </label>
+            <div class="flex gap-2">
+              <CmsButton
+                class="flex-1 sm:flex-none"
+                variant="outline"
+                :disabled="page <= 1"
+                @click="goPrevious"
+                >Previous</CmsButton
+              >
+              <CmsButton
+                class="flex-1 sm:flex-none"
+                variant="outline"
+                :disabled="page >= totalPages"
+                @click="goNext"
+                >Next</CmsButton
+              >
+            </div>
+          </div>
+        </footer>
       </div>
     </CmsCard>
   </section>

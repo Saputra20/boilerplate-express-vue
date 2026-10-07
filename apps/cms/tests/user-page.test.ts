@@ -19,11 +19,22 @@ vi.mock('../src/stores/auth', () => ({
 }));
 
 import UserView from '../src/views/UserView.vue';
+import UserDetailView from '../src/views/UserDetailView.vue';
 
 async function mountUserView() {
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/users', component: UserView }],
+    routes: [
+      { path: '/', component: { template: '<div />' } },
+      { path: '/users', name: 'users', component: UserView },
+      {
+        path: '/users/:id',
+        name: 'user-detail',
+        component: UserDetailView,
+        props: (route) => ({ userId: String(route.params.id) }),
+      },
+      { path: '/users/:id/edit', name: 'user-edit', component: { template: '<div />' } },
+    ],
   });
   await router.push('/users');
   await router.isReady();
@@ -97,14 +108,26 @@ describe('user management page', () => {
     expect(wrapper.text()).not.toContain('passwordHash');
     expect(wrapper.text()).not.toContain('token');
 
-    const detailButton = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes(user.email));
-    await detailButton?.trigger('click');
+    await wrapper.get('[aria-label="View details for user member@example.com"]').trigger('click');
     await flushPromises();
     expect(api.getUser).toHaveBeenCalledWith(user.id);
-    expect(document.body.textContent).toContain('Password change is required at first login.');
-    expect(document.body.textContent).not.toContain('passwordHash');
+    const backLink = wrapper.get('a[href="/users"]');
+    const breadcrumb = wrapper.get('nav[aria-label="Breadcrumb"]');
+    expect(breadcrumb.text()).toContain('Home');
+    expect(breadcrumb.text()).toContain('User details');
+    expect(backLink.element.parentElement).toBe(breadcrumb.element.parentElement);
+    expect(breadcrumb.element.parentElement?.className).toContain('justify-between');
+    expect(wrapper.text()).not.toContain('First-login password change');
+    expect(wrapper.text()).not.toContain('Account identifiers');
+    expect(wrapper.text()).not.toContain('Security');
+    expect(wrapper.text()).not.toContain('Permissions');
+    expect(wrapper.text()).not.toContain(user.id);
+    expect(wrapper.text()).toContain('Not verified');
+    expect(wrapper.text()).toContain('Never logged in');
+    expect(wrapper.text()).toContain('Edit user');
+    expect(wrapper.text()).not.toContain('Reset password');
+    expect(wrapper.text()).not.toContain('Two-factor');
+    expect(wrapper.text()).not.toContain('passwordHash');
     wrapper.unmount();
   });
 

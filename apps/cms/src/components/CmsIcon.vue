@@ -19,7 +19,12 @@ withDefaults(
       | 'search'
       | 'filter'
       | 'edit'
-      | 'trash';
+      | 'trash'
+      | 'arrow-left'
+      | 'download'
+      | 'calendar'
+      | 'copy'
+      | 'check-circle';
     size?: number;
   }>(),
   { size: 20 },
@@ -78,6 +83,14 @@ withDefaults(
     <path v-else-if="name === 'filter'" d="M4 6h16M7 12h10m-7 6h4" />
     <path v-else-if="name === 'edit'" d="m14 5 5 5M4 20l4.4-.9L19 8.5 15.5 5 5 15.5 4 20Z" />
     <path v-else-if="name === 'trash'" d="M4 7h16m-10 4v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3" />
+    <path v-else-if="name === 'arrow-left'" d="m12 19-7-7 7-7m-7 7h14" />
+    <path v-else-if="name === 'download'" d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3" />
+    <path
+      v-else-if="name === 'calendar'"
+      d="M8 3v4m8-4v4M4 9h16M5 5h14a1 1 0 0 1 1 1v13H4V6a1 1 0 0 1 1-1Z"
+    />
+    <path v-else-if="name === 'copy'" d="M8 8V4h12v12h-4M4 8h12v12H4V8Z" />
+    <path v-else-if="name === 'check-circle'" d="M20 11.1V12a8 8 0 1 1-4.7-7.3M8.5 11.5l3 3L21 5" />
     <path v-else-if="name === 'dots'" d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.5" />
     <path v-else d="m6 6 12 12M18 6 6 18" />
   </svg>

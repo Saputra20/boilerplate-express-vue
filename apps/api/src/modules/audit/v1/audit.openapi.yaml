@@ -155,17 +155,19 @@ schemas:
         items: { $ref: '#/components/schemas/AuditV1Item' }
       pagination:
         type: object
-        required: [limit, nextCursor]
+        required: [page, limit, total, totalPages]
         additionalProperties: false
         properties:
+          page: { type: integer, minimum: 1 }
           limit: { type: integer, enum: [10, 20, 50, 100] }
-          nextCursor: { type: string, nullable: true }
+          total: { type: integer, minimum: 0 }
+          totalPages: { type: integer, minimum: 0 }
 paths:
   /api/v1/audit-events:
     get:
       tags: [Audit Trail]
       operationId: listAuditEvents
-      description: Lists approved catalog events in createdAt DESC and id DESC order. Browsing defaults to the last 30 days and accepts submitted ranges up to 90 days. Page size is 10, 20, 50, or 100.
+      description: Lists approved catalog events in createdAt DESC and id DESC order. Browsing defaults to the last 30 days and accepts submitted ranges up to 90 days. Page size is 10, 20, 50, or 100. Total counts reflect the applied filters.
       security: [{ bearerAuth: [] }]
       parameters:
         - name: from
@@ -210,10 +212,10 @@ paths:
         - name: limit
           in: query
           schema: { type: integer, enum: [10, 20, 50, 100], default: 10 }
-        - name: cursor
+        - name: page
           in: query
-          description: Opaque base64url cursor over createdAt DESC and id DESC. Invalid cursors receive 400.
-          schema: { type: string, minLength: 1, maxLength: 512 }
+          description: One-based page number. Invalid values receive 400.
+          schema: { type: integer, minimum: 1, default: 1 }
       responses:
         '200':
           description: Audit event list

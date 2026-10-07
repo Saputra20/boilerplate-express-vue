@@ -115,6 +115,33 @@ describe('Role dedicated pages', () => {
     expect(api.listRoles).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, limit: 20 }));
   });
 
+  it('keeps the role list compact while retaining every permission code', async () => {
+    api.listRoles.mockResolvedValue({
+      items: [
+        { ...editor, code: 'admin', name: 'Admin', permissionCodes: ['role.read', 'user.read'] },
+        { ...editor, id: '00000000-0000-4000-8000-000000000002', permissionCodes: [] },
+      ],
+      pagination: { page: 1, limit: 10, total: 2, totalPages: 1 },
+    });
+    const { wrapper } = await mountRolePage('/roles');
+    await flushPromises();
+
+    const rows = wrapper.findAll('tbody tr');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.find('td:first-child').text()).toContain('Protected role');
+    expect(rows[0]?.find('[aria-label="View details for role Admin"]').exists()).toBe(true);
+    expect(rows[0]?.find('[aria-label="Edit role Admin"]').exists()).toBe(false);
+    expect(rows[0]?.find('[aria-label="Delete role Admin"]').exists()).toBe(false);
+    const permissions = rows[0]?.get('details');
+    expect(permissions?.attributes('open')).toBeUndefined();
+    expect(permissions?.get('summary').text()).toContain('2 permissions');
+    expect(permissions?.findAll('li').map((item) => item.text())).toEqual([
+      'role.read',
+      'user.read',
+    ]);
+    expect(rows[1]?.text()).toContain('No permissions assigned');
+  });
+
   it('navigates from the list to create/edit and keeps delete confirmation in a modal', async () => {
     const { router, wrapper } = await mountRolePage('/roles');
     await flushPromises();
@@ -124,6 +151,20 @@ describe('Role dedicated pages', () => {
     await addRole?.trigger('click');
     await flushPromises();
     expect(router.currentRoute.value.path).toBe('/roles/create');
+
+    await router.push('/roles');
+    await flushPromises();
+    await wrapper.get('[aria-label="View details for role Editor"]').trigger('click');
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe(`/roles/${editor.id}`);
+    const detailFields = wrapper.findAll('input[readonly]');
+    expect(detailFields.map((field) => (field.element as HTMLInputElement).value)).toEqual([
+      'editor',
+      'Editor',
+      'Content editor',
+    ]);
+    expect(wrapper.get('input[value="category.read"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.find('button[aria-label="Clear Category permissions"]').exists()).toBe(false);
 
     await router.push('/roles');
     await flushPromises();

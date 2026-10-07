@@ -13,6 +13,7 @@ withDefaults(
     title?: string;
     error?: string;
     disabled?: boolean;
+    readOnly?: boolean;
     ariaDescribedby?: string;
     errorId?: string;
   }>(),
@@ -29,6 +30,7 @@ withDefaults(
     title: undefined,
     error: undefined,
     disabled: false,
+    readOnly: false,
     ariaDescribedby: undefined,
     errorId: undefined,
   },
@@ -53,9 +55,10 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
       :required="required"
       :title="title"
       :disabled="disabled"
+      :readonly="readOnly"
       :aria-invalid="Boolean(error)"
       :aria-describedby="[ariaDescribedby, error && errorId].filter(Boolean).join(' ') || undefined"
-      class="block h-11 w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm text-cms-foreground shadow-cms-card outline-none placeholder:text-cms-muted focus:border-[#9cb9ff] focus:ring-[3px] focus:ring-cms-primary/10 disabled:cursor-not-allowed disabled:bg-cms-muted-surface disabled:opacity-70 dark:bg-[#101828] dark:focus:border-[#252dae]"
+      class="block h-11 w-full rounded-lg border bg-transparent px-4 py-2.5 text-sm text-cms-foreground shadow-cms-card outline-none placeholder:text-cms-muted focus:border-[#9cb9ff] focus:ring-[3px] focus:ring-cms-primary/10 read-only:bg-cms-muted-surface disabled:cursor-not-allowed disabled:bg-cms-muted-surface disabled:opacity-70 dark:bg-[#101828] dark:focus:border-[#252dae]"
       :class="error ? 'border-cms-destructive' : 'border-cms-border'"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />

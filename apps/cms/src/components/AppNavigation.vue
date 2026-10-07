@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { filterNavigationItems, navigationItems } from '../navigation';
 import { useAuthStore } from '../stores/auth';
+import gecLogo from '../assets/gec-logo.png';
 import CmsIcon from './CmsIcon.vue';
 
 withDefaults(defineProps<{ mobile?: boolean; collapsed?: boolean }>(), {
@@ -27,22 +28,16 @@ const visibleNavigationItems = computed(() => filterNavigationItems(navigationIt
         aria-label="CMS home"
         @click="emit('navigate')"
       >
-        <span
-          class="grid size-8 shrink-0 place-items-center rounded-lg bg-cms-primary text-sm font-bold text-cms-primary-contrast"
-          aria-hidden="true"
-          >C</span
-        >
-        <div class="min-w-0">
-          <p class="truncate text-base font-semibold text-cms-foreground">CMS</p>
-          <p class="mt-0.5 truncate text-xs text-cms-muted">Content workspace</p>
-        </div>
+        <img :src="gecLogo" alt="" class="h-auto w-full max-w-[14rem]" />
       </RouterLink>
-      <span
+      <div
         v-else
-        class="grid size-8 place-items-center rounded-lg bg-cms-primary text-sm font-bold text-cms-primary-contrast"
-        aria-label="CMS"
-        >C</span
+        class="size-8 shrink-0 overflow-hidden"
+        role="img"
+        aria-label="Geotechnical Engineering Consultant"
       >
+        <img :src="gecLogo" alt="" class="h-auto w-[6.2rem] max-w-none" />
+      </div>
       <button
         v-if="mobile"
         type="button"

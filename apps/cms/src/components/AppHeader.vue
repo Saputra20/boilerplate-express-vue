@@ -41,10 +41,6 @@ const { theme, toggleTheme } = useTheme();
           >
             <CmsIcon name="menu" :size="18" />
           </button>
-          <div class="min-w-0">
-            <p class="truncate text-sm font-semibold text-cms-foreground">Content workspace</p>
-            <p class="hidden text-xs text-cms-muted sm:block">CMS administration</p>
-          </div>
         </div>
 
         <div class="flex shrink-0 items-center gap-2 sm:gap-3">
