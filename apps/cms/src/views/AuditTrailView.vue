@@ -26,7 +26,7 @@ const exporting = ref(false);
 const error = ref<{ kind: 'error' | 'unavailable' | 'denied'; message: string } | null>(null);
 const exportError = ref<string | null>(null);
 const page = ref(1);
-const pageSize = ref<20 | 50 | 100>(20);
+const pageSize = ref<10 | 20 | 50 | 100>(10);
 const cursor = ref<string | undefined>();
 const nextCursor = ref<string | null>(null);
 const cursorHistory = ref<Array<string | undefined>>([]);
@@ -45,6 +45,8 @@ const emptyFilters = () => ({
 
 const filters = reactive(emptyFilters());
 const isEmpty = computed(() => !loading.value && error.value === null && events.value.length === 0);
+const firstRecord = computed(() => (page.value - 1) * pageSize.value + 1);
+const lastRecord = computed(() => firstRecord.value + events.value.length - 1);
 const canExport = computed(() => auth.can('audit.read') && auth.can('audit.export'));
 const eventTypes = auditEventTypeSchema.options;
 const resourceTypes = ['category', 'role', 'user'] as const;
@@ -135,8 +137,8 @@ function goPrevious(): void {
 
 function changePageSize(value: string): void {
   const nextSize = Number(value);
-  if (nextSize !== 20 && nextSize !== 50 && nextSize !== 100) return;
-  pageSize.value = nextSize;
+  if (nextSize !== 10 && nextSize !== 20 && nextSize !== 50 && nextSize !== 100) return;
+  pageSize.value = nextSize as 10 | 20 | 50 | 100;
   void loadPage(undefined, 1, []);
 }
 
@@ -323,28 +325,29 @@ onMounted(() => void loadPage(undefined, 1, []));
         class="mt-5 flex flex-col gap-3 border-t border-cms-border pt-4 sm:flex-row sm:items-center sm:justify-between"
       >
         <p class="text-sm text-cms-muted" aria-live="polite">
-          Page {{ page }}, {{ events.length }} events shown
+          Showing {{ firstRecord }} to {{ lastRecord }} events on page {{ page }}
         </p>
-        <div class="flex flex-wrap gap-2">
-          <CmsButton variant="outline" :disabled="page <= 1" @click="goPrevious"
-            >Previous</CmsButton
-          >
-          <CmsButton variant="outline" :disabled="nextCursor === null" @click="goNext"
-            >Next</CmsButton
-          >
+        <div class="flex flex-wrap items-center gap-2">
           <label class="flex min-h-11 items-center gap-2 text-sm text-cms-muted">
-            <span>Rows</span>
+            <span>Rows per page</span>
             <select
               :value="pageSize"
               aria-label="Rows per page"
               class="h-11 rounded-lg border border-cms-border bg-cms-surface px-3 text-cms-foreground outline-none focus-visible:ring-2 focus-visible:ring-cms-focus"
               @change="changePageSize(($event.target as HTMLSelectElement).value)"
             >
+              <option :value="10">10</option>
               <option :value="20">20</option>
               <option :value="50">50</option>
               <option :value="100">100</option>
             </select>
           </label>
+          <CmsButton variant="outline" :disabled="page <= 1" @click="goPrevious"
+            >Previous</CmsButton
+          >
+          <CmsButton variant="outline" :disabled="nextCursor === null" @click="goNext"
+            >Next</CmsButton
+          >
         </div>
       </div>
     </CmsCard>

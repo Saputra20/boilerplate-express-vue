@@ -267,7 +267,7 @@ const auditExportSummarySchema = z.object({
 export const auditListResponseSchema = z.object({
   items: z.array(auditItemSchema),
   pagination: z.object({
-    limit: z.union([z.literal(20), z.literal(50), z.literal(100)]),
+    limit: z.union([z.literal(10), z.literal(20), z.literal(50), z.literal(100)]),
     nextCursor: z.string().nullable(),
   }),
 });
@@ -289,7 +289,7 @@ export type AuditEventQuery = {
   resourceId?: string;
   outcome?: 'success' | 'failure';
   q?: string;
-  limit?: 20 | 50 | 100;
+  limit?: 10 | 20 | 50 | 100;
   cursor?: string;
 };
 
@@ -306,7 +306,7 @@ export const auditEventQuerySchema = z.object({
   resourceId: z.string().min(1).max(255).optional(),
   outcome: z.enum(['success', 'failure']).optional(),
   q: z.string().trim().min(2).max(120).optional(),
-  limit: z.union([z.literal(20), z.literal(50), z.literal(100)]).optional(),
+  limit: z.union([z.literal(10), z.literal(20), z.literal(50), z.literal(100)]).optional(),
   cursor: z.string().min(1).max(512).optional(),
 });
 

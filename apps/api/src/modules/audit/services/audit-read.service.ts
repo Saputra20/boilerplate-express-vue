@@ -142,10 +142,10 @@ const listQuerySchema = querySchema.extend({
   limit: z.coerce
     .number()
     .int()
-    .refine((value) => value === 20 || value === 50 || value === 100, {
-      message: 'Limit must be 20, 50, or 100',
+    .refine((value) => value === 10 || value === 20 || value === 50 || value === 100, {
+      message: 'Limit must be 10, 20, 50, or 100',
     })
-    .default(20),
+    .default(10),
   cursor: z.string().min(1).max(512).optional(),
 });
 const exportQuerySchema = querySchema;

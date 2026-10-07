@@ -191,6 +191,10 @@ describe('OpenAPI infrastructure', () => {
       expect(document.paths['/api/v1/audit-events']?.get?.parameters).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
+            name: 'limit',
+            schema: expect.objectContaining({ enum: [10, 20, 50, 100], default: 10 }),
+          }),
+          expect.objectContaining({
             name: 'cursor',
             description: expect.stringContaining('Opaque'),
             schema: expect.objectContaining({ minLength: 1, maxLength: 512 }),

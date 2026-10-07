@@ -158,14 +158,14 @@ schemas:
         required: [limit, nextCursor]
         additionalProperties: false
         properties:
-          limit: { type: integer, enum: [20, 50, 100] }
+          limit: { type: integer, enum: [10, 20, 50, 100] }
           nextCursor: { type: string, nullable: true }
 paths:
   /api/v1/audit-events:
     get:
       tags: [Audit Trail]
       operationId: listAuditEvents
-      description: Lists approved catalog events in createdAt DESC and id DESC order. Browsing defaults to the last 30 days and accepts submitted ranges up to 90 days. Page size is 20, 50, or 100.
+      description: Lists approved catalog events in createdAt DESC and id DESC order. Browsing defaults to the last 30 days and accepts submitted ranges up to 90 days. Page size is 10, 20, 50, or 100.
       security: [{ bearerAuth: [] }]
       parameters:
         - name: from
@@ -209,7 +209,7 @@ paths:
           schema: { type: string, minLength: 2, maxLength: 120 }
         - name: limit
           in: query
-          schema: { type: integer, enum: [20, 50, 100], default: 20 }
+          schema: { type: integer, enum: [10, 20, 50, 100], default: 10 }
         - name: cursor
           in: query
           description: Opaque base64url cursor over createdAt DESC and id DESC. Invalid cursors receive 400.

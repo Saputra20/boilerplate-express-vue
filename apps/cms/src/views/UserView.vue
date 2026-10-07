@@ -207,7 +207,7 @@ onMounted(() => void loadUsers());
           <td class="px-5 py-4">
             <button
               type="button"
-              class="text-left font-medium text-cms-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cms-focus"
+              class="block max-w-full break-all text-left font-medium text-cms-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cms-focus"
               @click="openDetails(user)"
             >
               {{ user.email }}

@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useSlots } from 'v
 import CmsIcon from '../CmsIcon.vue';
 import CmsButton from './CmsButton.vue';
 
-const pageSizeOptions = [10, 20, 30, 50, 100];
+const pageSizeOptions = [10, 20, 50, 100];
 const props = defineProps<{
   title: string;
   totalRecords: number;
@@ -113,27 +113,10 @@ function handleDocumentKeydown(event: KeyboardEvent): void {
     <div class="p-4 sm:p-5 lg:p-6">
       <div class="relative rounded-2xl border border-cms-border">
         <div
-          class="flex flex-col gap-4 border-b border-cms-border px-4 py-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-6"
+          class="flex flex-col gap-4 border-b border-cms-border px-4 py-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:px-6"
         >
-          <div class="flex flex-wrap items-center gap-3">
-            <label class="flex items-center gap-3 text-sm font-medium text-cms-muted">
-              <span>Show</span>
-              <select
-                :value="pageSize"
-                aria-label="Entries per page"
-                class="h-12 rounded-lg border border-cms-border bg-cms-surface px-3 text-sm font-medium text-cms-foreground shadow-cms-card outline-none focus-visible:ring-2 focus-visible:ring-cms-focus"
-                @change="updatePageSize"
-              >
-                <option v-for="size in pageSizeOptions" :key="size" :value="size">
-                  {{ size }}
-                </option>
-              </select>
-              <span>entries</span>
-            </label>
-          </div>
-
           <div
-            class="flex w-full min-w-0 items-center gap-3 sm:ml-auto sm:min-w-[20rem] sm:max-w-[32rem] sm:flex-1 sm:justify-end"
+            class="flex w-full min-w-0 items-center gap-3 sm:ml-auto sm:w-auto sm:max-w-[22.5rem] sm:flex-1 sm:justify-end"
           >
             <div v-if="hasFilters" ref="filterGroup" class="relative shrink-0">
               <CmsButton
@@ -176,7 +159,7 @@ function handleDocumentKeydown(event: KeyboardEvent): void {
                 :value="searchTerm"
                 type="search"
                 :aria-label="searchLabel"
-                placeholder="Search..."
+                :placeholder="searchLabel"
                 class="h-12 w-full rounded-lg border border-cms-border bg-cms-surface py-3 pl-11 pr-4 text-sm text-cms-foreground shadow-cms-card outline-none placeholder:text-cms-muted focus-visible:ring-2 focus-visible:ring-cms-focus"
                 @input="updateSearchTerm"
               />
@@ -209,7 +192,22 @@ function handleDocumentKeydown(event: KeyboardEvent): void {
           <p class="text-sm text-cms-muted" aria-live="polite">
             Showing {{ firstRecord }} to {{ lastRecord }} of {{ totalRecords }} {{ itemLabel }}
           </p>
-          <slot name="footer" />
+          <div class="flex flex-wrap items-center justify-end gap-3">
+            <label class="flex min-h-11 items-center gap-2 text-sm text-cms-muted">
+              <span>Rows per page</span>
+              <select
+                :value="pageSize"
+                aria-label="Rows per page"
+                class="h-11 rounded-lg border border-cms-border bg-cms-surface px-3 text-cms-foreground outline-none focus-visible:ring-2 focus-visible:ring-cms-focus"
+                @change="updatePageSize"
+              >
+                <option v-for="size in pageSizeOptions" :key="size" :value="size">
+                  {{ size }}
+                </option>
+              </select>
+            </label>
+            <slot name="footer" />
+          </div>
         </footer>
       </div>
     </div>

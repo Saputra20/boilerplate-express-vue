@@ -158,7 +158,7 @@ onMounted(() => void load());
               <span
                 v-for="code in role.permissionCodes"
                 :key="code"
-                class="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-600 dark:bg-white/[0.03] dark:text-gray-400"
+                class="max-w-full break-all rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs font-medium text-gray-600 dark:bg-white/[0.03] dark:text-gray-400"
                 >{{ code }}</span
               ><span v-if="!role.permissionCodes.length" class="text-xs text-cms-muted"
                 >No permissions assigned</span

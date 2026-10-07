@@ -114,7 +114,44 @@ describe('Audit Trail list page', () => {
     await flushPromises();
 
     expect(api.listAuditEvents).toHaveBeenLastCalledWith(
-      expect.objectContaining({ q: 'Ada', limit: 20 }),
+      expect.objectContaining({ q: 'Ada', limit: 10 }),
+    );
+    const rows = wrapper.get('select[aria-label="Rows per page"]');
+    expect(rows.findAll('option').map((option) => option.text())).toEqual([
+      '10',
+      '20',
+      '50',
+      '100',
+    ]);
+    expect((rows.element as HTMLSelectElement).value).toBe('10');
+    expect(wrapper.text()).toContain('Rows per page');
+    expect(wrapper.text()).toContain('Showing 1 to 1 events on page 1');
+  });
+
+  it('resets cursor pagination when page size changes and preserves cursor navigation', async () => {
+    api.listAuditEvents
+      .mockResolvedValueOnce({ items: [event], pagination: { limit: 10, nextCursor: 'cursor-1' } })
+      .mockResolvedValueOnce({ items: [event], pagination: { limit: 20, nextCursor: 'cursor-2' } })
+      .mockResolvedValueOnce({ items: [event], pagination: { limit: 20, nextCursor: null } });
+    const { wrapper } = await mountAuditPage('/audit-trail');
+    await flushPromises();
+
+    await wrapper.get('select[aria-label="Rows per page"]').setValue('20');
+    await flushPromises();
+    expect(api.listAuditEvents).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 20 }));
+    expect(api.listAuditEvents.mock.calls[1]?.[0]).toHaveProperty('cursor', undefined);
+
+    api.listAuditEvents.mockResolvedValueOnce({
+      items: [event],
+      pagination: { limit: 20, nextCursor: 'cursor-2' },
+    });
+    await wrapper
+      .findAll('button')
+      .find((button) => button.text() === 'Next')
+      ?.trigger('click');
+    await flushPromises();
+    expect(api.listAuditEvents).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cursor: 'cursor-2', limit: 20 }),
     );
   });
 

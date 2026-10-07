@@ -1,0 +1,12 @@
+[Unit]
+Description=Restrict Safial API port to loopback proxy access
+After=network-pre.target
+Before=network.target nginx.service pm2-root.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/safial-api-firewall
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

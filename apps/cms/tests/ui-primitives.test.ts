@@ -105,9 +105,14 @@ describe('CMS UI primitives', () => {
     });
 
     expect(wrapper.get('h2').text()).toBe('Users');
-    expect(
-      (wrapper.get('select[aria-label="Entries per page"]').element as HTMLSelectElement).value,
-    ).toBe('10');
+    const rows = wrapper.get('select[aria-label="Rows per page"]');
+    expect((rows.element as HTMLSelectElement).value).toBe('10');
+    expect(rows.findAll('option').map((option) => option.text())).toEqual([
+      '10',
+      '20',
+      '50',
+      '100',
+    ]);
     expect(wrapper.get('input[aria-label="Search users by email"]')).toBeTruthy();
     expect(wrapper.get('tbody').text()).toContain('user@example.com');
     expect(wrapper.get('footer').text()).toContain('Showing 11 to 20 of 47 users');
@@ -131,7 +136,7 @@ describe('CMS UI primitives', () => {
       },
     });
 
-    expect(wrapper.get('select[aria-label="Entries per page"]')).toBeTruthy();
+    expect(wrapper.get('select[aria-label="Rows per page"]')).toBeTruthy();
     expect(wrapper.get('input[aria-label="Search categories"]')).toBeTruthy();
     expect(wrapper.text()).toContain('No categories found');
     expect(wrapper.text()).not.toContain('must not render');
@@ -150,7 +155,7 @@ describe('CMS UI primitives', () => {
       },
     });
 
-    await wrapper.get('select[aria-label="Entries per page"]').setValue('20');
+    await wrapper.get('select[aria-label="Rows per page"]').setValue('20');
     expect(wrapper.emitted('update:pageSize')).toEqual([[20]]);
     await wrapper.get('input[aria-label="Search roles"]').setValue('editor');
     expect(wrapper.emitted('update:searchTerm')).toEqual([['editor']]);

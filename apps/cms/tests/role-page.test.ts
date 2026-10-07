@@ -82,6 +82,39 @@ describe('Role dedicated pages', () => {
     auth.can.mockReturnValue(true);
   });
 
+  it('uses page-level pagination contract for initial load, footer, and page-size changes', async () => {
+    api.listRoles.mockResolvedValue({
+      items: [editor],
+      pagination: { page: 1, limit: 10, total: 25, totalPages: 3 },
+    });
+    const { wrapper } = await mountRolePage('/roles');
+    await flushPromises();
+
+    expect(api.listRoles).toHaveBeenCalledWith(expect.objectContaining({ page: 1, limit: 10 }));
+    const search = wrapper.get('input[aria-label="Search roles"]');
+    expect(search.attributes('placeholder')).toBe('Search roles');
+    const rows = wrapper.get('select[aria-label="Rows per page"]');
+    expect(rows.findAll('option').map((option) => option.text())).toEqual([
+      '10',
+      '20',
+      '50',
+      '100',
+    ]);
+    const footer = wrapper.get('footer');
+    expect(footer.text()).toContain('Showing 1 to 10 of 25 roles');
+    expect(footer.element.children[0]?.tagName).toBe('P');
+    expect(footer.element.children[1]?.querySelector('label')?.textContent).toContain(
+      'Rows per page',
+    );
+    expect(footer.element.children[1]?.querySelector('nav')).not.toBeNull();
+
+    await wrapper.get('button[aria-label="Go to page 3"]').trigger('click');
+    await flushPromises();
+    await rows.setValue('20');
+    await flushPromises();
+    expect(api.listRoles).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, limit: 20 }));
+  });
+
   it('navigates from the list to create/edit and keeps delete confirmation in a modal', async () => {
     const { router, wrapper } = await mountRolePage('/roles');
     await flushPromises();

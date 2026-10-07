@@ -53,6 +53,40 @@ describe('user management page', () => {
     api.getUser.mockResolvedValue(user);
   });
 
+  it('uses page-level pagination contract for initial load, footer, and page-size changes', async () => {
+    api.listUsers.mockResolvedValue({
+      items: [user],
+      pagination: { page: 1, limit: 10, total: 25, totalPages: 3 },
+    });
+    const wrapper = await mountUserView();
+    await flushPromises();
+
+    expect(api.listUsers).toHaveBeenCalledWith(expect.objectContaining({ page: 1, limit: 10 }));
+    const search = wrapper.get('input[aria-label="Search users by email"]');
+    expect(search.attributes('placeholder')).toBe('Search users by email');
+    const rows = wrapper.get('select[aria-label="Rows per page"]');
+    expect(rows.findAll('option').map((option) => option.text())).toEqual([
+      '10',
+      '20',
+      '50',
+      '100',
+    ]);
+    const footer = wrapper.get('footer');
+    expect(footer.text()).toContain('Showing 1 to 10 of 25 users');
+    expect(footer.element.children[0]?.tagName).toBe('P');
+    expect(footer.element.children[1]?.querySelector('label')?.textContent).toContain(
+      'Rows per page',
+    );
+    expect(footer.element.children[1]?.querySelector('nav')).not.toBeNull();
+
+    await wrapper.get('button[aria-label="Go to page 3"]').trigger('click');
+    await flushPromises();
+    await rows.setValue('20');
+    await flushPromises();
+    expect(api.listUsers).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, limit: 20 }));
+    wrapper.unmount();
+  });
+
   it('renders backend user fields without exposing credential data', async () => {
     const wrapper = await mountUserView();
     await flushPromises();
@@ -89,7 +123,7 @@ describe('user management page', () => {
 
     const trigger = wrapper.get('[data-filter-trigger]');
     await trigger.trigger('click');
-    await wrapper.findAll('select')[1]?.setValue('disabled');
+    await wrapper.get('[role="region"] select').setValue('disabled');
     expect(api.listUsers).toHaveBeenCalledTimes(1);
 
     await wrapper

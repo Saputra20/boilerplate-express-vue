@@ -1,0 +1,55 @@
+{
+  "collectionDateUTC": "2026-10-04",
+  "marketplace": "lazada-id",
+  "access": "public catalog pages via static HTTP and ordinary browser rendering",
+  "secretFree": true,
+  "recordsAreSamples": true,
+  "notes": [
+    "Raw card text is preserved exactly as observed for samples.",
+    "No login, user cookies, CAPTCHA handling, anti-bot bypass, private endpoint, token extraction, fingerprint spoofing, proxy rotation, or rate-limit evasion used.",
+    "Abbreviated sold displays remain raw; no exact count inferred."
+  ],
+  "runs": [
+    {
+      "runId": "reliability-page1-sample",
+      "keywords": [
+        {
+          "keyword": "baju one set bahan rayon",
+          "url": "https://www.lazada.co.id/catalog/?q=baju%20one%20set%20bahan%20rayon",
+          "productsFound": 40,
+          "sample": [
+            {"searchRank": 1, "externalProductId": "18859608699", "title": "Tania Women's Suit Rayon Mix Premium Striped Cotton Blouse Culottes Busui Friendly Oneset Jumbo Contemporary 2026", "productUrl": "https://www.lazada.co.id/products/pdp-i18859608699.html", "price": "Rp72.800", "rawSoldCount": "36 sold", "reviewCount": "28", "location": "Kab. Cirebon"},
+            {"searchRank": 2, "externalProductId": "18888583444", "title": "One Set New Motif Premium Rayon Rubber Sleeves Jumbo Culot Pants Recent Set", "productUrl": "https://www.lazada.co.id/products/pdp-i18888583444.html", "price": "Rp24.500", "rawSoldCount": "174 sold", "reviewCount": "64", "location": "Kab. Cirebon"},
+            {"searchRank": 3, "externalProductId": "18884471078", "title": "Adult Jumbo Kriwil Set Full Buttons Premium Rayon Material Women's Culot Pants Soft, Smooth, Lightweight Clothes", "productUrl": "https://www.lazada.co.id/products/pdp-i18884471078.html", "price": "Rp24.500", "rawSoldCount": "237 sold", "reviewCount": "82", "location": "Kab. Cirebon"},
+            {"searchRank": 4, "externalProductId": "8621120811", "title": "Queen Motif Set, Rayon Material, Really Cool, Cool and Comfortable", "productUrl": "https://www.lazada.co.id/products/pdp-i8621120811.html", "price": "Rp95.000", "rawSoldCount": "3.0K sold", "reviewCount": "1061", "location": "Kab. Pekalongan"},
+            {"searchRank": 5, "externalProductId": "18886823799", "title": "Lauria Set for Adult Women's Jumbo Pajamas, Premium Rayon Material, Latest Trendy Setcel", "productUrl": "https://www.lazada.co.id/products/pdp-i18886823799.html", "price": "Rp24.500", "rawSoldCount": "72 sold", "reviewCount": "40", "location": "Kab. Cirebon"}
+          ]
+        },
+        {
+          "keyword": "setelan wanita rayon",
+          "url": "https://www.lazada.co.id/tag/setelan-wanita-rayon/?q=setelan%20wanita%20rayon&catalog_redirect_tag=true",
+          "productsFound": 40,
+          "sample": [
+            {"searchRank": 1, "externalProductId": "18888583444", "title": "One Set New Motif Premium Rayon Rubber Sleeves Jumbo Culot Pants Recent Set", "productUrl": "https://www.lazada.co.id/products/pdp-i18888583444.html", "price": "Rp24.500", "rawSoldCount": "174 sold", "reviewCount": "64", "location": "Kab. Cirebon"},
+            {"searchRank": 2, "externalProductId": "18884479060", "title": "Oneset Kalea Jumbo Set of Culot Pants and Premium Rayon Shirt with Beautiful Motifs Friendly Busui Today's Viral Trend", "productUrl": "https://www.lazada.co.id/products/pdp-i18884479060.html", "price": "Rp24.500", "rawSoldCount": "198 sold", "reviewCount": "71", "location": "Kab. Cirebon"},
+            {"searchRank": 3, "externalProductId": "8621120811", "title": "Queen Motif Set, Rayon Material, Really Cool, Cool and Comfortable", "productUrl": "https://www.lazada.co.id/products/pdp-i8621120811.html", "price": "Rp95.000", "rawSoldCount": "3.0K sold", "reviewCount": "1061", "location": "Kab. Pekalongan"},
+            {"searchRank": 4, "externalProductId": "18886823799", "title": "Lauria Set for Adult Women's Jumbo Pajamas, Premium Rayon Material, Latest Trendy Setcel", "productUrl": "https://www.lazada.co.id/products/pdp-i18886823799.html", "price": "Rp24.500", "rawSoldCount": "72 sold", "reviewCount": "40", "location": "Kab. Cirebon"},
+            {"searchRank": 5, "externalProductId": "18888498882", "title": "Premium Women's Full Modern Motif Rayon Set", "productUrl": "https://www.lazada.co.id/products/pdp-i18888498882.html", "price": "Rp25.500", "rawSoldCount": "55 sold", "reviewCount": "31", "location": "Kab. Cirebon"}
+          ]
+        },
+        {
+          "keyword": "kulot wanita rayon",
+          "url": "https://www.lazada.co.id/tag/kulot-wanita-rayon/?q=kulot%20wanita%20rayon&catalog_redirect_tag=true",
+          "productsFound": 40,
+          "sample": [
+            {"searchRank": 1, "externalProductId": "18851438541", "title": "Comfortable Culottes for Adult Women, Jumbo Rayon Material, Premium Abstract Pattern, Best Selling", "productUrl": "https://www.lazada.co.id/products/pdp-i18851438541.html", "price": "Rp27.000", "rawSoldCount": "366 sold", "reviewCount": "119", "location": "Kab. Cirebon"},
+            {"searchRank": 2, "externalProductId": "8286678003", "title": "Women's Culottes with Contemporary Patterns, Premium Rayon Material, Size m L XL XXL", "productUrl": "https://www.lazada.co.id/products/pdp-i8286678003.html", "price": "Rp26.500", "rawSoldCount": "2.8K sold", "reviewCount": "686", "location": "Kab. Cirebon"},
+            {"searchRank": 3, "externalProductId": "18873744017", "title": "Hommy Kallyoutfit Hommy Pants Part 3 Adem Culot Rayon Pajama Women's Trousers Premium Rayon Culot", "productUrl": "https://www.lazada.co.id/products/pdp-i18873744017.html", "price": "Rp18.000", "rawSoldCount": "82 sold", "reviewCount": "32", "location": "Kab. Cirebon"},
+            {"searchRank": 4, "externalProductId": "8311856894", "title": "Kallyoutfit Hommy Part 3 Trousers Adem Culot Rayon Pajama", "productUrl": "https://www.lazada.co.id/products/pdp-i8311856894.html", "price": "Rp37.900", "rawSoldCount": "5.2K sold", "reviewCount": "1243", "location": "Kab. Pekalongan"},
+            {"searchRank": 5, "externalProductId": "18857596926", "title": "Adult Women's Motifed Trousers Jumbo Long Rayon Comfortable Rubber Culotes", "productUrl": "https://www.lazada.co.id/products/pdp-i18857596926.html", "price": "Rp24.500", "rawSoldCount": "351 sold", "reviewCount": "96", "location": "Kab. Cirebon"}
+          ]
+        }
+      ]
+    }
+  ]
+}

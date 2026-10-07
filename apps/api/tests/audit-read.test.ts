@@ -177,13 +177,14 @@ describe('audit read service', () => {
     }
   });
 
-  it('rejects unsupported limits and date ranges before repository access', () => {
-    expect(() =>
-      parseListQuery(
-        { limit: '10', from: '2026-01-01T00:00:00.000Z', to: '2026-01-31T00:00:00.000Z' },
-        now,
-      ),
-    ).toThrow('Invalid audit query');
+  it('defaults to 10, accepts approved limits, and rejects unsupported limits and date ranges before repository access', () => {
+    const dateRange = { from: '2026-01-01T00:00:00.000Z', to: '2026-01-31T00:00:00.000Z' };
+
+    expect(parseListQuery(dateRange, now).limit).toBe(10);
+    for (const limit of [10, 20, 50, 100]) {
+      expect(parseListQuery({ ...dateRange, limit: String(limit) }, now).limit).toBe(limit);
+    }
+    expect(() => parseListQuery({ ...dateRange, limit: '15' }, now)).toThrow('Invalid audit query');
     expect(() =>
       parseListQuery({ from: '2025-01-01T00:00:00.000Z', to: '2026-01-01T00:00:00.000Z' }, now),
     ).toThrow('Invalid audit query');
@@ -311,6 +312,6 @@ describe('audit read authorization', () => {
 
     expect(deniedList.status).toBe(403);
     expect(deniedExport.status).toBe(403);
-    expect(allowedList.status).toBe(400);
+    expect(allowedList.status).toBe(200);
   });
 });

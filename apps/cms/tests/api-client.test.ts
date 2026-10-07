@@ -411,13 +411,13 @@ describe('API client', () => {
     };
     transport.request
       .mockResolvedValueOnce(
-        createResponse({ items: [detail], pagination: { limit: 20, nextCursor: null } }),
+        createResponse({ items: [detail], pagination: { limit: 10, nextCursor: null } }),
       )
       .mockResolvedValueOnce(createResponse({ ...detail, requestId: null }))
       .mockResolvedValueOnce(createResponse(new Blob(['id,eventType\n'], { type: 'text/csv' })));
     const client = createApiClient('http://localhost:3000', () => 'access-token', transport);
 
-    await expect(client.listAuditEvents({ limit: 20 })).resolves.toMatchObject({
+    await expect(client.listAuditEvents({ limit: 10 })).resolves.toMatchObject({
       items: [{ id: eventId, eventType: 'category.updated' }],
     });
     await expect(client.getAuditEvent(eventId)).resolves.toMatchObject({
